@@ -1,6 +1,6 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast } from '../util.js?v=0.2.2.20261030212248';
-import { buildForm } from '../form.js?v=0.2.2.20261030212248';
+import { h, fmtDate, fmtMoney, toast } from '../util.js?v=0.2.3.20261030214117';
+import { buildForm } from '../form.js?v=0.2.3.20261030214117';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);

@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.2.2.20261030212248';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.2.3.20261030214117';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -123,7 +123,7 @@ export default {
     return h('div.page',
       h('div.page-head', h('div', h('h1', 'Key dates'),
         h('p.lede', 'Exits, notice deadlines, readiness interviews, forums, obligations, RAID and action due dates, data requests, work orders, regulatory filings and plan milestones.')),
-        h('button.btn', { type: 'button', onclick: () => exportIcs(shown) }, 'Download calendar (.ics)')),
+        h('button.btn', { type: 'button', onclick: () => exportIcs(shown.filter((e) => e.type !== 'forum' && e.d >= RD), ui.off.has('forum') ? [] : store.records('tblForums')) }, 'Download calendar (.ics)')),
       h('div.filters', Object.entries(TYPES).map(([k, [label, col]]) => {
         const on = !ui.off.has(k);
         return h('button.fchip', { type: 'button', 'aria-pressed': String(on), onclick: () => { on ? ui.off.add(k) : ui.off.delete(k); rerender(); },
@@ -133,16 +133,27 @@ export default {
   }
 };
 
-function exportIcs(evs) {
+function exportIcs(evs, forums) {
+  // From the reporting date on only; each forum is one repeating meeting rather than hundreds of single entries.
   const pad = (n) => String(n).padStart(2, '0');
   const dt = (s) => { const d = fromSerial(s); return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`; };
   const esc = (s) => String(s || '').replace(/[\\,;]/g, (c) => '\\' + c).replace(/\n/g, ' ');
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whisper Consulting//SMO Hub//EN'];
-  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.d}-${i}`, `DTSTAMP:${dt(e.d)}T000000Z`, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'END:VEVENT'));
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whisper Consulting//SMO Hub//EN', 'X-WR-CALNAME:SMO Hub key dates'];
+  const stamp = 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'));
+  const rule = { Weekly: 'FREQ=WEEKLY', Fortnightly: 'FREQ=WEEKLY;INTERVAL=2', Monthly: 'FREQ=MONTHLY', Quarterly: 'FREQ=MONTHLY;INTERVAL=3' };
+  forums.forEach((r, i) => {
+    const f = r.get('First meeting'), rr = rule[r.get('Frequency')];
+    if (!f || !rr) return;
+    const tm = /^(\d{1,2}):(\d\d)/.exec(String(r.get('Time') || ''));
+    const start = tm ? `DTSTART:${dt(f)}T${pad(tm[1])}${tm[2]}00` : `DTSTART;VALUE=DATE:${dt(f)}`;
+    lines.push('BEGIN:VEVENT', `UID:smohub-forum-${i}`, stamp, start, tm ? 'DURATION:PT1H' : '', `RRULE:${rr};COUNT=${{ Weekly: 104, Fortnightly: 52, Monthly: 24, Quarterly: 8 }[r.get('Frequency')]}`,
+      `SUMMARY:${esc(r.get('Forum'))}`, `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
+  });
   lines.push('END:VCALENDAR');
   try {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/calendar' }));
+    a.href = URL.createObjectURL(new Blob([lines.filter(Boolean).join('\r\n')], { type: 'text/calendar' }));
     a.download = 'SMO Hub key dates.ics';
     document.body.appendChild(a); a.click(); a.remove();
   } catch (e) { toast('Download is not available here', true); }
