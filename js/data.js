@@ -81,6 +81,13 @@ export class ExcelSource {
     });
   }
 
+  async writeNames(pairs) {
+    return Excel.run(async (ctx) => {
+      for (const [n, v] of pairs) ctx.workbook.names.getItem(n).getRange().values = [[v]];
+      await ctx.sync();
+    });
+  }
+
   /** cells: [{addr, value}] on one sheet. */
   async writeCells(sheet, cells) {
     return Excel.run(async (ctx) => {
@@ -150,6 +157,7 @@ export class PreviewSource {
     for (let r = r1; r <= r2; r++) { const row = []; for (let c = c1; c <= c2; c++) { const v = cells[colName(c) + r]; row.push(v == null ? '' : v); } out.push(row); }
     return out;
   }
+  async writeNames(pairs) { pairs.forEach(([n, v]) => { this.snap.names[n] = v; }); }
   async writeCells(sheet, list) {
     this.snap.cells = this.snap.cells || {};
     const cells = this.snap.cells[sheet] = this.snap.cells[sheet] || {};
@@ -253,6 +261,12 @@ export class Store {
   show(name, row) { return this.src.show(name, row); }
 
   readRange(sheet, addr) { return this.src.readRange(sheet, addr); }
+  readNamesNow(list) { return this.src.readNames(list); }
+  async writeNames(pairs) {
+    await this.src.writeNames(pairs);
+    pairs.forEach(([n, v]) => { this.names[n] = v; });
+    Object.keys(this.t).forEach((t) => this.stale.add(t));
+  }
   async writeCells(sheet, cells) {
     await this.src.writeCells(sheet, cells);
     Object.keys(this.t).forEach((n) => this.stale.add(n));   // formulas elsewhere depend on these cells

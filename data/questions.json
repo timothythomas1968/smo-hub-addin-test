@@ -1,0 +1,474 @@
+[
+ {
+  "group": "About the programme",
+  "qs": [
+   {
+    "name": "ProgName",
+    "q": "What do you call this separation programme?",
+    "fmt": "text",
+    "dv": null,
+    "help": "Shown in every report and form header.",
+    "example": "Project Fernhallow separation",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "BuyerName",
+    "q": "What is the buyer's name for this transaction?",
+    "fmt": "text",
+    "dv": null,
+    "help": "Legal or trading name used in reports. Also suggested as an entity on the Lists sheet.",
+    "example": "Quillmere Life",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "SellerName",
+    "q": "What is the seller's name for this transaction?",
+    "fmt": "text",
+    "dv": null,
+    "help": "Legal or trading name used in reports. Also suggested as an entity on the Lists sheet.",
+    "example": "Fernhallow Mutual",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "Perspective",
+    "q": "Which side are you on: buyer or seller?",
+    "fmt": "text",
+    "dv": [
+     "Buyer",
+     "Seller"
+    ],
+    "help": "Drives \"our\" and \"their\" throughout the Hub: suggested owners, cost shares and which invoices you issue.",
+    "example": "Buyer",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "HubOwner",
+    "q": "Who runs this Hub (usually the SMO lead)?",
+    "fmt": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "help": "Suggested automatically once the People sheet has someone with the role SMO lead. Used as interviewer, approver and engagement owner.",
+    "example": "Maya Okafor",
+    "required": false,
+    "ai": false
+   }
+  ]
+ },
+ {
+  "group": "Key dates",
+  "qs": [
+   {
+    "name": "SignDate",
+    "q": "What is the signing date of the main deal agreements?",
+    "fmt": "date",
+    "dv": null,
+    "help": "On or before the closing date.",
+    "example": "15 Oct 2025",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "CloseDate",
+    "q": "What is the closing date (Day 1)?",
+    "fmt": "date",
+    "dv": null,
+    "help": "Drives every calculated date in the Hub; fees cannot be forecast without it.",
+    "example": "1 Mar 2026",
+    "required": true,
+    "ai": true
+   }
+  ]
+ },
+ {
+  "group": "Money",
+  "qs": [
+   {
+    "name": "RepCcy",
+    "q": "Which currency should reports use?",
+    "fmt": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "help": "All money in reports is shown in this currency. Add every other currency, with its rate, on the Lists sheet.",
+    "example": "GBP",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "FYStart",
+    "q": "In which month does your financial year start? (1 = January)",
+    "fmt": "int",
+    "dv": null,
+    "help": "Used by the cost reports only; TSA fees always use calendar years.",
+    "example": "1",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "FeeCap",
+    "q": "Is there a cap on total TSA fees? If so, how much? (leave blank if none)",
+    "fmt": "money",
+    "dv": null,
+    "help": "In the reporting currency.",
+    "example": "21,000,000",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ConsentSplit",
+    "q": "What share of third-party consent costs does the buyer pay?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "The seller pays the rest.",
+    "example": "50%",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ConsentCap",
+    "q": "Is there a cap on what your side pays for consents? (leave blank if none)",
+    "fmt": "money",
+    "dv": null,
+    "help": "The most this Hub's side pays towards third-party consent costs, in the reporting currency; checked on Third Parties, with a warning at 80%.",
+    "example": "250,000",
+    "required": false,
+    "ai": true
+   }
+  ]
+ },
+ {
+  "group": "The TSA's terms",
+  "qs": [
+   {
+    "name": "LongStop",
+    "q": "What is the TSA's long-stop date (the latest any service may run, extensions included)?",
+    "fmt": "date",
+    "dv": null,
+    "help": "",
+    "example": "29 Feb 2028",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DefTerm",
+    "q": "What is the usual initial term of a service, in months?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Copied to each service; change it per service where the schedules differ.",
+    "example": "12",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ExitConv",
+    "q": "On which day do services end?",
+    "fmt": "text",
+    "dv": [
+     "First of month",
+     "Last day of month",
+     "Pro-rata"
+    ],
+    "help": "First of month: a service exits on the 1st and the last month charged is the month before.",
+    "example": "First of month",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DefExitNotice",
+    "q": "How many days' notice are needed to end a service on its planned date?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "30",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DefEENotice",
+    "q": "How many days' notice are needed to end a service early?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "60",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DefExtNotice",
+    "q": "How many days' notice are needed to extend a service?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "60",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DefPartial",
+    "q": "Can part of a service be ended on its own (partial exit)? (Y or N)",
+    "fmt": "text",
+    "dv": [
+     "Y",
+     "N"
+    ],
+    "help": "",
+    "example": "N",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "EEResp",
+    "q": "How many business days does the provider have to respond to an early exit request?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "15",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "EEDecide",
+    "q": "How many business days does the recipient then have to decide?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "10",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ExtCount",
+    "q": "How many extensions does the TSA allow?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Up to four. Each can carry its own fee mark-up below.",
+    "example": "2",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ExtMaxMonths",
+    "q": "What is the longest each extension can be, in months?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Also the suggested length of each extension below.",
+    "example": "6",
+    "required": true,
+    "ai": true
+   }
+  ]
+ },
+ {
+  "group": "Extension fee mark-ups",
+  "qs": [
+   {
+    "name": "ExtMonths1",
+    "q": "How many months does extension 1 run for?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Usually the maximum months per extension.",
+    "example": "6",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ExtPct1",
+    "q": "What fee mark-up applies during extension 1?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "Enter 0% if the TSA has no uplift.",
+    "example": "10%",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "ExtMonths2",
+    "q": "How many months does extension 2 run for?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Usually the maximum months per extension.",
+    "example": "6",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ExtPct2",
+    "q": "What fee mark-up applies during extension 2?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "Enter 0% if the TSA has no uplift.",
+    "example": "15%",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ExtMonths3",
+    "q": "How many months does extension 3 run for?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Usually the maximum months per extension.",
+    "example": "6",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ExtPct3",
+    "q": "What fee mark-up applies during extension 3?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "Enter 0% if the TSA has no uplift.",
+    "example": "15%",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ExtMonths4",
+    "q": "How many months does extension 4 run for?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Usually the maximum months per extension.",
+    "example": "6",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "ExtPct4",
+    "q": "What fee mark-up applies during extension 4?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "Enter 0% if the TSA has no uplift.",
+    "example": "15%",
+    "required": false,
+    "ai": true
+   }
+  ]
+ },
+ {
+  "group": "Invoices and payment",
+  "qs": [
+   {
+    "name": "InvFreq",
+    "q": "How often are TSA fees invoiced?",
+    "fmt": "text",
+    "dv": [
+     "Monthly",
+     "Quarterly"
+    ],
+    "help": "",
+    "example": "Monthly",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "PayTerms",
+    "q": "How many days are allowed to pay an invoice?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Counted from receipt.",
+    "example": "30",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "DisputeDays",
+    "q": "How many days are allowed to dispute an invoice?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Counted from receipt.",
+    "example": "30",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "OOPThr",
+    "q": "Above what amount do out-of-pocket expenses need approval? (leave blank if none)",
+    "fmt": "money",
+    "dv": null,
+    "help": "In the reporting currency.",
+    "example": "5,000",
+    "required": false,
+    "ai": true
+   },
+   {
+    "name": "VarThr",
+    "q": "How far can an invoice differ from the expected fees before it is flagged?",
+    "fmt": "pct",
+    "dv": null,
+    "help": "A tolerance you choose, not a contract term.",
+    "example": "5%",
+    "required": true,
+    "ai": false
+   }
+  ]
+ },
+ {
+  "group": "Readiness and service levels",
+  "qs": [
+   {
+    "name": "OmitDays",
+    "q": "How many days after closing can omitted services still be added?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "90",
+    "required": true,
+    "ai": true
+   },
+   {
+    "name": "RevPt1",
+    "q": "How many days before exit is the first readiness interview?",
+    "fmt": "int",
+    "dv": null,
+    "help": "Readiness interviews: before each service ends, the SMO lead meets the workstream lead to check nine areas are ready. Leave all four blank if this programme does not hold them: nothing is then scheduled or flagged.",
+    "example": "90",
+    "required": false,
+    "ai": false
+   },
+   {
+    "name": "RevPt2",
+    "q": "And the second?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "60",
+    "required": false,
+    "ai": false
+   },
+   {
+    "name": "RevPt3",
+    "q": "And the third?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "30",
+    "required": false,
+    "ai": false
+   },
+   {
+    "name": "RevPt4",
+    "q": "And the fourth?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "15",
+    "required": false,
+    "ai": false
+   },
+   {
+    "name": "Shortfall",
+    "q": "After how many months in a row below standard does the recipient get a remedy?",
+    "fmt": "int",
+    "dv": null,
+    "help": "",
+    "example": "3",
+    "required": true,
+    "ai": true
+   }
+  ]
+ }
+]

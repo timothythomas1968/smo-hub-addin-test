@@ -1,19 +1,19 @@
 // SMO Hub add-in shell: header, navigation, routing between screens.
-import { h, toast, fmtDate, setEdition } from './util.js?v=0.7.0.20261030221848';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.7.0.20261030221848';
-import home from './screens/home.js?v=0.7.0.20261030221848';
-import register from './screens/register.js?v=0.7.0.20261030221848';
-import raid from './screens/raid.js?v=0.7.0.20261030221848';
-import { soon } from './screens/soon.js?v=0.7.0.20261030221848';
-import dates from './screens/dates.js?v=0.7.0.20261030221848';
-import interview from './screens/interview.js?v=0.7.0.20261030221848';
-import report from './screens/report.js?v=0.7.0.20261030221848';
-import invoice from './screens/invoice.js?v=0.7.0.20261030221848';
-import pack from './screens/pack.js?v=0.7.0.20261030221848';
-import plan from './screens/plan.js?v=0.7.0.20261030221848';
-import { day1, f100 } from './screens/checklist.js?v=0.7.0.20261030221848';
+import { h, toast, fmtDate, setEdition } from './util.js?v=0.8.0.20261030222058';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.8.0.20261030222058';
+import home from './screens/home.js?v=0.8.0.20261030222058';
+import register from './screens/register.js?v=0.8.0.20261030222058';
+import raid from './screens/raid.js?v=0.8.0.20261030222058';
+import dates from './screens/dates.js?v=0.8.0.20261030222058';
+import interview from './screens/interview.js?v=0.8.0.20261030222058';
+import report from './screens/report.js?v=0.8.0.20261030222058';
+import invoice from './screens/invoice.js?v=0.8.0.20261030222058';
+import pack from './screens/pack.js?v=0.8.0.20261030222058';
+import plan from './screens/plan.js?v=0.8.0.20261030222058';
+import setup from './screens/setup.js?v=0.8.0.20261030222058';
+import { day1, f100 } from './screens/checklist.js?v=0.8.0.20261030222058';
 
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -26,7 +26,7 @@ const NAV = [
   { group: 'Closing and after', items: [
     ['day1', 'Day 1 plan', day1],
     ['f100', 'First 100 days', f100]] },
-  { group: 'Set-up', items: [['setup', 'Set-up wizard', soon('Set-up wizard', 'Step-by-step set-up: deal facts, roles, contract terms, services and your logo.', null)]] }
+  { group: 'Set-up', items: [['setup', 'Set-up wizard', setup]] }
 ];
 const SCREENS = Object.fromEntries(NAV.flatMap((g) => g.items.map(([k, label, mod]) => [k, { k, label, mod }])));
 
@@ -107,10 +107,10 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening SMO Hub…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.7.0.20261030221848')).json();
+    const schema = await (await fetch('data/schema.json?v=0.8.0.20261030222058')).json();
     let src;
     if (inExcel) src = new ExcelSource();
-    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.7.0.20261030221848')).json());
+    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.8.0.20261030222058')).json());
     const store = new Store(src, schema);
     await store.init();
     if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like an SMO Hub. Open the SMO Hub workbook, then open the add-in again.');
