@@ -5,20 +5,22 @@ import home from './screens/home.js';
 import register from './screens/register.js';
 import raid from './screens/raid.js';
 import { soon } from './screens/soon.js';
+import dates from './screens/dates.js';
+import { day1, f100 } from './screens/checklist.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 const NAV = [
   { group: 'Every month', items: [
-    ['home', 'Home', home], ['dates', 'Key dates', soon('Key dates', 'A calendar of exit dates, notice deadlines, forums, obligations, work orders and data requests.', 'tblOBL')],
+    ['home', 'Home', home], ['dates', 'Key dates', dates],
     ['register', 'TSA register', register], ['plan', 'Exit plan', soon('Exit plan', 'The plan and Gantt for every service exit.', 'tblPlan')],
     ['raid', 'RAID and actions', raid], ['report', 'Workstream report', soon('Workstream report', 'Each lead\'s monthly status, with the register facts alongside.', 'tblStatus')],
     ['interview', 'Readiness interviews', soon('Readiness interviews', 'Up to four interviews per service, RAG coloured, with "not needed" overrides.', 'tblReadiness')],
     ['invoice', 'Our invoice', soon('Our invoice', 'The invoice to the other party, with tax per service and the charges log.', 'tblInvoices')],
     ['pack', 'Governance pack', soon('Governance pack', 'Packs for each forum, built from the registers, with SMO commentary.', 'tblStatus')]] },
   { group: 'Closing and after', items: [
-    ['day1', 'Day 1 plan', soon('Day 1 plan', 'The Day 1 checklist with go / no-go.', 'tblDay1')],
-    ['f100', 'First 100 days', soon('First 100 days', 'The first 100 days plan with status and editing.', 'tblFirst100')]] },
+    ['day1', 'Day 1 plan', day1],
+    ['f100', 'First 100 days', f100]] },
   { group: 'Set-up', items: [['setup', 'Set-up wizard', soon('Set-up wizard', 'Step-by-step set-up: deal facts, roles, contract terms, services and your logo.', null)]] }
 ];
 const SCREENS = Object.fromEntries(NAV.flatMap((g) => g.items.map(([k, label, mod]) => [k, { k, label, mod }])));

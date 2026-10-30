@@ -68,7 +68,7 @@ export function buildForm(store, table, rec, fields, opts = {}) {
       } else if (col.f === 'date' || (col.dv && col.dv.date)) {
         el = h('input', { id, type: 'date', value: serialToIso(shown) });
         get = () => isoToSerial(el.value);
-      } else if (col.f === 'long') {
+      } else if (col.f === 'long' || spec.area) {
         el = h('textarea', { id, rows: spec.rows || 3 });
         el.value = shown === '' ? '' : String(shown);
         get = () => el.value;

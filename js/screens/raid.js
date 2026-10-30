@@ -129,7 +129,7 @@ function row(x, sel, ctx, wsName) {
 
 function fieldsFor(store, cfg) {
   const def = store.schema[cfg.t];
-  return def.cols.filter((c) => c.h !== cfg.id && c.k !== 'ID').map((c) => (c.h === cfg.title ? { h: c.h, full: true } : c.h));
+  return def.cols.filter((c) => c.h !== cfg.id && c.k !== 'ID').map((c) => (c.h === cfg.title ? { h: c.h, full: true, area: true, rows: 2 } : c.h));
 }
 
 function editPanel(ctx, x) {
