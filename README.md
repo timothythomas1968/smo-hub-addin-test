@@ -51,10 +51,36 @@ The screens load from GitHub Pages each time, so a new build normally appears wh
 
 You only need a new manifest when the ribbon button or permissions change; I'll tell you when.
 
-## What works in this build (0.1.0)
+## What works in this build (0.8)
 
-- **Home**: tiles, this month's checklist (ticks are saved inside the workbook), workstream status with trend, coming up in 30 days, milestones, Day 1 and first 100 days.
-- **TSA register**: search, filters, and a details panel that edits the register row.
-- **RAID and actions**: one list for risks, issues, decisions, assumptions and dependencies, and actions; adopt or remove suggested items; edit and add items.
-- Every change is written straight into the workbook cell. Suggested (grey italic) values are only overwritten when you change them.
-- The other screens show "SOON" and offer a button that opens their worksheet.
+Every screen is built:
+
+- **Home:**
+  - tiles and this month's checklist (ticks are saved inside the workbook);
+  - workstream status (each workstream opens its report);
+  - coming up in 30 days, milestones, and Day 1 and the first 100 days.
+- **Key dates:** a month calendar with type filters, plus an optional "Copy these dates to Outlook" box with steps and a 3, 6 or 12 month choice.
+- **TSA register:** search, filters and a details panel.
+- **Exit plan:**
+  - a Gantt chart grouped by service, with late items, a choice of 6, 12 or 24 months, and the option to include exited services;
+  - an edit panel for dates and progress.
+- **RAID and actions:** adopt or remove suggested items, edit and add.
+- **Workstream report:**
+  - who has reported this month, and the facts from the registers;
+  - RAG, trend, the commentary boxes, and risks, issues and decisions;
+  - setting the reporting date, and an email request to the lead.
+- **Readiness interviews:**
+  - four interviews per service, coloured by RAG;
+  - Yes, Partly or No for the nine areas, with notes and last time's answers;
+  - interviewee, others present and "not needed" overrides.
+- **Our invoice:**
+  - invoice settings, letterhead and logo, tax per service, and the charges log;
+  - print or save as PDF.
+- **Governance pack:**
+  - one pack per forum, shared or internal, with SMO commentary and sections you switch on or off;
+  - the fees by year and by quarter;
+  - print or save as PDF.
+- **Day 1 plan** and **First 100 days:** filters, status changed in the row, editing, adding and deleting.
+- **Set-up wizard:** the deal, contract terms, people, services from the Library, and letterhead and review.
+
+Every change is written straight into the workbook cell. Suggested (grey italic) values are only overwritten when you change them.

@@ -1,5 +1,5 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.8.0.20261030222058';
+import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.8.1.20261030222244';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Complete', 'Not required']);

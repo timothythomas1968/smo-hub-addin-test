@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural } from '../util.js?v=0.8.0.20261030222058';
-import { buildForm } from '../form.js?v=0.8.0.20261030222058';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural } from '../util.js?v=0.8.1.20261030222244';
+import { buildForm } from '../form.js?v=0.8.1.20261030222244';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
