@@ -1,6 +1,6 @@
 // Builds an edit form from the workbook's own column definitions (schema.json, generated from the builder).
 // Inputs (I) and suggested values (D) are editable; calculated columns (C) are shown read-only.
-import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial } from './util.js?v=0.6.0.20261030221728';
+import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial } from './util.js?v=0.7.0.20261030221848';
 
 export function display(store, col, v) {
   if (v === '' || v == null) return '';
