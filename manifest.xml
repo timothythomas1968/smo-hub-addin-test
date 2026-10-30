@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SMO Hub add-in manifest. tools/build.py replaces https://timothythomas1968.github.io/smo-hub-addin-test with the HTTPS address the files are served from. -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+           xsi:type="TaskPaneApp">
+  <Id>bd363564-91bc-40c1-a3f6-31d090fce9d7</Id>
+  <Version>0.1.0.0</Version>
+  <ProviderName>Whisper Consulting</ProviderName>
+  <DefaultLocale>en-GB</DefaultLocale>
+  <DisplayName DefaultValue="SMO Hub (test)"/>
+  <Description DefaultValue="Screens for running a separation and TSA programme from the SMO Hub workbook."/>
+  <IconUrl DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-64.png"/>
+  <SupportUrl DefaultValue="https://www.whisper-consulting.com"/>
+  <AppDomains>
+    <AppDomain>https://timothythomas1968.github.io</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="ExcelApi" MinVersion="1.7"/>
+    </Sets>
+  </Requirements>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Workbook">
+        <DesktopFormFactor>
+          <GetStarted>
+            <Title resid="GetStarted.Title"/>
+            <Description resid="GetStarted.Description"/>
+            <LearnMoreUrl resid="GetStarted.LearnMoreUrl"/>
+          </GetStarted>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="SMOHub.Group">
+                <Label resid="Group.Label"/>
+                <Icon>
+                  <bt:Image size="16" resid="Icon.16"/>
+                  <bt:Image size="32" resid="Icon.32"/>
+                  <bt:Image size="80" resid="Icon.80"/>
+                </Icon>
+                <Control xsi:type="Button" id="SMOHub.Open">
+                  <Label resid="Open.Label"/>
+                  <Supertip>
+                    <Title resid="Open.Label"/>
+                    <Description resid="Open.Tip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>SMOHubPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url"/>
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Icon.16" DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-16.png"/>
+        <bt:Image id="Icon.32" DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-32.png"/>
+        <bt:Image id="Icon.80" DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://www.whisper-consulting.com"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/taskpane.html"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="GetStarted.Title" DefaultValue="SMO Hub is ready"/>
+        <bt:String id="Group.Label" DefaultValue="SMO Hub"/>
+        <bt:String id="Open.Label" DefaultValue="SMO Hub (test)"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="GetStarted.Description" DefaultValue="Open SMO Hub from the Home tab. Drag the panel's left edge to make it wider."/>
+        <bt:String id="Open.Tip" DefaultValue="Open the SMO Hub screens for this workbook."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

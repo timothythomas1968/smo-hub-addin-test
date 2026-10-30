@@ -1,0 +1,5751 @@
+{
+ "tblPeople": {
+  "prefix": "P",
+  "sheet": "People",
+  "title": "People, stakeholders and forums (A2, A12)",
+  "live": "Role",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "Name",
+    "h": "Name",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "One row per person. The live Hub lists the usual roles for every workstream: type the name of the person in each role, and add rows for anyone else.",
+    "sec": "Person"
+   },
+   {
+    "k": "Org",
+    "h": "Organisation",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Buyer",
+      "Seller",
+      "Third party"
+     ]
+    },
+    "n": "",
+    "sec": "Person"
+   },
+   {
+    "k": "Role",
+    "h": "Role",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_Role"
+    },
+    "n": "Pick a standard role. It fills in the suggested stakeholder analysis and forum membership.",
+    "sec": "Person"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream or function",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSPN"
+    },
+    "n": "Suggested from the role (e.g. Finance lead: Finance, tax and treasury); otherwise pick the workstream by name, or Programme for programme-wide roles. Leads of a workstream are suggested as owners of its services.",
+    "sec": "Person"
+   },
+   {
+    "k": "Email",
+    "h": "Email",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Person"
+   },
+   {
+    "k": "Phone",
+    "h": "Phone",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Person"
+   },
+   {
+    "k": "Inf",
+    "h": "Influence",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "High",
+      "Medium",
+      "Low"
+     ]
+    },
+    "n": "Suggested from the role.",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Int",
+    "h": "Interest",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "High",
+      "Medium",
+      "Low"
+     ]
+    },
+    "n": "Suggested from the role.",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Quad",
+    "h": "Quadrant",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Needs",
+    "h": "Needs and concerns",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the role. Overwrite with what you know about the person.",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Reports",
+    "h": "Reports received, decisions owned",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "EOwner",
+    "h": "Engagement owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the Hub owner.",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Freq",
+    "h": "Contact frequency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Weekly",
+      "Fortnightly",
+      "Monthly",
+      "Quarterly",
+      "As needed"
+     ]
+    },
+    "n": "",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "Next",
+    "h": "Next contact",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Optional.",
+    "sec": "Stakeholder analysis"
+   },
+   {
+    "k": "F1",
+    "h": "Forum 1",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F2",
+    "h": "Forum 2",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F3",
+    "h": "Forum 3",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F4",
+    "h": "Forum 4",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F5",
+    "h": "Forum 5",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F6",
+    "h": "Forum 6",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F7",
+    "h": "Forum 7",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F8",
+    "h": "Forum 8",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F9",
+    "h": "Forum 9",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F10",
+    "h": "Forum 10",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F11",
+    "h": "Forum 11",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "F12",
+    "h": "Forum 12",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Chair",
+      "Member",
+      "As needed"
+     ]
+    },
+    "n": "Forum names are shown above the headings. Suggested: Chair for the forum chair; Member for the roles the forum lists on the Lists sheet.",
+    "sec": "Forum membership"
+   },
+   {
+    "k": "WSC",
+    "h": "Workstream code",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblTSA": {
+  "prefix": "TSA",
+  "sheet": "TSA Register",
+  "title": "TSA register (A3)",
+  "live": "TSA ID",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "TSA ID",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the library ID: TSA-{workstream}-{nnn} for services the seller provides, rTSA-{workstream}-{nnn} for reverse services. Capitals only. Type over it with the contract numbering if you prefer; once other sheets refer to a service, keep its ID fixed.",
+    "sec": "Service"
+   },
+   {
+    "k": "Name",
+    "h": "Service name",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the library ID.",
+    "sec": "Service"
+   },
+   {
+    "k": "Desc",
+    "h": "Service description",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the TSA ID.",
+    "sec": "Service"
+   },
+   {
+    "k": "Dir",
+    "h": "Direction",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Start",
+    "h": "Service start",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Term"
+   },
+   {
+    "k": "Term",
+    "h": "Initial term (months)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "Often 12 or 18 months; nothing in the Hub is limited to it.",
+    "sec": "Term"
+   },
+   {
+    "k": "InitEnd",
+    "h": "Initial end date",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "The service start plus the initial term, moved to the day services end on (Start Here): e.g. 15 Nov 2026 + 12 months = 1 Dec 2027 when services end on the first of the month.",
+    "sec": "Term"
+   },
+   {
+    "k": "Planned",
+    "h": "Planned exit date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The contract exit date: the initial end date, or the new date from the latest approved extension, early exit or termination on TSA Changes (applied automatically).",
+    "sec": "Term"
+   },
+   {
+    "k": "Fcst",
+    "h": "Forecast exit date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Service owner's current view. Only the long-stop limits it.",
+    "sec": "Term"
+   },
+   {
+    "k": "Actual",
+    "h": "Actual exit date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Enter when the service ends.",
+    "sec": "Term"
+   },
+   {
+    "k": "Ccy",
+    "h": "Fee currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "Suggested: same as the row above.",
+    "sec": "Cost"
+   },
+   {
+    "k": "Fee",
+    "h": "Monthly fee (key input)",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "KEY INPUT: the monthly fee from the TSA schedule, in the fee currency. TSA fees, the executive summary and the invoices all depend on it. Leave blank only if the fee is not a fixed amount, and explain in the fee basis note.",
+    "sec": "Cost"
+   },
+   {
+    "k": "FeeRep",
+    "h": "Monthly fee (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "Basis",
+    "h": "Charging basis",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Basis"
+    },
+    "n": "Suggested: same as the row above.",
+    "sec": "Cost"
+   },
+   {
+    "k": "FeeNote",
+    "h": "Fee basis note",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Only for fees that are not a fixed amount, e.g. \"per rate card\".",
+    "sec": "Cost"
+   },
+   {
+    "k": "Cap",
+    "h": "Inside fee cap",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "POwner",
+    "h": "Provider service owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the providing party's workstream lead.",
+    "sec": "Owners"
+   },
+   {
+    "k": "ROwner",
+    "h": "Recipient service owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the receiving party's workstream lead. Attests service levels and readiness.",
+    "sec": "Owners"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_TSAStatus"
+    },
+    "n": "Suggested from the dates. Overwrite for Terminated.",
+    "sec": "Status and checks"
+   },
+   {
+    "k": "DRAG",
+    "h": "Service delivery RAG",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Red",
+      "Amber",
+      "Green"
+     ]
+    },
+    "n": "Suggested from the SLA tracker: red if the latest month was missed or shortfall rights are reached, amber for a concern. Overwrite with your judgement.",
+    "sec": "Status and checks"
+   },
+   {
+    "k": "XRAG",
+    "h": "Exit readiness RAG",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Red",
+      "Amber",
+      "Green",
+      "Complete"
+     ]
+    },
+    "n": "Suggested from readiness interviews and the plan: red within 30 days of exit if not ready; amber within 90 days if not ready, or with late or overrunning plan items. Overwrite with your judgement.",
+    "sec": "Status and checks"
+   },
+   {
+    "k": "PTG",
+    "h": "Path to green",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "Only needed when a RAG is amber or red.",
+    "sec": "Status and checks"
+   },
+   {
+    "k": "Checks",
+    "h": "Data checks",
+    "t": "C",
+    "f": "long",
+    "dv": null,
+    "n": "The Data Quality checks for this row. Red TSA IDs have an error, amber ones a warning.",
+    "sec": "Status and checks"
+   },
+   {
+    "k": "Route",
+    "h": "Exit route",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Route"
+    },
+    "n": "Suggested from the library, otherwise the same as the row above.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "PlanApp",
+    "h": "Exit plan approved on (date)",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The date the exit plan was approved (a date, not Y or N). Type it once: the services below take the same date until you type a different one.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "PlanSt",
+    "h": "Exit plan status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_PlanStatus"
+    },
+    "n": "Suggested: Approved once an approval date is entered, otherwise the same as the row above.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "Hyp",
+    "h": "Exit hypothesis",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the library and exit route; refine during exit planning.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "Alt",
+    "h": "Alternative exit options",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "Optional.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "Ent",
+    "h": "Entanglement",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Entangle"
+    },
+    "n": "",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "Cplx",
+    "h": "Exit complexity",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Complex"
+    },
+    "n": "Suggested from the exit route.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "Lib",
+    "h": "Library ID",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "LIB_ID"
+    },
+    "n": "Suggested: the services you marked on the Library sheet, in order. Or pick the nearest library service yourself; it suggests the name, description, service level, exit route and hypothesis.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Sub",
+    "h": "Sub-function",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Free text, suggested from the library.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "LOB",
+    "h": "Line of business",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_LOB"
+    },
+    "n": "Suggested from the library, otherwise the same as the row above.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Crit",
+    "h": "Critical",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Suggested Y for high-complexity exits. Critical services get a dress rehearsal and closer monitoring.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Sched",
+    "h": "Schedule ref",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested: 2.01(a) for services the seller provides and 2.01(b) for reverse services. Overwrite with the contract's own numbering.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Prov",
+    "h": "Provider entity",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Entity"
+    },
+    "n": "Suggested: the first entity of the providing party on the Lists sheet.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Recip",
+    "h": "Recipient entity",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Entity"
+    },
+    "n": "",
+    "sec": "Service detail"
+   },
+   {
+    "k": "TwoWay",
+    "h": "Two-way",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y if both parties provide part of this service to each other (for example a shared system each side runs part of), so both sides have delivery and exit tasks. Suggested N.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Staff",
+    "h": "Staff transfer",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y if people who deliver this service will transfer employment to the recipient when it exits, which brings consultation, contracts and payroll tasks. Suggested Y when the exit route is Transfer staff and knowledge.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Move",
+    "h": "Move group",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Optional: services that migrate together share a move group, e.g. MG-03.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "SLAText",
+    "h": "Service levels",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the library. Copied to the SLA tracker.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Deps",
+    "h": "Dependent services",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Optional: TSA IDs that must end or extend with this one, separated by semicolons.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "ExitNot",
+    "h": "On-time exit notice (days)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "EENot",
+    "h": "Early exit notice (days)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "ExtNot",
+    "h": "Extension notice (days)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "ExtOK",
+    "h": "Extension allowed",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "ExtMax",
+    "h": "Maximum extension (months)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "Partial",
+    "h": "Partial exit allowed",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "Delay",
+    "h": "Approved delay (days)",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "ExitType",
+    "h": "Exit type",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "On time, early exit or extension, comparing the forecast with the planned exit date.",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "ExitDL",
+    "h": "Exit notice deadline",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "Forecast exit minus the early exit notice (early exit) or the on-time exit notice.",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "ExtDL",
+    "h": "Extension notice deadline",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "NextRev",
+    "h": "Next readiness interview",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "From Exit Readiness: the next interview point (90, 60, 30, 15 days before the forecast exit) or the recommended follow-up.",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "OpenAfter",
+    "h": "Plan items open after exit",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "ConvChk",
+    "h": "Exit date check",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Dates (calculated)"
+   },
+   {
+    "k": "Comm",
+    "h": "Comments",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "Internal; never on the shared report.",
+    "sec": "Notes"
+   },
+   {
+    "k": "SComm",
+    "h": "Shared comments",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "The only comments shown on the shared report.",
+    "sec": "Notes"
+   },
+   {
+    "k": "SLAm",
+    "h": "Latest SLA month",
+    "t": "C",
+    "f": "month",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "SLA",
+    "h": "Latest SLA result",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Below",
+    "h": "Months below standard",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "OIss",
+    "h": "Open issues",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "OAct",
+    "h": "Open actions",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "OCR",
+    "h": "Open change requests",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "LibWS",
+    "h": "Library workstream",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Pre",
+    "h": "Library direction",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "StartM",
+    "h": "First billed month",
+    "t": "C",
+    "f": "month",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "ExitEff",
+    "h": "Billing stops",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "MkS",
+    "h": "Mark-up starts",
+    "t": "C",
+    "f": "month",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Bill",
+    "h": "On our invoice",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblPlan": {
+  "prefix": "SP",
+  "sheet": "Plan & Gantt",
+  "title": "Plan and Gantt (A4)",
+  "live": "Activity",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Activity ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Calculated from the workstream and the row, so it never needs typing.",
+    "sec": "Activity"
+   },
+   {
+    "k": "WBS",
+    "h": "WBS",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Activity"
+   },
+   {
+    "k": "Type",
+    "h": "Type",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "TSA exit",
+      "Milestone",
+      "Task",
+      "Gate"
+     ]
+    },
+    "n": "Each service has a TSA exit row followed by its suggested steps (from the Library section Plan templates). Spare rows in a block are for extra tasks of that service.",
+    "sec": "Activity"
+   },
+   {
+    "k": "Name",
+    "h": "Activity",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the exit route. Reword it, or type an extra task in an empty row of the service's block.",
+    "sec": "Activity"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Activity"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "",
+    "sec": "Activity"
+   },
+   {
+    "k": "Phase",
+    "h": "Phase",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Phase"
+    },
+    "n": "",
+    "sec": "Activity"
+   },
+   {
+    "k": "Party",
+    "h": "Party",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Joint"
+     ]
+    },
+    "n": "Who does the work.",
+    "sec": "Activity"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the recipient service owner (provider owner for seller tasks).",
+    "sec": "Activity"
+   },
+   {
+    "k": "BStart",
+    "h": "Baseline start",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested by counting back from the forecast exit date. When the plan is agreed, freeze the baseline by typing the dates (or paste values) so later changes show as slippage.",
+    "sec": "Dates"
+   },
+   {
+    "k": "BFin",
+    "h": "Baseline finish",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "PStart",
+    "h": "Planned start",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested: the baseline start. Overwrite when the plan moves.",
+    "sec": "Dates"
+   },
+   {
+    "k": "PFin",
+    "h": "Planned finish",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Pct",
+    "h": "% complete",
+    "t": "I",
+    "f": "pct",
+    "dv": null,
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "AStart",
+    "h": "Actual start",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "AFin",
+    "h": "Actual finish",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "TSAExit",
+    "h": "TSA forecast exit",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "P1",
+    "h": "Predecessor 1",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "SP_ID"
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "P2",
+    "h": "Predecessor 2",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "SP_ID"
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "Crit",
+    "h": "Critical path",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "DRf",
+    "h": "Data request needed",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "WOf",
+    "h": "Work order needed",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "DRWO",
+    "h": "Linked DR or WO ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "DOrg",
+    "h": "Depends on",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Third party"
+     ]
+    },
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "DDesc",
+    "h": "Dependency",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "Comm",
+    "h": "Comments",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Links"
+   },
+   {
+    "k": "Slip",
+    "h": "Slippage (days)",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "PredChk",
+    "h": "Predecessor check",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Names any problem with the predecessors. Blank = fine.",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Years",
+    "h": "Years",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "For filtering, e.g. Years contains 2026.",
+    "sec": "Calculated"
+   },
+   {
+    "k": "OwnOrg",
+    "h": "Owner organisation",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "E",
+    "h": "Exit no.",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "M",
+    "h": "Milestone no.",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "T",
+    "h": "Task no.",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "TplRow",
+    "h": "Template row",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Fx",
+    "h": "Service forecast exit",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblCostLines": {
+  "prefix": "CL",
+  "sheet": "One-off Costs",
+  "title": "One-off separation costs (A5)",
+  "live": "Description",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Cost line ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Cost line"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_WS"
+    },
+    "n": "Enter cost lines workstream by workstream; the summary above totals them.",
+    "sec": "Cost line"
+   },
+   {
+    "k": "Desc",
+    "h": "Description",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Cost line"
+   },
+   {
+    "k": "Cat",
+    "h": "Category",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_CostCat"
+    },
+    "n": "",
+    "sec": "Cost line"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "Optional: the service this cost helps exit. Sets the suggested end month.",
+    "sec": "Cost line"
+   },
+   {
+    "k": "Party",
+    "h": "Party bearing cost",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Shared"
+     ]
+    },
+    "n": "Suggested: integration costs are the buyer's, stranded costs the seller's, others this Hub's owner.",
+    "sec": "Cost line"
+   },
+   {
+    "k": "BShare",
+    "h": "Buyer share %",
+    "t": "D",
+    "f": "pct",
+    "dv": null,
+    "n": "Percentage borne by the buyer.",
+    "sec": "Cost line"
+   },
+   {
+    "k": "Ccy",
+    "h": "Currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "",
+    "sec": "Cost line"
+   },
+   {
+    "k": "Budget",
+    "h": "Budget",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Estimate"
+   },
+   {
+    "k": "Best",
+    "h": "Best estimate",
+    "t": "D",
+    "f": "money",
+    "dv": null,
+    "n": "Suggested: the budget.",
+    "sec": "Estimate"
+   },
+   {
+    "k": "Min",
+    "h": "Low estimate",
+    "t": "D",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Estimate"
+   },
+   {
+    "k": "Max",
+    "h": "High estimate",
+    "t": "D",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Estimate"
+   },
+   {
+    "k": "From",
+    "h": "Spend from",
+    "t": "D",
+    "f": "month",
+    "dv": {
+     "date": true
+    },
+    "n": "First month of spend. Suggested: the closing month.",
+    "sec": "Estimate"
+   },
+   {
+    "k": "To",
+    "h": "Spend to",
+    "t": "D",
+    "f": "month",
+    "dv": {
+     "date": true
+    },
+    "n": "Last month of spend. Suggested: the month before the linked service exits, otherwise twelve months.",
+    "sec": "Estimate"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Estimate"
+   },
+   {
+    "k": "InCap",
+    "h": "Inside cost cap",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Estimate"
+   },
+   {
+    "k": "A1",
+    "h": "M01",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A2",
+    "h": "M02",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A3",
+    "h": "M03",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A4",
+    "h": "M04",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A5",
+    "h": "M05",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A6",
+    "h": "M06",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A7",
+    "h": "M07",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A8",
+    "h": "M08",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A9",
+    "h": "M09",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A10",
+    "h": "M10",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A11",
+    "h": "M11",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A12",
+    "h": "M12",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A13",
+    "h": "M13",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A14",
+    "h": "M14",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A15",
+    "h": "M15",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A16",
+    "h": "M16",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A17",
+    "h": "M17",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A18",
+    "h": "M18",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A19",
+    "h": "M19",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A20",
+    "h": "M20",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A21",
+    "h": "M21",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A22",
+    "h": "M22",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A23",
+    "h": "M23",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A24",
+    "h": "M24",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A25",
+    "h": "M25",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A26",
+    "h": "M26",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A27",
+    "h": "M27",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A28",
+    "h": "M28",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A29",
+    "h": "M29",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A30",
+    "h": "M30",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A31",
+    "h": "M31",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A32",
+    "h": "M32",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A33",
+    "h": "M33",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A34",
+    "h": "M34",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A35",
+    "h": "M35",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A36",
+    "h": "M36",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "SShare",
+    "h": "Seller share %",
+    "t": "C",
+    "f": "pct",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Act2D",
+    "h": "Actual to date",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Left",
+    "h": "Months left",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "FcPM",
+    "h": "Forecast per month",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "Remaining best estimate spread evenly over the months left.",
+    "sec": "Calculated"
+   },
+   {
+    "k": "FAC",
+    "h": "Forecast at completion",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Var",
+    "h": "Variance to budget",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Rate",
+    "h": "Rate",
+    "t": "C",
+    "f": "num",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "FACRep",
+    "h": "Forecast at completion (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "BudRep",
+    "h": "Budget (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "ActRep",
+    "h": "Actual to date (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "OurFAC",
+    "h": "Our share of forecast (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblRisks": {
+  "prefix": "RSK",
+  "sheet": "Risks",
+  "title": "Risks (A6)",
+  "live": "Risk",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Risk ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "Title",
+    "h": "Risk",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "Desc",
+    "h": "Description",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Risk"
+   },
+   {
+    "k": "L",
+    "h": "Likelihood (1-5)",
+    "t": "I",
+    "f": "int",
+    "dv": {
+     "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "n": "",
+    "sec": "Assessment"
+   },
+   {
+    "k": "I",
+    "h": "Impact (1-5)",
+    "t": "I",
+    "f": "int",
+    "dv": {
+     "list": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ]
+    },
+    "n": "",
+    "sec": "Assessment"
+   },
+   {
+    "k": "Score",
+    "h": "Score",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Assessment"
+   },
+   {
+    "k": "Rating",
+    "h": "Rating",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Blank for closed or removed risks.",
+    "sec": "Assessment"
+   },
+   {
+    "k": "Resp",
+    "h": "Mitigation / response",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Assessment"
+   },
+   {
+    "k": "Status",
+    "h": "Status (adopt or remove)",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "Open",
+      "In progress",
+      "Closed",
+      "Remove"
+     ]
+    },
+    "n": "Suggested risks from the starter library show \"Suggested\": change to Open to adopt one, or Remove to drop it. Suggested items stay out of reports and checks.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Raised",
+    "h": "Date raised",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Due",
+    "h": "Review by",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Share",
+    "h": "Shareable",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y lets the risk appear in joint reports.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Esc",
+    "h": "Escalate to",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblIssues": {
+  "prefix": "ISS",
+  "sheet": "Issues",
+  "title": "Issues (A6)",
+  "live": "Issue",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Issue ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "Title",
+    "h": "Issue",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "Desc",
+    "h": "Description",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Issue"
+   },
+   {
+    "k": "Pri",
+    "h": "Priority",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "High",
+      "Medium",
+      "Low"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "Open",
+      "In progress",
+      "Closed",
+      "Remove"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Raised",
+    "h": "Date raised",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested from the priority: 7, 14 or 30 days after raising.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Closed",
+    "h": "Closed date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Res",
+    "h": "Resolution",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "XP",
+    "h": "Other party must act",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Share",
+    "h": "Shareable",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Suggested Y when the other party must act.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Esc",
+    "h": "Escalate to",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblDecisions": {
+  "prefix": "DEC",
+  "sheet": "Decisions",
+  "title": "Decisions (A6)",
+  "live": "Decision needed",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Decision ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Title",
+    "h": "Decision needed",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Forum",
+    "h": "Decided by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Due",
+    "h": "Needed by",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Outcome"
+   },
+   {
+    "k": "Dec",
+    "h": "Decision",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Outcome"
+   },
+   {
+    "k": "DecOn",
+    "h": "Decided on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Outcome"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Open",
+      "Made",
+      "Withdrawn"
+     ]
+    },
+    "n": "",
+    "sec": "Outcome"
+   },
+   {
+    "k": "Share",
+    "h": "Shareable",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Suggested Y for decisions made by a joint forum.",
+    "sec": "Outcome"
+   }
+  ]
+ },
+ "tblAssumpDep": {
+  "prefix": "AD",
+  "sheet": "Assumptions & Dependencies",
+  "title": "Assumptions and dependencies (A6)",
+  "live": "Assumption or dependency",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "Title",
+    "h": "Assumption or dependency",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "Type",
+    "h": "Type",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Assumption",
+      "Dependency"
+     ]
+    },
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Item"
+   },
+   {
+    "k": "On",
+    "h": "Depends on",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Third party"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Due",
+    "h": "Needed by",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status (adopt or remove)",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "Open",
+      "In progress",
+      "Closed",
+      "Remove"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Share",
+    "h": "Shareable",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Notes",
+    "h": "Notes",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblChange": {
+  "prefix": "CR",
+  "sheet": "TSA Changes",
+  "title": "TSA change control log (A7)",
+  "live": "Request type",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "CR ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "RType",
+    "h": "Request type",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "RQ_Type"
+    },
+    "n": "Pick the type first: most other fields are suggested from it.",
+    "sec": "Request"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "Needed for extend, early exit, terminate, change and delay relief.",
+    "sec": "Request"
+   },
+   {
+    "k": "Title",
+    "h": "Title",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "CType",
+    "h": "Change type",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Contract",
+      "Service",
+      "Plan"
+     ]
+    },
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "By",
+    "h": "Raised by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "On",
+    "h": "Raised on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Ctrl+; enters today.",
+    "sec": "Request"
+   },
+   {
+    "k": "OldExit",
+    "h": "Exit date before change",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested: the exit date before this change (the initial end date, or the date set by an earlier approved change).",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "NewExit",
+    "h": "Proposed exit date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested for an extension: the old date plus the maximum months per extension.",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "STC",
+    "h": "Stop-the-clock days",
+    "t": "I",
+    "f": "int",
+    "dv": null,
+    "n": "Delay relief only.",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "FeeImp",
+    "h": "Fee impact (calculated, reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "Monthly fee times the months added (+) or removed (−), with the extension mark-ups from Start Here.",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "TermFee",
+    "h": "Termination fees quoted",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "Cost",
+    "h": "Other cost impact",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "One-off costs not in the fee calculation.",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "Impact",
+    "h": "Impact summary",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Dates and money"
+   },
+   {
+    "k": "Forum",
+    "h": "Approval forum",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "DecDue",
+    "h": "Decision due",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested: raised on plus the decision period for the request type.",
+    "sec": "Decision"
+   },
+   {
+    "k": "RespOn",
+    "h": "Provider response received",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Early exit only.",
+    "sec": "Decision"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_CRStatus"
+    },
+    "n": "Suggested from the dates; overwrite for Rejected, Withdrawn or Implemented.",
+    "sec": "Decision"
+   },
+   {
+    "k": "Decision",
+    "h": "Decision",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "DecOn",
+    "h": "Decision date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Override",
+    "h": "Special approval override",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y lifts the block on an extension beyond the contract limits when a forum approved it.",
+    "sec": "Decision"
+   },
+   {
+    "k": "OvDec",
+    "h": "Approving decision ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "Link",
+    "h": "Request form link",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Decision"
+   },
+   {
+    "k": "sO",
+    "h": "Months from initial end (before)",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "sN",
+    "h": "Months from initial end (after)",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "RespDue",
+    "h": "Provider response due",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "DecDue2",
+    "h": "Recipient decision due",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "RegUpd",
+    "h": "Register updated",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "For approved extend, early exit and terminate requests: Y once the TSA register planned exit date equals the new date.",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblInvoices": {
+  "prefix": "INV",
+  "sheet": "Invoices Log",
+  "title": "Invoices log (A9)",
+  "live": "Service month",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Invoice ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Invoice"
+   },
+   {
+    "k": "Party",
+    "h": "Issued by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "Seller invoices cover TSA services; buyer invoices cover reverse services. In the rows you add at the bottom it is suggested as the other party.",
+    "sec": "Invoice"
+   },
+   {
+    "k": "Month",
+    "h": "Service month",
+    "t": "D",
+    "f": "month",
+    "dv": {
+     "date": true
+    },
+    "n": "Expected invoices are listed for every month up to the reporting month, one row per issuing party and currency. Add any other invoice in the empty rows at the bottom.",
+    "sec": "Invoice"
+   },
+   {
+    "k": "Ccy",
+    "h": "Currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "",
+    "sec": "Invoice"
+   },
+   {
+    "k": "SupNo",
+    "h": "Their invoice number",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Invoice"
+   },
+   {
+    "k": "Recd",
+    "h": "Date received",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The date the invoice arrived. Payment and dispute deadlines run from it.",
+    "sec": "Invoice"
+   },
+   {
+    "k": "Billed",
+    "h": "Total billed (invoice currency)",
+    "t": "D",
+    "f": "money",
+    "dv": null,
+    "n": "The total on the invoice, in the invoice currency, including other charges. Suggested once you type the date received: the expected TSA fees plus other charges; type over it with the invoice total if different.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Exp",
+    "h": "Expected TSA fees (invoice currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "Scheduled fees for that month and currency from TSA Cost Tracker, including mark-ups.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Other",
+    "h": "Other charges billed",
+    "t": "D",
+    "f": "money",
+    "dv": null,
+    "n": "Charges on the invoice that are not scheduled TSA fees: work orders, pass-through and out-of-pocket costs. On our own invoices it is suggested from the Other charges log on Our Invoice.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Var",
+    "h": "Variance",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "Billed minus expected fees minus other charges.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Flag",
+    "h": "Check",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Disp",
+    "h": "Amount disputed",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "The part of the invoice you are disputing, in the invoice currency. Raise the dispute in TSA Changes and put its ID in the next column.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "DSP",
+    "h": "Dispute or CR ref",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Evid",
+    "h": "Evidence for other charges",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "The reference of the supporting document for other charges, e.g. the vendor invoice or timesheet number. Required by most TSAs for pass-through and out-of-pocket costs.",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Expected",
+      "Received",
+      "Checked",
+      "Approved",
+      "Disputed",
+      "Paid"
+     ]
+    },
+    "n": "Expected until you type the date received.",
+    "sec": "Payment"
+   },
+   {
+    "k": "Paid",
+    "h": "Paid on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Payment"
+   },
+   {
+    "k": "AppBy",
+    "h": "Approved by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Payment"
+   },
+   {
+    "k": "Due",
+    "h": "Payment due",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Payment"
+   },
+   {
+    "k": "DispDL",
+    "h": "Dispute deadline",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Payment"
+   },
+   {
+    "k": "BilledRep",
+    "h": "Billed (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Payment"
+   },
+   {
+    "k": "SlotExp",
+    "h": "Expected in this slot",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Payment"
+   }
+  ]
+ },
+ "tblDataReq": {
+  "prefix": "DR",
+  "sheet": "Data Requests",
+  "title": "Data requests (A10)",
+  "live": "Data set requested",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "DR ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "Set",
+    "h": "Data set requested",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "Purpose",
+    "h": "Purpose",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "By",
+    "h": "Requested by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "From",
+    "h": "Requested from",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "",
+    "sec": "Request"
+   },
+   {
+    "k": "On",
+    "h": "Requested on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested: ten working days after the request.",
+    "sec": "Dates"
+   },
+   {
+    "k": "Owner",
+    "h": "Data owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Deliv",
+    "h": "Delivered on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Open",
+      "In progress",
+      "Delivered",
+      "Rejected",
+      "Cancelled"
+     ]
+    },
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Late",
+    "h": "Days late",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Dates"
+   },
+   {
+    "k": "Ccy",
+    "h": "Currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "Cost",
+    "h": "Agreed cost",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "CostRef",
+    "h": "Agreed under",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "CR or WO ID.",
+    "sec": "Cost"
+   }
+  ]
+ },
+ "tblWO": {
+  "prefix": "WO",
+  "sheet": "Work Orders",
+  "title": "Work orders (A11)",
+  "live": "Title",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "WO ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "Title",
+    "h": "Title",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "Scope",
+    "h": "Scope",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "ReqP",
+    "h": "Requesting party",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "ProvP",
+    "h": "Providing party",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "",
+    "sec": "Work order"
+   },
+   {
+    "k": "Ccy",
+    "h": "Currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "Quote",
+    "h": "Quote",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "Appr",
+    "h": "Approved amount",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "Inv",
+    "h": "Invoiced to date",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Requested",
+      "Quoted",
+      "Approved",
+      "In progress",
+      "Complete",
+      "Rejected",
+      "Cancelled"
+     ]
+    },
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "AppBy",
+    "h": "Approved by",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "AppOn",
+    "h": "Approved on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "Target",
+    "h": "Target completion",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Approval"
+   }
+  ]
+ },
+ "tblTPC": {
+  "prefix": "TPC",
+  "sheet": "Third Parties",
+  "title": "Third-party contracts (A14)",
+  "live": "Contract",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "TPC ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Contract"
+   },
+   {
+    "k": "Vendor",
+    "h": "Vendor",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Contract"
+   },
+   {
+    "k": "Desc",
+    "h": "Contract",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Contract"
+   },
+   {
+    "k": "Holder",
+    "h": "Contract holder",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "Suggested: the party providing the linked service.",
+    "sec": "Contract"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Contract"
+   },
+   {
+    "k": "Action",
+    "h": "Action needed",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Consent",
+      "Assign",
+      "Novate",
+      "Right to use",
+      "Replace",
+      "Wrong pockets"
+     ]
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "Sent",
+    "h": "Date consent requested",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "RDue",
+    "h": "Response due",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "RRecd",
+    "h": "Date response received",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Not started",
+      "Requested",
+      "Negotiating",
+      "Agreed",
+      "Refused",
+      "Not needed"
+     ]
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "Esc",
+    "h": "Escalation level",
+    "t": "I",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Consent"
+   },
+   {
+    "k": "Cost",
+    "h": "Consent cost (reporting currency)",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "BShare",
+    "h": "Buyer share %",
+    "t": "D",
+    "f": "pct",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "SShare",
+    "h": "Seller share %",
+    "t": "C",
+    "f": "pct",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "OurCost",
+    "h": "Our share of cost",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Cost"
+   },
+   {
+    "k": "Alert",
+    "h": "Consent alert",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Outstanding if not agreed after closing.",
+    "sec": "Cost"
+   }
+  ]
+ },
+ "tblREG": {
+  "prefix": "REG",
+  "sheet": "Regulatory",
+  "title": "Regulatory approvals (A15)",
+  "live": "Filing or approval",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "REG ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Filing"
+   },
+   {
+    "k": "Entity",
+    "h": "Entity",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_Entity"
+    },
+    "n": "",
+    "sec": "Filing"
+   },
+   {
+    "k": "Juris",
+    "h": "Jurisdiction",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the entity on the Lists sheet.",
+    "sec": "Filing"
+   },
+   {
+    "k": "Regulator",
+    "h": "Regulator",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the entity on the Lists sheet.",
+    "sec": "Filing"
+   },
+   {
+    "k": "Filing",
+    "h": "Filing or approval",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Filing"
+   },
+   {
+    "k": "CP",
+    "h": "Condition to closing",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Filing"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "Sub",
+    "h": "Submitted on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "App",
+    "h": "Approved on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Not started",
+      "Drafting",
+      "Submitted",
+      "Questions",
+      "Approved",
+      "Approved with conditions",
+      "Refused"
+     ]
+    },
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "Cond",
+    "h": "Conditions",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Progress"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Progress"
+   }
+  ]
+ },
+ "tblSLA": {
+  "prefix": "SLA",
+  "sheet": "SLA",
+  "title": "SLA tracker (A16)",
+  "live": "TSA ID",
+  "mode": "tsa",
+  "cols": [
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Name",
+    "h": "Service",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Desc",
+    "h": "Service level measured",
+    "t": "C",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Owner",
+    "h": "Recipient owner",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "M1",
+    "h": "M01",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M2",
+    "h": "M02",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M3",
+    "h": "M03",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M4",
+    "h": "M04",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M5",
+    "h": "M05",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M6",
+    "h": "M06",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M7",
+    "h": "M07",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M8",
+    "h": "M08",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M9",
+    "h": "M09",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M10",
+    "h": "M10",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M11",
+    "h": "M11",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M12",
+    "h": "M12",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M13",
+    "h": "M13",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M14",
+    "h": "M14",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M15",
+    "h": "M15",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M16",
+    "h": "M16",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M17",
+    "h": "M17",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M18",
+    "h": "M18",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M19",
+    "h": "M19",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M20",
+    "h": "M20",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M21",
+    "h": "M21",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M22",
+    "h": "M22",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M23",
+    "h": "M23",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M24",
+    "h": "M24",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M25",
+    "h": "M25",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M26",
+    "h": "M26",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M27",
+    "h": "M27",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M28",
+    "h": "M28",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M29",
+    "h": "M29",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M30",
+    "h": "M30",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M31",
+    "h": "M31",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M32",
+    "h": "M32",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M33",
+    "h": "M33",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M34",
+    "h": "M34",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M35",
+    "h": "M35",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M36",
+    "h": "M36",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "Issues",
+    "h": "Latest issues",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Attestation"
+   },
+   {
+    "k": "AttBy",
+    "h": "Attested by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Attestation"
+   },
+   {
+    "k": "AttOn",
+    "h": "Attested on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Attestation"
+   },
+   {
+    "k": "LastI",
+    "h": "Latest month no.",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "LastM",
+    "h": "Latest month",
+    "t": "C",
+    "f": "month",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Last",
+    "h": "Latest result",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Consec",
+    "h": "Months below standard in a row",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Missed",
+    "h": "Months missed",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblReadiness": {
+  "prefix": "XR",
+  "sheet": "Exit Readiness",
+  "title": "Exit readiness and operationalisation (A13, A17)",
+  "live": "TSA ID",
+  "mode": "tsa",
+  "cols": [
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Name",
+    "h": "Service",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "WS",
+    "h": "Work-stream",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Fcst",
+    "h": "Forecast exit",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Days",
+    "h": "Days to exit",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "Exited or Terminated once the service has ended (TSA register status or actual exit date).",
+    "sec": "Service"
+   },
+   {
+    "k": "Touch",
+    "h": "Customer and business touchpoints",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the workstream. Who or what notices this service changing hands.",
+    "sec": "Operationalisation (suggested; edit to fit)"
+   },
+   {
+    "k": "D1",
+    "h": "Actions on the day after exit",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the exit route.",
+    "sec": "Operationalisation (suggested; edit to fit)"
+   },
+   {
+    "k": "Test",
+    "h": "Testing, pilot and fallback",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the exit route and criticality.",
+    "sec": "Operationalisation (suggested; edit to fit)"
+   },
+   {
+    "k": "Risk",
+    "h": "Service level impact and key risks",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the workstream.",
+    "sec": "Operationalisation (suggested; edit to fit)"
+   },
+   {
+    "k": "R1",
+    "h": "Data",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Is all the data the service needs migrated, reconciled and signed off? Are any extracts still to come from the provider? Is historic data archived or covered by an agreement?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R2",
+    "h": "Systems and applications",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Are the target systems built, tested and open to every user who needs them? Are interfaces switched over? Will old access be removed on exit?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R3",
+    "h": "Knowledge transfer",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Has the receiving team been trained? Are procedures and know-how written down? Who answers questions after exit?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R4",
+    "h": "Processes",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Are the end-to-end processes documented and rehearsed on the target set-up, including month-end and exceptions?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R5",
+    "h": "People",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Is the receiving team in place, with roles, cover and authorities? Have any transferring staff moved?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R6",
+    "h": "Vendors",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Are the vendor contracts the service relies on in place for the receiving party, with consents?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R7",
+    "h": "Other party",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Has the provider confirmed what it will do at exit (data deletion, access removal, final reports)? Are open disputes and invoices settled?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R8",
+    "h": "Exit plan milestones",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Are the exit plan milestones complete or on track, with nothing critical finishing after the exit date?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "R9",
+    "h": "Dependencies",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the latest interview on Readiness Interview. Must other services, projects or agreements finish first? Are linked services exiting together?",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "I90",
+    "h": "Interview 1 held on",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "I60",
+    "h": "Interview 2 held on",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "I30",
+    "h": "Interview 3 held on",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "I15",
+    "h": "Interview 4 held on",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "Lead",
+    "h": "Interviewee (latest)",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "Notes",
+    "h": "Agreed actions (from the interview)",
+    "t": "C",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Latest readiness interview (recorded on Readiness Interview)"
+   },
+   {
+    "k": "By",
+    "h": "Interviewer",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Sign-off"
+   },
+   {
+    "k": "SignBy",
+    "h": "Signed off by",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Sign-off"
+   },
+   {
+    "k": "SignOn",
+    "h": "Signed off on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Sign-off"
+   },
+   {
+    "k": "LastK",
+    "h": "Latest interview number",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Pct",
+    "h": "Ready %",
+    "t": "C",
+    "f": "pct",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Overall",
+    "h": "Overall ready",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "LastInt",
+    "h": "Last interview",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Next",
+    "h": "Next interview",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "Not needed once every area is ready or the service has exited. Otherwise the next interview point not yet held (90, 60, 30, 15 days before exit); after the last point, weekly until exit.",
+    "sec": "Calculated"
+   },
+   {
+    "k": "RevDue",
+    "h": "Interviews overdue",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblDay1": {
+  "prefix": "D1",
+  "sheet": "Day 1",
+  "title": "Day 1 checklist (A18)",
+  "live": "Task",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "D1 ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_WS"
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Task",
+    "h": "Task",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Desc",
+    "h": "Notes",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Mand",
+    "h": "Mandatory or discretionary",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Mandatory",
+      "Discretionary"
+     ]
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Resp",
+    "h": "Responsibility",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Joint"
+     ]
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Off",
+    "h": "Days from Day 1",
+    "t": "I",
+    "f": "int",
+    "dv": null,
+    "n": "Negative = before closing.",
+    "sec": "Task"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the responsible party's workstream lead.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Not started",
+      "In progress",
+      "Complete",
+      "Not required"
+     ]
+    },
+    "n": "Suggested: Not required for workstreams switched off on the Lists sheet.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Go",
+    "h": "Go / no-go",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblFirst100": {
+  "prefix": "F100",
+  "sheet": "First 100 Days",
+  "title": "First 100 days plan (A22)",
+  "live": "Task",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_WS"
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Theme",
+    "h": "Theme",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Isolation",
+      "Security",
+      "Confidential data",
+      "Brand",
+      "Governance",
+      "Control",
+      "Regulatory",
+      "Finance",
+      "People",
+      "Customers",
+      "Third parties",
+      "Separation",
+      "Other"
+     ]
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Task",
+    "h": "Task",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Desc",
+    "h": "Notes",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Mand",
+    "h": "Mandatory or discretionary",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Mandatory",
+      "Discretionary"
+     ]
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Resp",
+    "h": "Responsibility",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Joint"
+     ]
+    },
+    "n": "",
+    "sec": "Task"
+   },
+   {
+    "k": "Off",
+    "h": "Due on day",
+    "t": "I",
+    "f": "int",
+    "dv": null,
+    "n": "Day after closing by which it should be done (1 to 100).",
+    "sec": "Task"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the responsible party's workstream lead.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "Not started",
+      "In progress",
+      "Complete",
+      "Not required"
+     ]
+    },
+    "n": "Starter items show \"Suggested\": confirm each one (Not started), edit it to fit, or set Not required. Suggested items stay out of reports.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Done",
+    "h": "Completed on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Late",
+    "h": "Days late",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblActions": {
+  "prefix": "AC",
+  "sheet": "Actions",
+  "title": "Action log (A19)",
+  "live": "Action",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "AC ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Action"
+   },
+   {
+    "k": "Forum",
+    "h": "Forum",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "Suggested: same as the row above.",
+    "sec": "Action"
+   },
+   {
+    "k": "Meet",
+    "h": "Meeting date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Action"
+   },
+   {
+    "k": "Action",
+    "h": "Action",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Action"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Action"
+   },
+   {
+    "k": "Due",
+    "h": "Due date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Suggested: two weeks after the meeting.",
+    "sec": "Action"
+   },
+   {
+    "k": "Link",
+    "h": "Linked ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Optional: the ID of the record this action relates to, so you can find it later, e.g. a TSA ID (TSA-FIN-001), risk (R-004), issue (I-002), decision (DEC-003), change request (CR-005) or plan activity.",
+    "sec": "Action"
+   },
+   {
+    "k": "Share",
+    "h": "Shareable",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "ClosedOn",
+    "h": "Closed on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Open",
+      "Closed",
+      "Cancelled"
+     ]
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Over",
+    "h": "Overdue",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblOBL": {
+  "prefix": "OBL",
+  "sheet": "Obligations",
+  "title": "Obligations and entitlements (A21)",
+  "live": "Description",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "OBL ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Agr",
+    "h": "Agreement",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_Agreement"
+    },
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Clause",
+    "h": "Clause",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Kind",
+    "h": "Obligation or entitlement",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Obligation",
+      "Entitlement"
+     ]
+    },
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Party",
+    "h": "Party",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer",
+      "Both"
+     ]
+    },
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Desc",
+    "h": "Description",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "",
+    "sec": "Obligation"
+   },
+   {
+    "k": "Rule",
+    "h": "Rule type",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Fixed date",
+      "Days from closing",
+      "Recurring after period end",
+      "Days before exit"
+     ]
+    },
+    "n": "",
+    "sec": "Due date"
+   },
+   {
+    "k": "Fixed",
+    "h": "Fixed date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Due date"
+   },
+   {
+    "k": "Days",
+    "h": "Days",
+    "t": "I",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Due date"
+   },
+   {
+    "k": "Period",
+    "h": "Period",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Month",
+      "Quarter",
+      "Year"
+     ]
+    },
+    "n": "",
+    "sec": "Due date"
+   },
+   {
+    "k": "Next",
+    "h": "Next due date",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "",
+    "sec": "Due date"
+   },
+   {
+    "k": "Owner",
+    "h": "Owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status (adopt or remove)",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "Open",
+      "In progress",
+      "Closed",
+      "Remove"
+     ]
+    },
+    "n": "Starter obligations show \"Suggested\": check the clause, then set Open (or Remove if it does not apply).",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Met",
+    "h": "Last met on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Tracking"
+   }
+  ]
+ },
+ "tblStatus": {
+  "prefix": "ST",
+  "sheet": "Consolidated WS Reporting",
+  "title": "Workstream status (B3)",
+  "live": "Workstream",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_WSP"
+    },
+    "n": "The top rows list the programme and every active workstream for the current month. To keep a month, copy its rows and paste values into the empty rows below.",
+    "sec": "Period"
+   },
+   {
+    "k": "Period",
+    "h": "Period",
+    "t": "D",
+    "f": "month",
+    "dv": {
+     "date": true
+    },
+    "n": "First day of the reporting month.",
+    "sec": "Period"
+   },
+   {
+    "k": "Scope",
+    "h": "Scope",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Scope"
+    },
+    "n": "",
+    "sec": "Period"
+   },
+   {
+    "k": "RAG",
+    "h": "RAG",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Red",
+      "Amber",
+      "Green"
+     ]
+    },
+    "n": "Suggested: the RAG in the workstream report for this month; otherwise red if any service RAG is red, amber if any is amber or plan items are late. Overwrite with your judgement.",
+    "sec": "Status"
+   },
+   {
+    "k": "Sum",
+    "h": "Summary",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested: the summary from the workstream report, otherwise the key figures. Overwrite with two or three sentences on progress. When the month is final, paste values so the history stays as written.",
+    "sec": "Status"
+   },
+   {
+    "k": "Ach",
+    "h": "Achievements",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the workstream report.",
+    "sec": "Status"
+   },
+   {
+    "k": "NextS",
+    "h": "Next steps",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Status"
+   },
+   {
+    "k": "PTG",
+    "h": "Path to green",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Status"
+   },
+   {
+    "k": "Esc",
+    "h": "Escalations",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Status"
+   },
+   {
+    "k": "Cost",
+    "h": "Cost commentary",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "Internal only.",
+    "sec": "Status"
+   },
+   {
+    "k": "Shared",
+    "h": "Shared summary",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "The only text shown on the shared report. Suggested from the RAG.",
+    "sec": "Status"
+   },
+   {
+    "k": "By",
+    "h": "Entered by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Status"
+   },
+   {
+    "k": "NRA",
+    "h": "Red or amber services",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "KeyF",
+    "h": "Key figures (calculated)",
+    "t": "C",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   }
+  ]
+ },
+ "tblLinks": {
+  "prefix": "LNK",
+  "sheet": "Links",
+  "title": "Link table",
+  "live": "From ID",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "From",
+    "h": "From ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Link"
+   },
+   {
+    "k": "To",
+    "h": "To ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Link"
+   },
+   {
+    "k": "Type",
+    "h": "Link type",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Supports",
+      "Depends on",
+      "Enables exit of",
+      "Covered by",
+      "Affects"
+     ]
+    },
+    "n": "",
+    "sec": "Link"
+   },
+   {
+    "k": "Note",
+    "h": "Note",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Link"
+   }
+  ]
+ }
+}
