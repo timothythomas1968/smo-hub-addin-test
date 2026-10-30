@@ -1,5 +1,5 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.3.0.20261030221147';
+import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.4.0.20261030221339';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Complete', 'Not required']);
@@ -50,7 +50,7 @@ export default {
       ['int', interviewsDue ? `Hold the readiness interviews due (${interviewsDue})` : 'No readiness interviews due', 'Ticks itself when none are due', interviewsDue === 0, () => go('interview')],
       ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', 'Ticks itself when there are no errors', dqE === 0, null],
       ['inv', 'Record the invoices received this month', 'Tick it yourself', null, () => go('invoice')],
-      ['rep', 'Collect the workstream reports', 'Tick it yourself', null, () => go('report')],
+      ['rep', 'Collect the workstream reports', 'Tick it yourself, or see who is still due on the report screen', null, () => go('report')],
       ['pack', 'Send the governance pack', 'Tick it yourself', null, () => go('pack')]
     ];
     const isDone = (it) => (manual[it[0]] != null ? manual[it[0]] : !!it[3]);
@@ -82,13 +82,13 @@ export default {
         const ws = r.get('Workstream'), rag = r.get('RAG'), p = prev[ws];
         const trend = !p || !RANK[rag] ? '' : RANK[rag] > RANK[p] ? 'worse' : RANK[rag] < RANK[p] ? 'better' : 'same';
         const nNew = newRI(ws);
-        return h('button.ws-row', { type: 'button', onclick: () => go('raid', { ws }), title: 'Open the RAID for this workstream' },
+        return h('button.ws-row', { type: 'button', onclick: () => (ws === 'Programme' ? go('raid', { ws }) : go('report', { ws })), title: 'Open the workstream report' },
           h('span.ws-name', wsName[ws] || ws),
           nNew ? h('span.chip.info', `${nNew} new`) : null,
           h('span.ws-trend', trend),
           h('span.ws-rag', h('span.chip', { class: rag }, rag || '–')));
       }) : h('p.muted.small', 'No workstream status yet for this month.'),
-      h('p.small.muted', { style: { margin: '8px 0 0' } }, 'Blue badges: risks and issues raised this month. Select a workstream to see its RAID.'));
+      h('p.small.muted', { style: { margin: '8px 0 0' } }, 'Blue badges: risks and issues raised this month. Select a workstream to open its report.'));
 
     // ---- coming up in the next 30 days
     const soonDates = [];

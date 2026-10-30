@@ -1,21 +1,22 @@
 // SMO Hub add-in shell: header, navigation, routing between screens.
-import { h, toast, fmtDate, setEdition } from './util.js?v=0.3.0.20261030221147';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.3.0.20261030221147';
-import home from './screens/home.js?v=0.3.0.20261030221147';
-import register from './screens/register.js?v=0.3.0.20261030221147';
-import raid from './screens/raid.js?v=0.3.0.20261030221147';
-import { soon } from './screens/soon.js?v=0.3.0.20261030221147';
-import dates from './screens/dates.js?v=0.3.0.20261030221147';
-import interview from './screens/interview.js?v=0.3.0.20261030221147';
-import { day1, f100 } from './screens/checklist.js?v=0.3.0.20261030221147';
+import { h, toast, fmtDate, setEdition } from './util.js?v=0.4.0.20261030221339';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.4.0.20261030221339';
+import home from './screens/home.js?v=0.4.0.20261030221339';
+import register from './screens/register.js?v=0.4.0.20261030221339';
+import raid from './screens/raid.js?v=0.4.0.20261030221339';
+import { soon } from './screens/soon.js?v=0.4.0.20261030221339';
+import dates from './screens/dates.js?v=0.4.0.20261030221339';
+import interview from './screens/interview.js?v=0.4.0.20261030221339';
+import report from './screens/report.js?v=0.4.0.20261030221339';
+import { day1, f100 } from './screens/checklist.js?v=0.4.0.20261030221339';
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 
 const NAV = [
   { group: 'Every month', items: [
     ['home', 'Home', home], ['dates', 'Key dates', dates],
     ['register', 'TSA register', register], ['plan', 'Exit plan', soon('Exit plan', 'The plan and Gantt for every service exit.', 'tblPlan')],
-    ['raid', 'RAID and actions', raid], ['report', 'Workstream report', soon('Workstream report', 'Each lead\'s monthly status, with the register facts alongside.', 'tblStatus')],
+    ['raid', 'RAID and actions', raid], ['report', 'Workstream report', report],
     ['interview', 'Readiness interviews', interview],
     ['invoice', 'Our invoice', soon('Our invoice', 'The invoice to the other party, with tax per service and the charges log.', 'tblInvoices')],
     ['pack', 'Governance pack', soon('Governance pack', 'Packs for each forum, built from the registers, with SMO commentary.', 'tblStatus')]] },
@@ -103,10 +104,10 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening SMO Hub…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.3.0.20261030221147')).json();
+    const schema = await (await fetch('data/schema.json?v=0.4.0.20261030221339')).json();
     let src;
     if (inExcel) src = new ExcelSource();
-    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.3.0.20261030221147')).json());
+    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.4.0.20261030221339')).json());
     const store = new Store(src, schema);
     await store.init();
     if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like an SMO Hub. Open the SMO Hub workbook, then open the add-in again.');
