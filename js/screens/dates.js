@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.2.3.20261030214117';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.2.4.20261030214432';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -140,7 +140,7 @@ function exportIcs(evs, forums) {
   const esc = (s) => String(s || '').replace(/[\\,;]/g, (c) => '\\' + c).replace(/\n/g, ' ');
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whisper Consulting//SMO Hub//EN', 'X-WR-CALNAME:SMO Hub key dates'];
   const stamp = 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'));
+  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'CATEGORIES:SMO Hub', 'END:VEVENT'));
   const rule = { Weekly: 'FREQ=WEEKLY', Fortnightly: 'FREQ=WEEKLY;INTERVAL=2', Monthly: 'FREQ=MONTHLY', Quarterly: 'FREQ=MONTHLY;INTERVAL=3' };
   forums.forEach((r, i) => {
     const f = r.get('First meeting'), rr = rule[r.get('Frequency')];
@@ -148,7 +148,7 @@ function exportIcs(evs, forums) {
     const tm = /^(\d{1,2}):(\d\d)/.exec(String(r.get('Time') || ''));
     const start = tm ? `DTSTART:${dt(f)}T${pad(tm[1])}${tm[2]}00` : `DTSTART;VALUE=DATE:${dt(f)}`;
     lines.push('BEGIN:VEVENT', `UID:smohub-forum-${i}`, stamp, start, tm ? 'DURATION:PT1H' : '', `RRULE:${rr};COUNT=${{ Weekly: 104, Fortnightly: 52, Monthly: 24, Quarterly: 8 }[r.get('Frequency')]}`,
-      `SUMMARY:${esc(r.get('Forum'))}`, `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
+      `SUMMARY:${esc(r.get('Forum'))}`, 'CATEGORIES:SMO Hub', `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
   });
   lines.push('END:VCALENDAR');
   try {

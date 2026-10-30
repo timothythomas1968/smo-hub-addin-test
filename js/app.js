@@ -1,14 +1,14 @@
 // SMO Hub add-in shell: header, navigation, routing between screens.
-import { h, toast, fmtDate, setEdition } from './util.js?v=0.2.3.20261030214117';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.2.3.20261030214117';
-import home from './screens/home.js?v=0.2.3.20261030214117';
-import register from './screens/register.js?v=0.2.3.20261030214117';
-import raid from './screens/raid.js?v=0.2.3.20261030214117';
-import { soon } from './screens/soon.js?v=0.2.3.20261030214117';
-import dates from './screens/dates.js?v=0.2.3.20261030214117';
-import { day1, f100 } from './screens/checklist.js?v=0.2.3.20261030214117';
+import { h, toast, fmtDate, setEdition } from './util.js?v=0.2.4.20261030214432';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.2.4.20261030214432';
+import home from './screens/home.js?v=0.2.4.20261030214432';
+import register from './screens/register.js?v=0.2.4.20261030214432';
+import raid from './screens/raid.js?v=0.2.4.20261030214432';
+import { soon } from './screens/soon.js?v=0.2.4.20261030214432';
+import dates from './screens/dates.js?v=0.2.4.20261030214432';
+import { day1, f100 } from './screens/checklist.js?v=0.2.4.20261030214432';
 
-export const VERSION = '0.2.3';
+export const VERSION = '0.2.4';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -102,10 +102,10 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening SMO Hub…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.2.3.20261030214117')).json();
+    const schema = await (await fetch('data/schema.json?v=0.2.4.20261030214432')).json();
     let src;
     if (inExcel) src = new ExcelSource();
-    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.2.3.20261030214117')).json());
+    else src = new PreviewSource(await (await fetch('data/demo-data.json?v=0.2.4.20261030214432')).json());
     const store = new Store(src, schema);
     await store.init();
     if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like an SMO Hub. Open the SMO Hub workbook, then open the add-in again.');
