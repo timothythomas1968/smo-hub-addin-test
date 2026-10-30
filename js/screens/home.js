@@ -1,5 +1,5 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.2.4.20261030214432';
+import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.3.0.20261030221147';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Complete', 'Not required']);
@@ -98,7 +98,7 @@ export default {
       add(r.get('Exit notice deadline'), `Exit notice due: ${id}`, nm, 'register', { id });
       add(r.get('Extension notice deadline'), `Extension notice deadline: ${id}`, nm, 'register', { id });
       add(r.get('Forecast exit date'), `Exit: ${id}`, nm, 'register', { id });
-      add(r.get('Next readiness interview'), `Readiness interview: ${id}`, nm, 'interview');
+      add(r.get('Next readiness interview'), `Readiness interview: ${id}`, nm, 'interview', { id });
     });
     store.records('tblOBL').filter((r) => r.get('Status (adopt or remove)') === 'Open').forEach((r) => add(r.get('Next due date'), r.get('Description'), `${r.get('Agreement')} ${r.get('Clause')}`.trim(), 'dates'));
     decisions.forEach((r) => add(r.get('Needed by'), `Decision needed: ${r.get('Decision ID')}`, r.get('Decision needed'), 'raid', { tab: 'DEC', id: r.get('Decision ID') }));

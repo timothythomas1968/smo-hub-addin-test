@@ -10,6 +10,9 @@ const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
 const FALLBACK_LISTS = { Workstream: 'WS_Code', Owner: 'L_People', 'TSA ID': 'TSA_ID' };
 
+export function colNum(L) { let n = 0; for (const ch of L) n = n * 26 + ch.charCodeAt(0) - 64; return n; }
+export function colName(n) { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+
 export class ExcelSource {
   constructor() { this.kind = 'excel'; }
 
@@ -69,6 +72,32 @@ export class ExcelSource {
     });
   }
 
+  /** Values of a plain range, e.g. readRange('Readiness Interview', 'B22:I37'). */
+  async readRange(sheet, addr) {
+    return Excel.run(async (ctx) => {
+      const r = ctx.workbook.worksheets.getItem(sheet).getRange(addr).load('values');
+      await ctx.sync();
+      return r.values;
+    });
+  }
+
+  /** cells: [{addr, value}] on one sheet. */
+  async writeCells(sheet, cells) {
+    return Excel.run(async (ctx) => {
+      const ws = ctx.workbook.worksheets.getItem(sheet);
+      for (const c of cells) ws.getRange(c.addr).values = [[c.value]];
+      await ctx.sync();
+    });
+  }
+
+  async showRange(sheet, addr) {
+    return Excel.run(async (ctx) => {
+      const ws = ctx.workbook.worksheets.getItem(sheet);
+      ws.activate(); ws.getRange(addr).select();
+      await ctx.sync();
+    });
+  }
+
   getSetting(k) { try { return Office.context.document.settings.get(k); } catch (e) { return null; } }
   setSetting(k, v) {
     // Office document settings are saved inside the workbook, so ticks travel with the file.
@@ -112,6 +141,21 @@ export class PreviewSource {
     const r = this.snap.tables[name].full[row];
     for (const w of writes) { r.v[w.col] = w.value; r.f[w.col] = false; }
   }
+  async readRange(sheet, addr) {
+    const cells = (this.snap.cells || {})[sheet] || {};
+    const [a, b] = addr.split(':');
+    const p = (x) => { const m = /^([A-Z]+)(\d+)$/.exec(x); return [colNum(m[1]), Number(m[2])]; };
+    const [c1, r1] = p(a), [c2, r2] = p(b || a);
+    const out = [];
+    for (let r = r1; r <= r2; r++) { const row = []; for (let c = c1; c <= c2; c++) { const v = cells[colName(c) + r]; row.push(v == null ? '' : v); } out.push(row); }
+    return out;
+  }
+  async writeCells(sheet, list) {
+    this.snap.cells = this.snap.cells || {};
+    const cells = this.snap.cells[sheet] = this.snap.cells[sheet] || {};
+    list.forEach((c) => { cells[c.addr] = c.value; });
+  }
+  async showRange() { throw new Error('Preview only: open the add-in in Excel to jump to the worksheet.'); }
   getSetting(k) { try { return JSON.parse(localStorage.getItem('smohub.' + k)); } catch (e) { return null; } }
   async setSetting(k, v) { try { localStorage.setItem('smohub.' + k, JSON.stringify(v)); } catch (e) { /* ignore */ } }
   async show() { throw new Error('Preview only: open the add-in in Excel to jump to the worksheet.'); }
@@ -207,4 +251,11 @@ export class Store {
   }
 
   show(name, row) { return this.src.show(name, row); }
+
+  readRange(sheet, addr) { return this.src.readRange(sheet, addr); }
+  async writeCells(sheet, cells) {
+    await this.src.writeCells(sheet, cells);
+    Object.keys(this.t).forEach((n) => this.stale.add(n));   // formulas elsewhere depend on these cells
+  }
+  showRange(sheet, addr) { return this.src.showRange(sheet, addr); }
 }

@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.2.4.20261030214432';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.3.0.20261030221147';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -13,7 +13,7 @@ const TYPES = {
   reg: ['Regulatory', '#A61E4D'],
   plan: ['Milestones', '#3AA265']
 };
-const ui = { month: null, day: null, off: new Set() };
+const ui = { month: null, day: null, off: new Set(), exp: false, months: 6 };
 const EXITED = new Set(['Exited', 'Terminated']);
 
 function events(store) {
@@ -26,7 +26,7 @@ function events(store) {
     add('exit', r.get('Forecast exit date'), `Exit: ${id}`, nm, go);
     add('notice', r.get('Exit notice deadline'), `Exit notice due: ${id}`, nm, go);
     add('notice', r.get('Extension notice deadline'), `Extension notice deadline: ${id}`, nm, go);
-    add('interview', r.get('Next readiness interview'), `Readiness interview: ${id}`, nm, { k: 'interview' });
+    add('interview', r.get('Next readiness interview'), `Readiness interview: ${id}`, nm, { k: 'interview', arg: { id } });
   });
   // forums: repeat from the first meeting at their frequency, for two years
   const step = { Weekly: [0, 7], Fortnightly: [0, 14], Monthly: [1, 0], Quarterly: [3, 0] };
@@ -118,12 +118,13 @@ export default {
         dayEv.length ? dayEv.map((e) => evRow(e, false)) : h('p.small.muted', { style: { margin: 0 } }, 'Nothing on this day.'),
         h('div.sec', 'Next after this day'),
         upcoming.map((e) => evRow(e, true))),
-      h('div.panel-foot', h('span.small.muted', 'Dates come from the registers. Change them there (or on the matching screen) and the calendar follows.')));
+      h('div.panel-foot', { style: { flexDirection: 'column', alignItems: 'stretch' } },
+        h('span.small.muted', 'Dates come from the registers. Change them there (or on the matching screen) and the calendar follows.'),
+        ui.exp ? exportBox(store, shown, RD, rerender) : h('button.link-btn', { type: 'button', style: { alignSelf: 'flex-start' }, onclick: () => { ui.exp = true; rerender(); } }, 'Copy these dates to Outlook…')));
 
     return h('div.page',
       h('div.page-head', h('div', h('h1', 'Key dates'),
-        h('p.lede', 'Exits, notice deadlines, readiness interviews, forums, obligations, RAID and action due dates, data requests, work orders, regulatory filings and plan milestones.')),
-        h('button.btn', { type: 'button', onclick: () => exportIcs(shown.filter((e) => e.type !== 'forum' && e.d >= RD), ui.off.has('forum') ? [] : store.records('tblForums')) }, 'Download calendar (.ics)')),
+        h('p.lede', 'Exits, notice deadlines, readiness interviews, forums, obligations, RAID and action due dates, data requests, work orders, regulatory filings and plan milestones.'))),
       h('div.filters', Object.entries(TYPES).map(([k, [label, col]]) => {
         const on = !ui.off.has(k);
         return h('button.fchip', { type: 'button', 'aria-pressed': String(on), onclick: () => { on ? ui.off.add(k) : ui.off.delete(k); rerender(); },
@@ -133,7 +134,26 @@ export default {
   }
 };
 
-function exportIcs(evs, forums) {
+function exportBox(store, shown, RD, rerender) {
+  const sel = h('select', { 'aria-label': 'Period', style: { border: '1px solid var(--line-strong)', borderRadius: '6px', padding: '5px 8px', background: '#fff' } },
+    [3, 6, 12].map((m) => h('option', { value: String(m) }, `Next ${m} months`)));
+  sel.value = String(ui.months);
+  sel.addEventListener('change', () => { ui.months = Number(sel.value); });
+  const until = () => { const d = fromSerial(RD); return toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + ui.months, d.getUTCDate()))); };
+  return h('div', { style: { background: 'var(--input)', border: '1px solid var(--line)', borderRadius: '6px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' } },
+    h('b', { style: { fontSize: '13px' } }, 'Copy dates to Outlook'),
+    h('span.small', 'Keep them in a calendar of their own, so they can be removed in one go:'),
+    h('ol.small', { style: { margin: '0', paddingLeft: '18px' } },
+      h('li', 'Download the file below (only the types switched on above).'),
+      h('li', 'In Outlook: Add calendar → Create blank calendar, and name it SMO Hub.'),
+      h('li', 'Add calendar → Upload from file: choose the file and the SMO Hub calendar.')),
+    h('span.small.muted', 'Classic Outlook: open the file and choose to open it as a new calendar. To remove the dates later, delete the SMO Hub calendar.'),
+    h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } }, sel,
+      h('button.btn.btn-sm.btn-primary', { type: 'button', onclick: () => { const u = until(); exportIcs(shown.filter((e) => e.type !== 'forum' && e.d >= RD && e.d <= u), ui.off.has('forum') ? [] : store.records('tblForums'), RD, u); } }, 'Download (.ics)'),
+      h('button.link-btn', { type: 'button', onclick: () => { ui.exp = false; rerender(); } }, 'Close')));
+}
+
+function exportIcs(evs, forums, from, until) {
   // From the reporting date on only; each forum is one repeating meeting rather than hundreds of single entries.
   const pad = (n) => String(n).padStart(2, '0');
   const dt = (s) => { const d = fromSerial(s); return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`; };
@@ -143,11 +163,19 @@ function exportIcs(evs, forums) {
   evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'CATEGORIES:SMO Hub', 'END:VEVENT'));
   const rule = { Weekly: 'FREQ=WEEKLY', Fortnightly: 'FREQ=WEEKLY;INTERVAL=2', Monthly: 'FREQ=MONTHLY', Quarterly: 'FREQ=MONTHLY;INTERVAL=3' };
   forums.forEach((r, i) => {
-    const f = r.get('First meeting'), rr = rule[r.get('Frequency')];
+    let f = Number(r.get('First meeting'));
+    const rr = rule[r.get('Frequency')];
     if (!f || !rr) return;
+    // start the series at the first meeting on or after the reporting date
+    const fd = fromSerial(f), fq = r.get('Frequency');
+    for (let i = 0; f < from && i < 600; i++) {
+      f = fq === 'Weekly' ? f + 7 : fq === 'Fortnightly' ? f + 14
+        : toSerial(new Date(Date.UTC(fd.getUTCFullYear(), fd.getUTCMonth() + (fq === 'Monthly' ? 1 : 3) * (i + 1), fd.getUTCDate())));
+    }
+    if (f > until) return;
     const tm = /^(\d{1,2}):(\d\d)/.exec(String(r.get('Time') || ''));
     const start = tm ? `DTSTART:${dt(f)}T${pad(tm[1])}${tm[2]}00` : `DTSTART;VALUE=DATE:${dt(f)}`;
-    lines.push('BEGIN:VEVENT', `UID:smohub-forum-${i}`, stamp, start, tm ? 'DURATION:PT1H' : '', `RRULE:${rr};COUNT=${{ Weekly: 104, Fortnightly: 52, Monthly: 24, Quarterly: 8 }[r.get('Frequency')]}`,
+    lines.push('BEGIN:VEVENT', `UID:smohub-forum-${i}`, stamp, start, tm ? 'DURATION:PT1H' : '', `RRULE:${rr};UNTIL=${dt(until)}T235959Z`,
       `SUMMARY:${esc(r.get('Forum'))}`, 'CATEGORIES:SMO Hub', `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
   });
   lines.push('END:VCALENDAR');
