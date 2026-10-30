@@ -6,7 +6,7 @@
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
   <Id>bd363564-91bc-40c1-a3f6-31d090fce9d7</Id>
-  <Version>0.5.0.0</Version>
+  <Version>0.6.0.0</Version>
   <ProviderName>Whisper Consulting</ProviderName>
   <DefaultLocale>en-GB</DefaultLocale>
   <DisplayName DefaultValue="SMO Hub (test)"/>
