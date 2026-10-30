@@ -1,6 +1,6 @@
 // RAID and actions: risks, issues, decisions, assumptions and dependencies, and the action log, in one list.
-import { h, fmtDate, toast, toSerial } from '../util.js?v=0.4.0.20261030221339';
-import { buildForm } from '../form.js?v=0.4.0.20261030221339';
+import { h, fmtDate, toast, toSerial } from '../util.js?v=0.5.0.20261030221540';
+import { buildForm } from '../form.js?v=0.5.0.20261030221540';
 
 const TYPES = {
   RSK: { t: 'tblRisks', one: 'Risk', many: 'Risks', id: 'Risk ID', title: 'Risk', st: 'Status (adopt or remove)', raised: 'Date raised' },

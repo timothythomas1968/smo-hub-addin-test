@@ -62,3 +62,16 @@ export function toast(msg, err) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.remove(), err ? 6000 : 2600);
 }
+
+/** Print just this element (also how users save a PDF: choose "Microsoft Print to PDF" or "Save as PDF"). */
+export function printNode(node) {
+  document.getElementById('print-root')?.remove();
+  const root = document.createElement('div');
+  root.id = 'print-root';
+  root.appendChild(node.cloneNode(true));
+  document.body.appendChild(root);
+  document.body.classList.add('printing');
+  const done = () => { document.body.classList.remove('printing'); root.remove(); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  try { window.print(); } catch (e) { done(); toast('Printing is not available here. Use the worksheet and print from Excel.', true); }
+}
