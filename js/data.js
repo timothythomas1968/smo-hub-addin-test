@@ -3,6 +3,9 @@
 // Two sources share one interface:
 //   ExcelSource   - inside Excel, through Office.js
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
+// The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
+// the US way (e.g. "Organization"), so need() also files each column under its UK name.
+import { ed, isUS } from './util.js?v=0.9.0.20261102192530';
 
 const SCALAR_NAMES = ['ProgName', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];
@@ -162,6 +165,9 @@ export class PreviewSource {
     this.snap.cells = this.snap.cells || {};
     const cells = this.snap.cells[sheet] = this.snap.cells[sheet] || {};
     list.forEach((c) => { cells[c.addr] = c.value; });
+    // Named cells the screens write directly (in Excel the name follows the cell by itself).
+    const named = { 'Consolidated WS Reporting!B5': 'RD' };
+    list.forEach((c) => { const n = named[sheet + '!' + c.addr]; if (n) this.snap.names[n] = c.value; });
   }
   async showRange() { throw new Error('Preview only: open the add-in in Excel to jump to the worksheet.'); }
   getSetting(k) { try { return JSON.parse(localStorage.getItem('smohub.' + k)); } catch (e) { return null; } }
@@ -175,10 +181,27 @@ export class Store {
   }
 
   async init() {
+    await this.reloadNames();
+    this.file = await this.src.fileName();
+    if (this.schema.tblPeople) await this.need(['tblPeople']);   // for "Name (role)" in every people dropdown
+  }
+
+  /** "Workstream lead, CON" for a person on the People sheet, or '' if not found. */
+  roleOf(name) {
+    const t = this.t.tblPeople;
+    if (!t || !name) return '';
+    const r = t.rows.find((x) => x.v[t.idx.Name] === name);
+    if (!r) return '';
+    const role = r.v[t.idx.Role] || '', ws = t.idx['Workstream code'] != null ? r.v[t.idx['Workstream code']] : '';
+    const prog = ['Programme', 'Program', 'PRG', ''];
+    return [role, prog.includes(String(ws)) ? '' : ws].filter(Boolean).join(', ');
+  }
+
+  /** Re-read the named cells and dropdown lists (people, IDs, workstreams), which change when tables change. */
+  async reloadNames() {
     const lists = new Set(LIST_NAMES);
     Object.values(this.schema).forEach((t) => t.cols.forEach((c) => { if (c.dv && c.dv.name) lists.add(c.dv.name); }));
     this.names = await this.src.readNames([...SCALAR_NAMES, ...lists]);
-    this.file = await this.src.fileName();
   }
 
   /** Make sure these tables are loaded and fresh. */
@@ -189,6 +212,7 @@ export class Store {
     for (const [n, t] of Object.entries(got)) {
       const s = this.schema[n] || {};
       t.idx = Object.fromEntries(t.headers.map((hd, i) => [hd, i]));
+      (s.cols || []).forEach((c) => { if (t.idx[c.h] == null && t.idx[ed(c.h, true)] != null) t.idx[c.h] = t.idx[ed(c.h, true)]; });
       t.live = s.live && t.idx[s.live] != null ? t.idx[s.live] : null;
       t.cols = Object.fromEntries((s.cols || []).map((c) => [c.h, c]));
       this.t[n] = t; this.stale.delete(n);
@@ -196,6 +220,7 @@ export class Store {
   }
 
   async refresh() {
+    this.gen = (this.gen || 0) + 1;   // screens that cache plain-sheet ranges read them again
     Object.keys(this.t).forEach((n) => this.stale.add(n));
     this.names = {};
     await this.init();
@@ -219,7 +244,7 @@ export class Store {
   options(col) {
     if (col && !col.dv && col.t === 'I' && FALLBACK_LISTS[col.h]) col = { ...col, dv: { name: FALLBACK_LISTS[col.h] } };
     if (!col || !col.dv) return null;
-    if (col.dv.list) return col.dv.list;
+    if (col.dv.list) return isUS() ? col.dv.list.map((x) => ed(x)) : col.dv.list;
     if (col.dv.name) {
       const v = this.names[col.dv.name];
       return Array.isArray(v) ? [...new Set(v.filter((x) => x !== '' && x != null).map(String))] : null;
@@ -240,11 +265,14 @@ export class Store {
       writes.push({ col, value: val });
     }
     if (!writes.length) return 0;
+    this.lastWrite = Date.now();
     await this.src.write(name, rowIndex, writes, opts.unhide);
+    this.lastWrite = Date.now();
     // Re-read so formulas that depend on the change (scores, ratings, IDs) come back recalculated.
     this.stale.add(name);
     Object.keys(this.t).forEach((n) => this.stale.add(n));
     await this.need([name]);
+    await this.reloadNames();   // a new or renamed person, service or workstream must show in every dropdown at once
     return writes.length;
   }
 
@@ -263,13 +291,18 @@ export class Store {
   readRange(sheet, addr) { return this.src.readRange(sheet, addr); }
   readNamesNow(list) { return this.src.readNames(list); }
   async writeNames(pairs) {
+    this.lastWrite = Date.now();
     await this.src.writeNames(pairs);
+    this.lastWrite = Date.now();
     pairs.forEach(([n, v]) => { this.names[n] = v; });
     Object.keys(this.t).forEach((t) => this.stale.add(t));
   }
   async writeCells(sheet, cells) {
+    this.lastWrite = Date.now();
     await this.src.writeCells(sheet, cells);
+    this.lastWrite = Date.now();
     Object.keys(this.t).forEach((n) => this.stale.add(n));   // formulas elsewhere depend on these cells
+    await this.reloadNames();
   }
   showRange(sheet, addr) { return this.src.showRange(sheet, addr); }
 }

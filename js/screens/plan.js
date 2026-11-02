@@ -1,6 +1,6 @@
 // Exit plan: the Plan & Gantt register drawn as a Gantt chart, grouped by service, with an edit panel.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.8.1.20261030222244';
-import { buildForm } from '../form.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed } from '../util.js?v=0.9.0.20261102192530';
+import { buildForm } from '../form.js?v=0.9.0.20261102192530';
 
 const T = 'tblPlan';
 const ui = { ws: '', q: '', open: null, sel: null, lateOnly: false, horizon: 12, exited: false };
@@ -18,7 +18,7 @@ export default {
     const groups = [];
     const byId = {};
     all.forEach((r) => {
-      const id = r.get('TSA ID') || 'Programme';
+      const id = r.get('TSA ID') || ed('Programme');
       if (!byId[id]) { byId[id] = { id, rows: [] }; groups.push(byId[id]); }
       byId[id].rows.push(r);
     });
@@ -45,7 +45,9 @@ export default {
       h('div', { style: { width: LW + 'px', flex: `0 0 ${LW}px`, padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: 'var(--navy)' } }, 'Service and activity'),
       h('div', { style: { flex: '1 1 auto', position: 'relative', display: 'flex' } },
         [...Array(nM).keys()].map((i) => { const d = new Date(Date.UTC(m0.getUTCFullYear(), m0.getUTCMonth() + i, 1)); return h('div', { style: { flex: '1 1 0', fontSize: '11px', fontWeight: 600, color: 'var(--navy)', padding: '8px 0 8px 4px', borderLeft: '1px solid var(--line)' } }, MONTHS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || i === 0 ? ' ' + String(d.getUTCFullYear()).slice(2) : '')); })));
-    const todayLine = () => h('div', { style: { position: 'absolute', top: 0, bottom: 0, left: pct(RD) + '%', width: '2px', background: 'var(--blue)', opacity: 0.5 } });
+    // Tim, 2 Nov 2026: the line shows today, not the reporting date (shown only when today is on the chart).
+    const now = new Date(), TODAY = toSerial(new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())));
+    const todayLine = () => (TODAY < t0 || TODAY > t1 ? null : h('div', { title: `Today, ${fmtDate(TODAY)}`, style: { position: 'absolute', top: 0, bottom: 0, left: pct(TODAY) + '%', width: '2px', background: 'var(--blue)', opacity: 0.6 } }));
     const go = (p) => { Object.assign(ui, p); ctx.rerender(); };
 
     const rowEls = [];
@@ -57,7 +59,7 @@ export default {
       rowEls.push(h('div', { style: { display: 'flex', borderTop: '1px solid var(--line)', background: '#FAFBFD', cursor: 'pointer' }, onclick: () => { isOpen ? ui.open.delete(g.id) : ui.open.add(g.id); ctx.rerender(); } },
         h('div', { style: { width: LW + 'px', flex: `0 0 ${LW}px`, padding: '8px 12px', minWidth: 0 } },
           h('div', { style: { fontWeight: 700, fontSize: '13px', color: 'var(--navy)' } }, `${isOpen ? '▾' : '▸'} ${g.id}`),
-          h('div.small', { style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t ? t.get('Service name') : 'Programme-wide', nLate ? h('span', { style: { color: 'var(--r-fg)', fontWeight: 600 } }, ` · ${nLate} late`) : null)),
+          h('div.small', { style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t ? t.get('Service name') : ed('Programme-wide'), nLate ? h('span', { style: { color: 'var(--r-fg)', fontWeight: 600 } }, ` · ${nLate} late`) : null)),
         h('div', { style: { flex: '1 1 auto', position: 'relative' } }, todayLine(),
           exit ? h('div', { title: `Exit ${fmtDate(exit)}`, style: { position: 'absolute', top: '50%', left: `calc(${pct(exit)}% - 7px)`, width: '12px', height: '12px', transform: 'translateY(-50%) rotate(45deg)', background: 'var(--navy)' } }) : null)));
       if (!isOpen) return;
@@ -68,7 +70,7 @@ export default {
         const ms = type === 'Milestone' || type === 'Gate' || type === 'TSA exit';
         const col = done ? 'var(--g-bar)' : isLate ? 'var(--r-bar)' : 'var(--navy)';
         const sel = ui.sel === r.i;
-        rowEls.push(h('div', { style: { display: 'flex', borderTop: '1px solid var(--line-soft)', background: sel ? 'var(--row-pick)' : '#fff', cursor: 'pointer', boxShadow: sel ? 'inset 3px 0 0 var(--blue)' : null }, onclick: () => go({ sel: r.i }) },
+        rowEls.push(h('div.plan-row', { 'data-type': type, style: { display: 'flex', borderTop: '1px solid var(--line-soft)', background: sel ? 'var(--row-pick)' : '#fff', cursor: 'pointer', boxShadow: sel ? 'inset 3px 0 0 var(--blue)' : null }, onclick: () => go({ sel: r.i }) },
           h('div', { style: { width: LW + 'px', flex: `0 0 ${LW}px`, padding: '6px 12px 6px 26px', minWidth: 0 } },
             h('div', { style: { fontSize: '12.5px', fontWeight: type === 'TSA exit' ? 700 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, r.get('Activity')),
             h('div.small.muted', { style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, [type, r.get('Owner'), f ? (ms ? fmtDate(f, true) : `${fmtDate(s, true)} – ${fmtDate(f, true)}`) : 'no dates', isLate ? 'late' : done ? 'done' : pc ? Math.round(pc * 100) + '%' : ''].filter(Boolean).join(' · '))),
@@ -90,7 +92,7 @@ export default {
 
     return h('div.page',
       h('div.page-head',
-        h('div', h('h1', 'Exit plan'), h('p.lede', `Every service's exit plan on one timeline. The blue line is the reporting date (${fmtDate(RD)}); diamonds are milestones and exits.`)),
+        h('div', h('h1', 'Exit plan'), h('p.lede', `Every service's exit plan on one timeline. The blue line is today; diamonds are milestones and exits. Late means not finished by the reporting date (${fmtDate(RD)}).`)),
         h('button.btn', { type: 'button', onclick: () => store.show(T, selRec ? selRec.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet')),
       h('div.filters', search, wsSel,
         h('button.fchip', { type: 'button', 'aria-pressed': String(ui.lateOnly), onclick: () => go({ lateOnly: !ui.lateOnly, open: null }) }, 'Late items only', h('span.n', String(nLateAll))),
@@ -110,16 +112,15 @@ function editPanel(ctx, r) {
     'Baseline start', 'Baseline finish', 'Slippage (days)', 'Critical path', 'Predecessor 1', 'Predecessor 2', 'Predecessor check', 'Depends on', 'Dependency', 'Comments']);
   const save = async () => {
     const ch = form.collect();
-    if ('% complete' in ch && ch['% complete'] !== '' && ch['% complete'] > 1) ch['% complete'] = ch['% complete'] / 100;   // typed as 40 rather than 0.4
     if (!Object.keys(ch).length) { toast('Nothing changed'); return; }
     try { const n = await store.save(T, r.i, ch); toast(`Saved ${n} change${n === 1 ? '' : 's'} to the workbook`); ctx.rerender(); }
     catch (e) { toast('Could not save: ' + (e.message || e), true); }
   };
   return h('aside.panel', { 'aria-label': 'Activity details' },
-    h('div.panel-head', h('span.panel-id', `${r.get('Activity ID')} · ${r.get('TSA ID') || 'Programme'}`), h('h2.panel-title', r.get('Activity'))),
+    h('div.panel-head', h('span.panel-id', `${r.get('Activity ID')} · ${r.get('TSA ID') || ed('Programme')}`), h('h2.panel-title', r.get('Activity'))),
     h('div.panel-body', form.el),
     h('div.panel-foot',
       h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save'),
       h('button.btn', { type: 'button', onclick: () => store.show(T, r.i).catch((e) => toast(e.message, true)) }, 'Show row'),
-      h('span.small.muted', { style: { flex: '1 1 100%' } }, '% complete is a fraction in the workbook: type 0.4 or 40 for 40%. Status is worked out from the dates and progress.')));
+      h('span.small.muted', { style: { flex: '1 1 100%' } }, 'Status is worked out from the dates and progress as you type. Entering an actual finish date sets the activity to 100% complete.')));
 }

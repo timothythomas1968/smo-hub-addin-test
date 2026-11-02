@@ -1,8 +1,9 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso } from '../util.js?v=0.8.1.20261030222244';
-import { colName } from '../data.js?v=0.8.1.20261030222244';
-import { todaySerial } from './checklist.js?v=0.8.1.20261030222244';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso } from '../util.js?v=0.9.0.20261102192530';
+import { personLabel } from '../form.js?v=0.9.0.20261102192530';
+import { colName } from '../data.js?v=0.9.0.20261102192530';
+import { todaySerial } from './checklist.js?v=0.9.0.20261102192530';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;
@@ -79,6 +80,7 @@ async function loadAndFill(ctx, main, sel, waive) {
   const { store } = ctx;
   try {
     const key = sel.id + '@' + sel.r.i;
+    if (ui.gen !== store.gen) { ui.gen = store.gen; ui.script = null; ui.block = null; }
     if (!ui.script) ui.script = await store.readRange(SHEET, 'K1:M9');
     if (ui.blockKey !== key || !ui.block) {
       const b = B0 + sel.r.i * BH;
@@ -154,7 +156,7 @@ function interviewCard(ctx, sel, waive) {
   const people = store.options({ h: 'Owner', t: 'I', dv: { name: 'L_People' } }) || [];
   const heldIn = h('input', { type: 'date', value: serialToIso(E.held), style: inputStyle() });
   heldIn.addEventListener('input', () => { E.held = isoToSerial(heldIn.value); E.dirty = true; });
-  const whoSel = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([E.who, ...people].filter(Boolean))].map((p) => h('option', { value: p }, p)));
+  const whoSel = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([E.who, ...people].filter(Boolean))].map((p) => h('option', { value: p }, personLabel(store, p))));
   whoSel.value = E.who;
   whoSel.addEventListener('change', () => { E.who = whoSel.value; E.dirty = true; });
   const othersIn = h('input', { type: 'text', value: E.others, placeholder: 'e.g. Kate Holloway (provider), Femi Adeyemi', style: inputStyle() });

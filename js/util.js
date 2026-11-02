@@ -38,6 +38,26 @@ export function serialToIso(n) { const d = fromSerial(n); return d ? d.toISOStri
 
 let US = false;
 export function setEdition(e) { US = e === 'US'; }
+export const isUS = () => US;
+
+// UK -> US spelling. The same list, in the same order, as GLOSS in workbook/builder/hub3_a.py:
+// keep the two in step, because the US workbook's own column names and dropdown values go through it too.
+export const GLOSS = [['programme', 'program'], ['Programme', 'Program'], ['organisation', 'organization'], ['Organisation', 'Organization'],
+  ['Operationalisation', 'Operationalization'], ['operationalisation', 'operationalization'], ['prioritis', 'prioritiz'],
+  ['colour', 'color'], ['Colour', 'Color'], ['behaviour', 'behavior'], ['centre', 'center'], ['licence', 'license'], ['Licence', 'License'],
+  ['authoris', 'authoriz'], ['summaris', 'summariz'], ['recognis', 'recogniz'], ['cancelled', 'canceled'], ['Cancelled', 'Canceled'],
+  ['judgement', 'judgment'], ['catalogue', 'catalog']];
+// Whole words only, so "ticket" and "sticky" are left alone. Same as GLOSS_WORDS in hub3_a.py.
+export const GLOSS_WORDS = { tick: 'check', ticks: 'checks', ticked: 'checked', ticking: 'checking', untick: 'uncheck', unticked: 'unchecked',
+  grey: 'gray', greyed: 'grayed', greys: 'grays' };
+for (const [a, b] of Object.entries(GLOSS_WORDS)) GLOSS_WORDS[a[0].toUpperCase() + a.slice(1)] = b[0].toUpperCase() + b.slice(1);
+const WORDS_RE = new RegExp('\\b(' + Object.keys(GLOSS_WORDS).join('|') + ')\\b', 'g');
+/** The add-in's own text in the workbook's edition, like ed() in the builder. UK text is returned as it is. */
+export function ed(s, us = US) {
+  if (!us || typeof s !== 'string' || s.startsWith('=')) return s;
+  for (const [a, b] of GLOSS) s = s.split(a).join(b);
+  return s.replace(WORDS_RE, (w) => GLOSS_WORDS[w]);
+}
 export function fmtDate(n, short) {
   const d = fromSerial(n);
   if (!d) return '';

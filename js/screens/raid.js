@@ -1,6 +1,7 @@
 // RAID and actions: risks, issues, decisions, assumptions and dependencies, and the action log, in one list.
-import { h, fmtDate, toast, toSerial } from '../util.js?v=0.8.1.20261030222244';
-import { buildForm } from '../form.js?v=0.8.1.20261030222244';
+import { h, fmtDate, toast, toSerial, ed } from '../util.js?v=0.9.0.20261102192530';
+import { buildForm } from '../form.js?v=0.9.0.20261102192530';
+import { LIVE } from '../live.js?v=0.9.0.20261102192530';
 
 const TYPES = {
   RSK: { t: 'tblRisks', one: 'Risk', many: 'Risks', id: 'Risk ID', title: 'Risk', st: 'Status (adopt or remove)', raised: 'Date raised' },
@@ -9,7 +10,7 @@ const TYPES = {
   AD: { t: 'tblAssumpDep', one: 'Assumption or dependency', many: 'Assumptions & dependencies', id: 'ID', title: 'Assumption or dependency', st: 'Status (adopt or remove)' },
   AC: { t: 'tblActions', one: 'Action', many: 'Actions', id: 'AC ID', title: 'Action', st: 'Status' }
 };
-const DONE = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled']);
+const DONE = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled']);
 const ui = { tab: 'ALL', showClosed: false, sel: null, adding: null, ws: null, suggestedOnly: false };
 
 export default {
@@ -21,7 +22,7 @@ export default {
       arg.used = true;
       ui.ws = arg.ws || null; ui.suggestedOnly = !!arg.suggested; ui.showClosed = false;
       ui.tab = arg.tab || 'ALL';
-      if (arg.id) ui.sel = arg.tab + ':' + arg.id;
+      if (arg.id) ui.selId = arg.tab + ':' + arg.id;
       if (arg.add) { ui.adding = 'RSK'; ui.sel = null; }
     }
     const wsName = Object.fromEntries(store.records('tblWorkstreams').map((r) => [r.get('Code'), r.get('Name')]));
@@ -29,14 +30,15 @@ export default {
     // every record, tagged with its type
     const items = [];
     for (const [k, cfg] of Object.entries(TYPES)) {
-      for (const r of store.records(cfg.t)) items.push({ k, cfg, r, key: k + ':' + r.get(cfg.id), st: r.get(cfg.st) || '' });
+      for (const r of store.records(cfg.t)) items.push({ k, cfg, r, key: k + ':' + r.i, idKey: k + ':' + r.get(cfg.id), st: r.get(cfg.st) || '' });   // keyed by row: an ID is only known after the workbook recalculates
     }
-    const wsOk = (x) => !ui.ws || x.r.get('Workstream') === ui.ws || (ui.ws === 'Programme' && !x.r.get('Workstream'));
+    const wsOk = (x) => !ui.ws || x.r.get('Workstream') === ui.ws || (ui.ws === ed('Programme') && !x.r.get('Workstream'));
     const vis = (x) => (ui.showClosed || !DONE.has(x.st)) && wsOk(x) && (!ui.suggestedOnly || x.st === 'Suggested');
     const inTab = (x, t) => t === 'ALL' || x.k === t;
     const list = items.filter((x) => inTab(x, ui.tab) && vis(x))
       .sort((a, b) => (a.st === 'Suggested') - (b.st === 'Suggested') || rank(b) - rank(a));
     const hidden = items.filter((x) => inTab(x, ui.tab) && wsOk(x) && DONE.has(x.st)).length;
+    if (ui.selId) { const f = items.find((x) => x.idKey === ui.selId); if (f) ui.sel = f.key; ui.selId = null; }
     let sel = ui.adding ? null : items.find((x) => x.key === ui.sel) || null;
     if (!sel && !ui.adding && list.length) { sel = list[0]; ui.sel = sel.key; }
 
@@ -156,7 +158,7 @@ function addPanel(ctx) {
   const cfg = TYPES[ui.adding];
   const today = toSerial(new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())));
   const defaults = cfg.raised ? { [cfg.raised]: today } : {};
-  const form = buildForm(store, cfg.t, null, fieldsFor(store, cfg).filter((f) => (store.colDef(cfg.t, f.h || f) || {}).t !== 'C'), { defaults });
+  const form = buildForm(store, cfg.t, null, fieldsFor(store, cfg).filter((f) => (store.colDef(cfg.t, f.h || f) || {}).t !== 'C' || ((LIVE[cfg.t] || {}).calc || {})[f.h || f]), { defaults });
   const add = async () => {
     const v = form.collect();
     if (cfg.raised && !(cfg.raised in v)) v[cfg.raised] = today;
@@ -164,8 +166,8 @@ function addPanel(ctx) {
     try {
       const i = await store.add(cfg.t, v);
       const rec = store.records(cfg.t).find((r) => r.i === i);
-      ui.adding = null; ui.sel = ui.adding + ':' + (rec ? rec.get(cfg.id) : '');
-      ui.sel = Object.keys(TYPES).find((k) => TYPES[k] === cfg) + ':' + (rec ? rec.get(cfg.id) : '');
+      ui.sel = Object.keys(TYPES).find((k) => TYPES[k] === cfg) + ':' + i;
+      ui.adding = null;
       toast(`${cfg.one} ${rec ? rec.get(cfg.id) : ''} added to the workbook`);
       ctx.rerender();
     } catch (e) { toast('Could not add: ' + (e.message || e), true); }

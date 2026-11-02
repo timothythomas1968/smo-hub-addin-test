@@ -97,7 +97,8 @@
     "help": "All money in reports is shown in this currency. Add every other currency, with its rate, on the Lists sheet.",
     "example": "GBP",
     "required": true,
-    "ai": false
+    "ai": false,
+    "example_us": "USD"
    },
    {
     "name": "FYStart",

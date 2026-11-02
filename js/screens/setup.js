@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural } from '../util.js?v=0.8.1.20261030222244';
-import { buildForm } from '../form.js?v=0.8.1.20261030222244';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS } from '../util.js?v=0.9.0.20261102192530';
+import { buildForm, personLabel } from '../form.js?v=0.9.0.20261102192530';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -22,7 +22,13 @@ export default {
 async function load(ctx, page) {
   const { store } = ctx;
   try {
-    if (!ui.qs) ui.qs = await (await fetch(new URL('../../data/questions.json', import.meta.url))).json();
+    if (!ui.qs) {
+      const qs = await (await fetch(new URL('../../data/questions.json', import.meta.url))).json();
+      // US edition: the questions, help and dropdown values as the US workbook spells them. Group names stay as keys for STEPS.
+      ui.qs = !isUS() ? qs : qs.map((g) => ({ ...g, qs: g.qs.map((q) => ({ ...q, q: ed(q.q), help: ed(q.help),
+        example: usDate(ed(q.example_us ?? q.example)), dv: Array.isArray(q.dv) ? q.dv.map((x) => ed(x)) : q.dv })) }));
+    }
+    if (ui.gen !== store.gen) { ui.gen = store.gen; ui.vals = null; }
     if (!ui.vals) ui.vals = await store.readNamesNow(ui.qs.flatMap((g) => g.qs.map((q) => q.name)));
     page.replaceChildren(...build(ctx).childNodes);
   } catch (e) {
@@ -31,6 +37,8 @@ async function load(ctx, page) {
 }
 
 const blank = (v) => v === '' || v == null;
+// The builder writes example dates the UK way ("1 Mar 2026"); the US edition shows "Mar 1, 2026".
+const usDate = (s) => (typeof s === 'string' ? s.replace(/\b(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})\b/g, '$2 $1, $3') : s);
 
 function build(ctx) {
   const { store } = ctx;
@@ -100,7 +108,7 @@ function questionsStep(ctx, groupNames, groups, relevant) {
     let el;
     const opts = Array.isArray(q.dv) ? q.dv : q.dv && q.dv.name ? store.options({ h: q.name, t: 'I', dv: q.dv }) : null;
     if (opts) {
-      el = h('select', { style: inp() }, h('option', { value: '' }, ''), [...new Set([String(cur ?? ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, o)));
+      el = h('select', { style: inp() }, h('option', { value: '' }, ''), [...new Set([String(cur ?? ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, q.dv && q.dv.name === 'L_People' ? personLabel(store, o) : o)));
       el.value = blank(cur) ? '' : String(cur);
       el.addEventListener('change', () => { set(el.value); if (q.name === 'ExtCount' || q.name === 'Perspective') { ui.vals[q.name] = el.value; saveEdits(ctx).then(() => ctx.rerender()); } });
     } else if (q.fmt === 'date') {
@@ -122,7 +130,7 @@ function questionsStep(ctx, groupNames, groups, relevant) {
         h('div.small.muted', [q.help, q.example ? `Example: ${q.example}.` : '', q.ai ? 'Your AI assistant can find this in the deal agreements (see the AI Prompts sheet).' : ''].filter(Boolean).join(' '))),
       el);
   };
-  return h('div.card', groupNames.map((g) => [h('div.sec', { style: { marginTop: 0, borderTop: 0 } }, g), (groups[g] || []).filter(relevant).map(qEl)]));
+  return h('div.card', groupNames.map((g) => [h('div.sec', { style: { marginTop: 0, borderTop: 0 } }, ed(g)), (groups[g] || []).filter(relevant).map(qEl)]));
 }
 
 function peopleStep(ctx) {
@@ -153,7 +161,7 @@ function peopleStep(ctx) {
   return h('div.row-wrap',
     h('div.card', { style: { flex: '999 1 560px', minWidth: 0 } },
       h('p.small.muted', { style: { margin: '0 0 8px' } }, 'The usual roles for every workstream are listed. Type the person\'s name against each role: owners, chairs and forum members are then suggested everywhere else. Names save as you leave each box.'),
-      h('div', { style: { overflowX: 'auto' } }, h('table.grid', h('thead', h('tr', ['Role', 'Organisation', 'Workstream', 'Name', 'Email'].map((x) => h('th', x)))), h('tbody', rows)))),
+      h('div', { style: { overflowX: 'auto' } }, h('table.grid', h('thead', h('tr', ['Role', 'Organisation', 'Workstream', 'Name', 'Email'].map((x) => h('th', ed(x))))), h('tbody', rows)))),
     h('aside.panel', h('div.panel-head', h('span.panel-id', 'Someone else'), h('h2.panel-title', 'Add a person')), h('div.panel-body', form.el),
       h('div.panel-foot', h('button.btn.btn-primary', { type: 'button', onclick: add }, 'Add'))));
 }

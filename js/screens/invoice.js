@@ -1,7 +1,7 @@
 // Our invoice: the invoice we send the other party for the services we provide, built by the Our Invoice sheet.
 // Settings (month, currency, number, date, tax, payment details) and the other-charges log are edited here;
 // the invoice itself is shown as a printable page with the client's logo.
-import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial } from '../util.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial } from '../util.js?v=0.9.0.20261102192530';
 
 const SHEET = 'Our Invoice';
 const OC0 = 20, OC1 = 119;
@@ -20,6 +20,7 @@ export default {
 async function load(ctx, page) {
   const { store } = ctx;
   try {
+    if (ui.gen !== store.gen) { ui.gen = store.gen; ui.data = null; }
     if (!ui.data) ui.data = await store.readRange(SHEET, `A1:Q${OC1}`);
     page.replaceChildren(...build(ctx).childNodes);
   } catch (e) {

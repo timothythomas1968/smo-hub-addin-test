@@ -1,19 +1,20 @@
 // SMO Hub add-in shell: header, navigation, routing between screens.
-import { h, toast, fmtDate, setEdition } from './util.js?v=0.8.1.20261030222244';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.8.1.20261030222244';
-import home from './screens/home.js?v=0.8.1.20261030222244';
-import register from './screens/register.js?v=0.8.1.20261030222244';
-import raid from './screens/raid.js?v=0.8.1.20261030222244';
-import dates from './screens/dates.js?v=0.8.1.20261030222244';
-import interview from './screens/interview.js?v=0.8.1.20261030222244';
-import report from './screens/report.js?v=0.8.1.20261030222244';
-import invoice from './screens/invoice.js?v=0.8.1.20261030222244';
-import pack from './screens/pack.js?v=0.8.1.20261030222244';
-import plan from './screens/plan.js?v=0.8.1.20261030222244';
-import setup from './screens/setup.js?v=0.8.1.20261030222244';
-import { day1, f100 } from './screens/checklist.js?v=0.8.1.20261030222244';
+import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.0.20261102192530';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.0.20261102192530';
+import { openRDDialog } from './rd.js?v=0.9.0.20261102192530';
+import home from './screens/home.js?v=0.9.0.20261102192530';
+import register from './screens/register.js?v=0.9.0.20261102192530';
+import raid from './screens/raid.js?v=0.9.0.20261102192530';
+import dates from './screens/dates.js?v=0.9.0.20261102192530';
+import interview from './screens/interview.js?v=0.9.0.20261102192530';
+import report from './screens/report.js?v=0.9.0.20261102192530';
+import invoice from './screens/invoice.js?v=0.9.0.20261102192530';
+import pack from './screens/pack.js?v=0.9.0.20261102192530';
+import plan from './screens/plan.js?v=0.9.0.20261102192530';
+import setup from './screens/setup.js?v=0.9.0.20261102192530';
+import { day1, f100 } from './screens/checklist.js?v=0.9.0.20261102192530';
 
-export const VERSION = '0.8.1';
+export const VERSION = '0.9.0';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -60,12 +61,51 @@ function shell() {
       h('button.icon-btn.menu-btn', { type: 'button', 'aria-label': 'Menu', onclick: () => document.querySelector('.nav').classList.toggle('open') }, '☰ Menu'),
       h('div.brand',
         h('div.brand-mark', svgMark()),
-        h('div.brand-text', h('span.brand-name', 'SMO Hub'), h('span.brand-sub', `${n.ProgName || 'Separation programme'} · ${side}`))),
+        h('div.brand-text', h('span.brand-name', 'SMO Hub'), h('span.brand-sub', `${n.ProgName || ed('Separation programme')} · ${side}`))),
       h('div.top-right',
-        h('span.top-label', 'Reporting to'), h('span.top-date', fmtDate(n.RD) || 'not set'),
+        h('span.top-label', 'Reporting to'), h('button.top-date', { type: 'button', title: 'Change the reporting date', onclick: changeRD }, fmtDate(n.RD) || 'not set'),
         preview ? h('span.pill-top.pill-preview', 'BROWSER PREVIEW') : null)),
+    widthHint(),
     h('div.body', nav, h('div.scrim', { onclick: closeNav }), h('main.main', { id: 'main' })));
   document.body.replaceChildren(app);
+}
+
+// When someone edits a sheet directly, re-read the workbook so the panel never shows old values.
+// The panel's own writes are ignored (they re-read already), and a half-filled form is never wiped.
+let watchTimer = null;
+function watchWorkbook() {
+  try {
+    Excel.run(async (ctx) => {
+      ctx.workbook.worksheets.onChanged.add(async () => {
+        if (Date.now() - (state.store.lastWrite || 0) < 3000) return;
+        clearTimeout(watchTimer);
+        watchTimer = setTimeout(async () => {
+          if (Date.now() - (state.store.lastWrite || 0) < 3000) return;
+          // Screens with their own sheet forms keep what is being typed: they only get a reminder.
+          const ownForms = ['report', 'interview', 'invoice', 'setup'].includes(state.screen);
+          const editing = ownForms || document.querySelector('.field.dirty, .modal-back');
+          if (editing) { toast('The workbook has changed. When you have saved your edits, choose Refresh from the workbook to see the changes.'); return; }
+          try { await state.store.refresh(); await render(); } catch (e) { /* the next change or Refresh will try again */ }
+        }, 1200);
+      });
+      await ctx.sync();
+    }).catch(() => { /* older Excel: Refresh still works */ });
+  } catch (e) { /* not supported */ }
+}
+
+function changeRD() { openRDDialog(state.store, () => render()); }
+
+// Office does not let an add-in set the panel's width, so suggest widening it while it is narrow.
+function widthHint() {
+  let off = false;
+  try { off = localStorage.getItem('smohub.wideHint') === 'off'; } catch (e) { /* storage unavailable */ }
+  if (off) return null;
+  const el = h('div.hint-wide', { role: 'note' },
+    h('span', h('b', 'Tip: '), 'drag the left edge of this panel to make it wider. SMO Hub works best at half the screen or more.'),
+    h('button.link-btn', { type: 'button', onclick: () => { el.remove(); try { localStorage.setItem('smohub.wideHint', 'off'); } catch (e) { /* ignore */ } } }, 'Hide'));
+  const fit = () => { el.style.display = window.innerWidth < 900 ? '' : 'none'; };
+  fit(); window.addEventListener('resize', fit);
+  return el;
 }
 
 function svgMark() {
@@ -79,8 +119,18 @@ function svgMark() {
 }
 
 let renderSeq = 0;
+// The title bar follows the workbook: the reporting date and names can change on any screen.
+function updateTop() {
+  const n = state.store.names, el = document.querySelector('.top-date');
+  if (el) el.textContent = fmtDate(n.RD) || 'not set';
+  const side = n.Perspective === 'Seller' ? `${n.SellerName || 'Seller'} (seller)` : `${n.BuyerName || 'Buyer'} (buyer)`;
+  const sub = document.querySelector('.brand-sub');
+  if (sub) sub.textContent = `${n.ProgName || ed('Separation programme')} · ${side}`;
+}
+
 async function render() {
   const sc = SCREENS[state.screen];
+  updateTop();
   document.querySelectorAll('.nav-item').forEach((b) => (b.dataset.k === sc.k ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
   const main = document.getElementById('main');
   const seq = ++renderSeq;
@@ -89,7 +139,8 @@ async function render() {
   try {
     await state.store.need(tables);
     if (seq !== renderSeq) return;
-    const ctx = { store: state.store, go, arg: state.arg, rerender: render, preview: state.store.src.kind === 'preview' };
+    const ctx = { store: state.store, go, arg: state.arg, rerender: render, changeRD, preview: state.store.src.kind === 'preview' };
+    updateTop();
     main.replaceChildren(sc.mod.render(ctx));
   } catch (e) {
     console.error(e);
@@ -107,11 +158,11 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening SMO Hub…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.8.1.20261030222244')).json();
+    const schema = await (await fetch('data/schema.json?v=0.9.0.20261102192530')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
-      const res = await fetch('data/demo-data.json?v=0.8.1.20261030222244');
+      const res = await fetch('data/demo-data.json?v=0.9.0.20261102192530');
       if (!res.ok) throw new Error('SMO Hub runs inside Excel. Open your SMO Hub workbook in Excel and choose SMO Hub on the Home tab.');
       src = new PreviewSource(await res.json());
     }
@@ -127,6 +178,7 @@ async function start(inExcel) {
       } catch (e) { /* not supported: ignore */ }
     }
     state.store = store;
+    if (inExcel) watchWorkbook();
     try { const k = localStorage.getItem('smohub.screen'); if (SCREENS[k]) state.screen = k; } catch (e) { /* ignore */ }
     shell();
     await render();

@@ -164,6 +164,10 @@ td.nowrap { white-space: nowrap; }
 .field.dirty input, .field.dirty select, .field.dirty textarea { border-color: var(--blue); background: #fff; color: var(--ink); font-style: normal; }
 .field-calc { font-size: 13px; font-weight: 600; padding: 2px 0; }
 .field-note { font-size: 11px; color: var(--muted); }
+.field-note:empty { display: none; }
+.pct-box { display: flex; align-items: center; gap: 6px; }
+.pct-box input { flex: 1 1 auto; }
+.pct-sign { font-size: 13px; color: var(--muted); }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .sec { font-size: 11px; font-weight: 700; letter-spacing: .7px; color: var(--heading); text-transform: uppercase; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
 .seg { display: flex; gap: 3px; }
@@ -202,7 +206,10 @@ td.nowrap { white-space: nowrap; }
 /* printing: only the chosen printable area (invoice, governance pack), copied into #print-root */
 #print-root { display: none; }
 @media print {
-  @page { margin: 14mm; }
+  /* Zero page margins leave no room for the browser's own header and footer (date, time, web address);
+     the page's margins come from #print-root's padding instead. */
+  @page { margin: 0; }
+  body.printing #print-root { padding: 14mm; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   body { background: #fff; }
   body.printing > *:not(#print-root) { display: none !important; }
   body.printing #print-root { display: block; }
@@ -211,3 +218,15 @@ td.nowrap { white-space: nowrap; }
   .pack-page { break-after: page; }
   .pack-page:last-child { break-after: auto; }
 }
+
+/* dialogs (reporting date) */
+.modal-back { position: fixed; inset: 0; background: rgba(11, 31, 51, .35); display: flex; align-items: flex-start; justify-content: center; padding: 60px 16px; z-index: 50; }
+.modal { background: #fff; border-radius: var(--radius); box-shadow: 0 12px 40px rgba(0, 0, 0, .25); padding: 20px; width: min(440px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.modal h2 { margin: 0; font-size: 17px; color: var(--navy); }
+.modal p { margin: 0; }
+button.top-date { color: inherit; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+button.top-date:hover { border-color: #fff; }
+/* panel-width hint */
+.hint-wide { display: flex; align-items: center; gap: 10px; background: var(--info-bg, #E8F2FF); color: var(--info-fg, #00315E); font-size: 12.5px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.hint-wide b { font-weight: 600; }
+.hint-wide button { margin-left: auto; }

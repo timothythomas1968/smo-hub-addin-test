@@ -1,6 +1,8 @@
 // Builds an edit form from the workbook's own column definitions (schema.json, generated from the builder).
 // Inputs (I) and suggested values (D) are editable; calculated columns (C) are shown read-only.
-import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial } from './util.js?v=0.8.1.20261030222244';
+// Values the workbook works out (scores, statuses, due dates) update as you type: see live.js.
+import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed } from './util.js?v=0.9.0.20261102192530';
+import { LIVE } from './live.js?v=0.9.0.20261102192530';
 
 export function display(store, col, v) {
   if (v === '' || v == null) return '';
@@ -12,6 +14,12 @@ export function display(store, col, v) {
   return String(v);
 }
 
+/** People in dropdowns show as "Name (role)"; the workbook still stores just the name. */
+export function personLabel(store, name) {
+  const role = store.roleOf && store.roleOf(name);
+  return role ? `${name} (${role})` : name;
+}
+
 let uid = 0;
 
 /**
@@ -21,14 +29,45 @@ let uid = 0;
  */
 export function buildForm(store, table, rec, fields, opts = {}) {
   const inputs = [];
+  const calcs = [];
+  const live = LIVE[table] || {};
   const root = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } });
   let pair = null;
+  let anyChange = false;
+
+  const byH = {};
+  const current = (hd) => {
+    const i = byH[hd];
+    if (i) return i.get();
+    if (rec) return rec.get(hd);
+    return (opts.defaults && opts.defaults[hd]) || '';
+  };
+
+  // Recalculate the live values after any change.
+  const recompute = (changedH) => {
+    if (changedH && live.on && live.on[changedH]) {
+      live.on[changedH](current(changedH), (hd, v) => { const i = byH[hd]; if (i && String(i.get()) !== String(v)) { i.set(v); i.wrap.classList.add('dirty'); } });
+    }
+    for (const [hd, fn] of Object.entries(live.sugg || {})) {
+      const i = byH[hd];
+      if (!i || i.wrap.classList.contains('dirty') || !(i.sugg || i.raw === '')) continue;   // the user's own value is never replaced
+      const v = fn(current, store);
+      if (v !== undefined && String(i.get()) !== String(v)) { i.set(v); if (v !== '') i.wrap.classList.add('is-sugg'); }
+    }
+    for (const c of calcs) {
+      const fn = (live.calc || {})[c.h];
+      const v = fn ? fn(current, store) : undefined;
+      if (v !== undefined) { c.span.textContent = display(store, c.col, v) || '–'; c.note.textContent = ''; }
+      else if (anyChange) c.note.textContent = 'updates when you save';
+    }
+  };
+  const changed = (hd) => { anyChange = true; recompute(hd); };
 
   for (const f0 of fields) {
     if (f0 && f0.sec) { root.appendChild(h('div.sec', f0.sec)); pair = null; continue; }
     const spec = typeof f0 === 'string' ? { h: f0 } : f0;
     const col = store.colDef(table, spec.h) || { h: spec.h, t: 'I', f: 'text' };
-    const label = spec.label || col.h.replace(/ \(key input\)$/, '');
+    const label = spec.label || ed(col.h.replace(/ \(key input\)$/, ''));
     const raw = rec ? rec.get(spec.h) : (opts.defaults && opts.defaults[spec.h]) || '';
     const pend = opts.pending && spec.h in opts.pending ? opts.pending[spec.h] : undefined;
     const shown = pend !== undefined ? pend : raw;
@@ -37,52 +76,68 @@ export function buildForm(store, table, rec, fields, opts = {}) {
     const wrap = h('div.field', { class: isSugg ? 'is-sugg' : null });
     const lab = h('label.field-label', { for: id }, label, isSugg ? h('span.hint', 'suggested') : null);
     wrap.appendChild(lab);
-    let get = null, el = null;
-    const markDirty = () => wrap.classList.add('dirty');
+    let get = null, set = null, el = null;
+    const markDirty = () => { wrap.classList.add('dirty'); wrap.classList.remove('is-sugg'); changed(spec.h); };
 
     if (col.t === 'C' || spec.readonly) {
       wrap.replaceChild(h('span.field-label', label), lab);
-      wrap.appendChild(h('span.field-calc', display(store, col, raw) || '–'));
+      const span = h('span.field-calc', display(store, col, raw) || '–');
+      const note = h('span.field-note', '');
+      wrap.appendChild(span); wrap.appendChild(note);
+      calcs.push({ h: spec.h, col, span, note });
     } else {
       const options = store.options(col);
       const isScale = options && options.length === 5 && options.join() === '1,2,3,4,5';
       if (isScale) {
         let cur = shown === '' ? '' : String(shown);
         const seg = h('div.seg', { role: 'group', 'aria-label': label });
+        const paint = () => seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === cur)));
         options.forEach((o) => {
-          const b = h('button', { type: 'button', 'aria-pressed': String(o === cur) }, o);
-          b.addEventListener('click', () => {
-            cur = cur === o ? '' : o;
-            seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.textContent === cur)));
-            markDirty();
-          });
+          const b = h('button', { type: 'button', 'aria-pressed': String(o === cur), 'data-v': o }, o);
+          b.addEventListener('click', () => { cur = cur === o ? '' : o; paint(); markDirty(); });
           seg.appendChild(b);
         });
         wrap.replaceChild(h('span.field-label', label), lab);
-        el = seg; get = () => (cur === '' ? '' : Number(cur));
+        el = seg; get = () => (cur === '' ? '' : Number(cur)); set = (v) => { cur = v === '' || v == null ? '' : String(v); paint(); };
       } else if (options) {
+        const people = col.dv && col.dv.name === 'L_People' || (!col.dv && col.h === 'Owner');
+        const text = (o) => (people ? personLabel(store, o) : o);
         const all = shown !== '' && !options.includes(String(shown)) ? [String(shown), ...options] : options;
-        el = h('select', { id }, h('option', { value: '' }, ''), all.map((o) => h('option', { value: o }, o)));
+        el = h('select', { id }, h('option', { value: '' }, ''), all.map((o) => h('option', { value: o }, text(o))));
         el.value = shown === '' ? '' : String(shown);
         get = () => el.value;
+        set = (v) => {
+          const s = v == null ? '' : String(v);
+          if (s && ![...el.options].some((o) => o.value === s)) el.appendChild(h('option', { value: s }, text(s)));
+          el.value = s;
+        };
       } else if (col.f === 'date' || (col.dv && col.dv.date)) {
         el = h('input', { id, type: 'date', value: serialToIso(shown) });
-        get = () => isoToSerial(el.value);
+        get = () => isoToSerial(el.value); set = (v) => { el.value = serialToIso(v); };
       } else if (col.f === 'long' || spec.area) {
         el = h('textarea', { id, rows: spec.rows || 3 });
         el.value = shown === '' ? '' : String(shown);
-        get = () => el.value;
-      } else if (['int', 'money', 'num', 'pct'].includes(col.f)) {
+        get = () => el.value; set = (v) => { el.value = v == null ? '' : String(v); };
+      } else if (col.f === 'pct') {
+        // Shown as a percentage (90), stored as a fraction (0.9).
+        const pct = (v) => (v === '' || v == null ? '' : String(Math.round(Number(v) * 1000) / 10));
+        const inp = h('input', { id, type: 'number', step: 'any', min: '0', max: '100', value: pct(shown), inputmode: 'decimal' });
+        get = () => (inp.value === '' ? '' : Math.round(Number(inp.value) * 10) / 1000);
+        set = (v) => { inp.value = pct(v); };
+        inp.addEventListener('input', markDirty);
+        el = h('span.pct-box', inp, h('span.pct-sign', '%'));
+      } else if (['int', 'money', 'num'].includes(col.f)) {
         el = h('input', { id, type: 'number', step: col.f === 'int' ? '1' : 'any', value: shown === '' ? '' : String(shown), inputmode: 'decimal' });
-        get = () => (el.value === '' ? '' : Number(el.value));
+        get = () => (el.value === '' ? '' : Number(el.value)); set = (v) => { el.value = v == null ? '' : String(v); };
       } else {
         el = h('input', { id, type: 'text', value: shown === '' ? '' : String(shown) });
-        get = () => el.value.trim();
+        get = () => el.value.trim(); set = (v) => { el.value = v == null ? '' : String(v); };
       }
-      if (el.tagName !== 'DIV') el.addEventListener('input', markDirty);
+      if (el.tagName !== 'DIV' && el.tagName !== 'SPAN') { el.addEventListener('input', markDirty); el.addEventListener('change', markDirty); }
       wrap.appendChild(el);
-      inputs.push({ h: spec.h, get, raw, wrap });
-      if (pend !== undefined) markDirty();
+      const entry = { h: spec.h, get, set, raw, wrap, sugg: isSugg || (!rec && col.t === 'D') };
+      inputs.push(entry); byH[spec.h] = entry;
+      if (pend !== undefined) wrap.classList.add('dirty');
     }
     if (spec.note) wrap.appendChild(h('span.field-note', spec.note));
 
@@ -94,6 +149,7 @@ export function buildForm(store, table, rec, fields, opts = {}) {
       pair = h('div.grid2', wrap); root.appendChild(pair);
     }
   }
+  recompute();
 
   return {
     el: root,

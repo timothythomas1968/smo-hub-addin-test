@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.0.20261102192530';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -47,9 +47,9 @@ function events(store) {
     add('raid', r.get('Due date'), `Issue due: ${r.get('Issue')}`, r.get('Issue ID'), { k: 'raid', arg: { tab: 'ISS', id: r.get('Issue ID') } }));
   recs('tblActions').filter((r) => r.get('Status') === 'Open').forEach((r) =>
     add('raid', r.get('Due date'), `Action due: ${r.get('Action')}`, `${r.get('AC ID')} · ${r.get('Owner')}`, { k: 'raid', arg: { tab: 'AC', id: r.get('AC ID') } }));
-  recs('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled'].includes(r.get('Status'))).forEach((r) =>
+  recs('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status'))).forEach((r) =>
     add('dr', r.get('Due date'), `Data due: ${r.get('Data set requested')}`, `${r.get('DR ID')} · from ${r.get('Requested from')}`, null));
-  recs('tblWO').filter((r) => !['Complete', 'Rejected', 'Cancelled'].includes(r.get('Status'))).forEach((r) =>
+  recs('tblWO').filter((r) => !['Complete', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status'))).forEach((r) =>
     add('wo', r.get('Target completion'), `Work order: ${r.get('Title')}`, `${r.get('WO ID')} · ${r.get('Status')}`, null));
   recs('tblREG').filter((r) => !String(r.get('Status')).startsWith('Approved') && r.get('Status') !== 'Refused').forEach((r) =>
     add('reg', r.get('Due date'), r.get('Filing or approval'), `${r.get('REG ID')} · ${r.get('Regulator')}`, null));

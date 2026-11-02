@@ -1,6 +1,7 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The SMO sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso } from '../util.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso } from '../util.js?v=0.9.0.20261102192530';
+import { personLabel } from '../form.js?v=0.9.0.20261102192530';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -11,7 +12,7 @@ const TABLES = {
   dec: { off: 30, n: 3, label: 'Decisions needed', cols: ['Decision needed', 'Context', 'TSA ID', 'Needed by', 'Decided by', 'Owner', 'Decision', 'Status'] }
 };
 const OPTS = { 'Likelihood (1-5)': ['1', '2', '3', '4', '5'], 'Impact (1-5)': ['1', '2', '3', '4', '5'], Priority: ['High', 'Medium', 'Low'], 'Other party must act': ['Y', 'N'] };
-const ui = { ws: null, sec: null, secKey: null, edit: null, rdEdit: false };
+const ui = { ws: null, sec: null, secKey: null, edit: null, rdSeen: null };
 
 export default {
   tables: ['tblWorkstreams', 'tblTSA', 'tblRisks', 'tblIssues', 'tblPlan', 'tblStatus'],
@@ -19,6 +20,7 @@ export default {
     const { store, go } = ctx;
     const n = store.names;
     const RD = Number(n.RD) || 0;
+    if (ui.rdSeen !== RD || ui.gen !== store.gen) { ui.rdSeen = RD; ui.gen = store.gen; ui.sec = null; ui.summ = null; }   // the reporting date changed: read the sheet again
     const codes = (n.WS_Code || []).map(String);
     const active = n.WS_Active || [];
     const wsRows = Object.fromEntries(store.records('tblWorkstreams').map((r) => [r.get('Code'), r]));
@@ -37,19 +39,6 @@ export default {
     const sel = list.find((w) => w.code === ui.ws);
     const nDone = list.filter(done).length;
 
-    const rdIn = h('input', { type: 'date', value: serialToIso(RD), style: { border: '1px solid var(--line-strong)', borderRadius: '6px', padding: '6px 8px', background: '#fff' } });
-    const saveRD = async () => {
-      const v = isoToSerial(rdIn.value);
-      if (!v) { toast('Pick a date', true); return; }
-      try {
-        await store.writeCells('Consolidated WS Reporting', [{ addr: 'B5', value: v }]);
-        await store.refresh();
-        ui.sec = null; ui.summ = null; ui.rdEdit = false;
-        toast(`Reporting date set to ${fmtDate(v)}. Every screen now reports to ${fmtMonth(v)}.`);
-        ctx.rerender();
-      } catch (e) { toast('Could not set the date: ' + (e.message || e), true); }
-    };
-
     const main = h('section.card', { style: { padding: 0, flex: '999 1 560px', minWidth: 0 } }, h('div.loading', h('div.spinner'), 'Reading the report…'));
     if (sel) fill(ctx, main, sel, wsRows[sel.code]);
 
@@ -59,8 +48,7 @@ export default {
           h('p.lede', 'Each lead\'s monthly status. It flows into Consolidated WS Reporting, Home and the governance pack; risks, issues and decisions listed here appear on the RAID logs.')),
         h('div.card', { style: { padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
           h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, 'Reporting date (set by the SMO)'),
-          ui.rdEdit ? [rdIn, h('button.btn.btn-sm.btn-primary', { type: 'button', onclick: saveRD }, 'Set'), h('button.link-btn', { type: 'button', onclick: () => { ui.rdEdit = false; ctx.rerender(); } }, 'Cancel')]
-            : [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => { ui.rdEdit = true; ctx.rerender(); } }, 'Change')])),
+          [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')])),
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } },
         h('span.small', { style: { fontWeight: 700, color: 'var(--navy)' } }, `${nDone} of ${list.length} reports in`),
         h('div.bar', { style: { maxWidth: '240px' } }, h('div', { style: { width: (list.length ? Math.round(nDone / list.length * 100) : 0) + '%' } }))),
@@ -149,15 +137,25 @@ function form(ctx, w, wsRow, s) {
     const lists = { 'TSA ID': tsaIds, Owner: people, 'Decided by': forums, Status: statusOpts, ...OPTS };
     const rows = [...Array(E.rows[key]).keys()].map((j) => {
       const vals = E.tables[key][j];
+      // A risk's rating (likelihood x impact, the Risks sheet's rule) shows as you pick, before saving.
+      const ratingEl = key === 'risk' ? h('span.chip', { style: { alignSelf: 'end', justifySelf: 'start' } }) : null;
+      const paintRating = () => {
+        if (!ratingEl) return;
+        const L = Number(vals[3]) || 0, I = Number(vals[4]) || 0, sc = L * I;
+        const r = !L || !I ? '' : sc >= 15 ? 'Red' : sc >= 8 ? 'Amber' : 'Green';
+        ratingEl.className = 'chip ' + r; ratingEl.textContent = r ? `Rating: ${r} (${sc})` : 'Rating: pick likelihood and impact';
+      };
+      paintRating();
       return h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px', padding: '10px', border: '1px solid var(--line)', borderRadius: '8px', background: '#fff' } },
+        ratingEl ? h('label.field', { style: { gridColumn: '1 / -1' } }, ratingEl) : null,
         t.cols.map((label, c) => {
           let el;
           const opts = lists[label];
           const isDate = label === 'Due date' || label === 'Needed by';
           if (opts) {
-            el = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([String(vals[c] || ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, o)));
+            el = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([String(vals[c] || ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, label === 'Owner' ? personLabel(ctx.store, o) : o)));
             el.value = String(vals[c] ?? '');
-            el.addEventListener('change', () => { vals[c] = /^\d$/.test(el.value) ? Number(el.value) : el.value; });
+            el.addEventListener('change', () => { vals[c] = /^\d$/.test(el.value) ? Number(el.value) : el.value; paintRating(); });
           } else if (isDate) {
             el = h('input', { type: 'date', value: serialToIso(vals[c]), style: inputStyle() });
             el.addEventListener('input', () => { vals[c] = isoToSerial(el.value); });
@@ -199,7 +197,7 @@ function form(ctx, w, wsRow, s) {
   return h('div',
     h('div', { style: { padding: '16px 18px 12px', borderBottom: '1px solid var(--line-soft)', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' } },
       h('div', { style: { flex: '1 1 240px' } }, h('span.panel-id', `${w.code} · lead ${lead || 'not named yet'}`), h('h2.panel-title', w.name)),
-      h('a.btn.btn-sm', { href: mail, target: '_blank', rel: 'noopener', style: { textDecoration: 'none' } }, 'Ask the lead by email')),
+      h('a.btn.btn-sm', { href: mail, target: '_blank', rel: 'noopener', style: { textDecoration: 'none' } }, 'Send email to lead, asking for report')),
     h('div', { style: { padding: '14px 18px 18px', display: 'flex', flexDirection: 'column', gap: '12px' } },
       h('div', { style: { display: 'flex', gap: '20px', flexWrap: 'wrap' } },
         h('div.field', h('span.field-label', 'Overall RAG'), seg(['Green', 'Amber', 'Red'], E.rag, (v) => { E.rag = v; }, true)),

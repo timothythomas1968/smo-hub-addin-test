@@ -1,6 +1,6 @@
 // Governance pack: one pack per forum, built live from the registers, with SMO commentary, the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural } from '../util.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed } from '../util.js?v=0.9.0.20261102192530';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -86,7 +86,7 @@ function buildPack(store, f, on, commentary) {
   const st = store.records('tblStatus').filter((r) => (r.get('Scope') || 'Overall') === 'Overall');
   const per = Math.max(0, ...st.map((r) => Number(r.get('Period')) || 0));
   const cur = st.filter((r) => Number(r.get('Period')) === per);
-  const prog = cur.find((r) => r.get('Workstream') === 'Programme');
+  const prog = cur.find((r) => r.get('Workstream') === ed('Programme'));
   const exits90 = live.filter((r) => { const d = Number(r.get('Forecast exit date')); return d >= RD && d <= RD + 90; }).sort((a, b) => a.get('Forecast exit date') - b.get('Forecast exit date'));
   const decisions = store.records('tblDecisions').filter((r) => r.get('Status') === 'Open' && ok(r));
   const office = store.src.getSetting('office-name') || 'Separation Management Office';
@@ -148,7 +148,7 @@ function buildPack(store, f, on, commentary) {
     parts.push(table(['CR', 'Change', 'Fee impact ', 'Decision due', 'Status'], cr.map((r) => [r.get('CR ID'), r.get('Title'), fmtMoney(r.get('Fee impact (calculated, reporting currency)'), sym) || '–', fmtDate(r.get('Decision due')), r.get('Status')]), 'No open change requests.'));
   }
   if (on('data')) {
-    const dr = store.records('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled'].includes(r.get('Status')));
+    const dr = store.records('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status')));
     parts.push(cap('Data requests', 'Data Requests, open'));
     parts.push(table(['DR', 'Data set', 'From', 'Due', 'Status'], dr.map((r) => [r.get('DR ID'), r.get('Data set requested'), r.get('Requested from'), fmtDate(r.get('Due date')) + (Number(r.get('Days late')) > 0 ? ` (${r.get('Days late')} days late)` : ''), r.get('Status')]), 'No open data requests.'));
   }

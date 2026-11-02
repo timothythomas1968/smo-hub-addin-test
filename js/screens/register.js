@@ -1,10 +1,10 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast } from '../util.js?v=0.8.1.20261030222244';
-import { buildForm } from '../form.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fmtMoney, toast, ed } from '../util.js?v=0.9.0.20261102192530';
+import { buildForm } from '../form.js?v=0.9.0.20261102192530';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);
-const ui = { filter: 'all', q: '', sel: null, tab: 'Overview', adding: false, pending: {}, pendingRow: null };
+const ui = { filter: 'all', ws: '', q: '', sel: null, tab: 'Overview', adding: false, pending: {}, pendingRow: null };
 
 const TABS = {
   Overview: ['TSA ID', { h: 'Service name', full: true }, 'Service description', 'Provider service owner', 'Recipient service owner', 'Status',
@@ -28,7 +28,8 @@ export default {
     if (arg && !arg.used) {
       arg.used = true;
       if (arg.filter) ui.filter = arg.filter;
-      if (arg.id) { ui.sel = arg.id; ui.filter = 'all'; ui.q = ''; }
+      if (arg.id) { ui.sel = arg.id; ui.filter = 'all'; ui.q = ''; ui.ws = ''; }
+      if (arg.ws) ui.ws = arg.ws;
     }
     const all = store.records(T);
     const live = (r) => !EXITED.has(r.get('Status'));
@@ -45,7 +46,12 @@ export default {
     if (!tests[ui.filter]) ui.filter = 'all';
     const q = ui.q.toLowerCase();
     const match = (r) => !q || ['TSA ID', 'Service name', 'Provider service owner', 'Recipient service owner', 'Workstream'].some((c) => String(r.get(c)).toLowerCase().includes(q));
-    const rows = all.filter(tests[ui.filter][1]).filter(match);
+    const wsOf = (r) => String(r.get('Workstream') || '');
+    const codes = (store.names.WS_Code || []).map(String), wsNames = store.names.WS_Name || [];
+    const wsList = [...new Set(all.map(wsOf).filter(Boolean))].sort((a, b) => codes.indexOf(a) - codes.indexOf(b));
+    if (ui.ws && !wsList.includes(ui.ws)) ui.ws = '';
+    const inWs = (r) => !ui.ws || wsOf(r) === ui.ws;
+    const rows = all.filter(tests[ui.filter][1]).filter(inWs).filter(match);
     let sel = all.find((r) => r.get('TSA ID') === ui.sel) || null;
     if (!sel && !ui.adding && rows.length) { sel = rows[0]; ui.sel = sel.get('TSA ID'); }
 
@@ -64,8 +70,15 @@ export default {
           s.addEventListener('input', () => { ui.q = s.value; const pos = s.selectionStart; rerender(); setTimeout(() => { const n = document.getElementById('reg-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }); });
           return s;
         })(),
+        (() => {
+          const s = h('select.search', { 'aria-label': 'Workstream', style: { flex: '0 1 240px' } }, h('option', { value: '' }, 'All workstreams'),
+            wsList.map((c) => h('option', { value: c }, `${c} · ${wsNames[codes.indexOf(c)] || c}`)));
+          s.value = ui.ws;
+          s.addEventListener('change', () => { ui.ws = s.value; rerender(); });
+          return s;
+        })(),
         Object.entries(tests).map(([k, [label, fn]]) => h('button.fchip', { type: 'button', 'aria-pressed': String(ui.filter === k), onclick: () => { ui.filter = k; rerender(); } },
-          label, h('span.n', String(all.filter(fn).length))))));
+          label, h('span.n', String(all.filter(fn).filter(inWs).length))))));
 
     const table = h('div.tbl-wrap',
       h('table.grid',
@@ -121,7 +134,7 @@ function detailPanel(ctx, rec) {
       h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save'),
       h('button.btn', { type: 'button', onclick: () => store.show(T, rec.i).catch((e) => toast(e.message, true)) }, 'Show row'),
       nPending ? h('span.small', { style: { color: 'var(--link)', fontWeight: 600 } }, `${nPending} unsaved change${nPending === 1 ? '' : 's'} on other tabs`) : null,
-      h('span.small.muted', { style: { flex: '1 1 100%' } }, 'Grey italic values are suggested by the Hub: type over them to set your own. Bold values are calculated.')));
+      h('span.small.muted', { style: { flex: '1 1 100%' } }, ed('Grey italic values are suggested by the Hub: type over them to set your own. Bold values are calculated.'))));
 }
 
 function addPanel(ctx) {

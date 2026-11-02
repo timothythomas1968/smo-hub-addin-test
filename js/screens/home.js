@@ -1,8 +1,8 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural } from '../util.js?v=0.8.1.20261030222244';
+import { h, fmtDate, fmtMonth, plural, ed } from '../util.js?v=0.9.0.20261102192530';
 
 const EXITED = new Set(['Exited', 'Terminated']);
-const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Complete', 'Not required']);
+const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled', 'Complete', 'Not required']);
 
 export default {
   tables: ['tblTSA', 'tblStatus', 'tblWorkstreams', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblAssumpDep', 'tblActions', 'tblOBL', 'tblPlan', 'tblDay1', 'tblFirst100'],
@@ -44,14 +44,14 @@ export default {
     const daysSinceRD = Math.floor(Date.now() / 86400000 + 25569) - RD;   // today as an Excel serial, minus RD
     const interviewsDue = live.filter((r) => { const d = Number(r.get('Next readiness interview')); return d && d <= RD + 14; }).length;
     const items = [
-      ['rd', `Set the reporting date (now ${fmtDate(RD)})`, 'Ticks itself when the date is within the last month', daysSinceRD <= 35, null],
-      ['raid', suggested ? `Review the RAID: ${plural(suggested, 'suggested item')} waiting` : 'Review the RAID: nothing waiting', 'Ticks itself when nothing is waiting', suggested === 0, () => go('raid', { suggested: true })],
-      ['act', overdue ? `Chase ${plural(overdue, 'overdue action')}` : 'No overdue actions', 'Ticks itself when no actions are overdue', overdue === 0, () => go('raid', { tab: 'AC' })],
-      ['int', interviewsDue ? `Hold the readiness interviews due (${interviewsDue})` : 'No readiness interviews due', 'Ticks itself when none are due', interviewsDue === 0, () => go('interview')],
-      ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', 'Ticks itself when there are no errors', dqE === 0, null],
-      ['inv', 'Record the invoices received this month', 'Tick it yourself', null, () => go('invoice')],
-      ['rep', 'Collect the workstream reports', 'Tick it yourself, or see who is still due on the report screen', null, () => go('report')],
-      ['pack', 'Send the governance pack', 'Tick it yourself', null, () => go('pack')]
+      ['rd', `Set the reporting date (now ${fmtDate(RD)})`, ed('Choose Change here, or click the date at the top right. Ticks itself when the date is within the last month'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
+      ['raid', suggested ? `Review the RAID: ${plural(suggested, 'suggested item')} waiting` : 'Review the RAID: nothing waiting', ed('Ticks itself when nothing is waiting'), suggested === 0, () => go('raid', { suggested: true })],
+      ['act', overdue ? `Chase ${plural(overdue, 'overdue action')}` : 'No overdue actions', ed('Ticks itself when no actions are overdue'), overdue === 0, () => go('raid', { tab: 'AC' })],
+      ['int', interviewsDue ? `Hold the readiness interviews due (${interviewsDue})` : 'No readiness interviews due', ed('Ticks itself when none are due'), interviewsDue === 0, () => go('interview')],
+      ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', ed('Ticks itself when there are no errors'), dqE === 0, null],
+      ['inv', 'Record the invoices received this month', ed('Tick it yourself'), null, () => go('invoice')],
+      ['rep', 'Collect the workstream reports', ed('Tick it yourself, or see who is still due on the report screen'), null, () => go('report')],
+      ['pack', 'Send the governance pack', ed('Tick it yourself'), null, () => go('pack')]
     ];
     const isDone = (it) => (manual[it[0]] != null ? manual[it[0]] : !!it[3]);
     const doneCount = items.filter(isDone).length;
@@ -65,7 +65,7 @@ export default {
         cb.addEventListener('change', async () => { manual[it[0]] = cb.checked; await store.src.setSetting(key, manual); ctx.rerender(); });
         return h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderTop: '1px solid var(--line-soft)' } },
           cb, h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', color: done ? 'var(--muted)' : 'var(--ink)' } }, it[1], h('br'), h('span.small.muted', it[2])),
-          it[4] ? h('button.btn.btn-sm', { type: 'button', onclick: it[4] }, 'Open') : null);
+          it[4] ? h('button.btn.btn-sm', { type: 'button', onclick: it[4] }, it[5] || 'Open') : null);
       }));
 
     // ---- workstream status from Consolidated WS Reporting (latest period, with trend against the one before)
@@ -82,7 +82,7 @@ export default {
         const ws = r.get('Workstream'), rag = r.get('RAG'), p = prev[ws];
         const trend = !p || !RANK[rag] ? '' : RANK[rag] > RANK[p] ? 'worse' : RANK[rag] < RANK[p] ? 'better' : 'same';
         const nNew = newRI(ws);
-        return h('button.ws-row', { type: 'button', onclick: () => (ws === 'Programme' ? go('raid', { ws }) : go('report', { ws })), title: 'Open the workstream report' },
+        return h('button.ws-row', { type: 'button', onclick: () => (ws === ed('Programme') ? go('raid', { ws }) : go('report', { ws })), title: 'Open the workstream report' },
           h('span.ws-name', wsName[ws] || ws),
           nNew ? h('span.chip.info', `${nNew} new`) : null,
           h('span.ws-trend', trend),
