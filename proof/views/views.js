@@ -98,7 +98,7 @@
     if (i >= 0) state.outbox[i] = item; else state.outbox.push(item);
     delete state.sent[key];
     renderTray();
-    toast('Ready to send. Send it from the bar at the bottom of any screen.');
+    toast('Saved to your changes. When you have made them all, send them together from the bar at the bottom.');
   }
   const pendingOf = (key) => state.outbox.some((x) => x.key === key);
   async function sendOutbox(extra) {
@@ -116,75 +116,96 @@
     if (!n) { if (t) t.remove(); return; }
     if (!t) { t = h('div.tray', { role: 'region', 'aria-label': 'Changes ready to send' }); document.body.append(t); }
     t.textContent = '';
-    t.append(h('div.tray-text', h('b', `${n} change${n === 1 ? '' : 's'} ready to send`), h('span.small.muted', state.outbox.slice(0, 3).map((x) => x.label).join(' · ') + (n > 3 ? ' …' : ''))),
-      h('button.btn', { onclick: reviewOutbox }, 'Review'), h('button.btn.btn-primary', { onclick: async (e) => { e.currentTarget.disabled = true; try { await sendOutbox(); } catch (err) { toast('Could not send: ' + err.message); e.currentTarget.disabled = false; } } }, 'Send to the SMO'));
+    t.append(h('div.tray-text', h('b', `${n} change${n === 1 ? '' : 's'} ready to send`), h('span.small.muted', 'Keep going: when all your changes are made, send them together in one go.')),
+      h('button.btn', { onclick: reviewOutbox }, 'Review'), h('button.btn.btn-primary', { onclick: async (e) => { e.currentTarget.disabled = true; try { await sendOutbox(); } catch (err) { toast('Could not send: ' + err.message); e.currentTarget.disabled = false; } } }, 'Send all to the SMO'));
   }
   function reviewOutbox() {
     const body = h('div.list');
     const draw = () => { body.textContent = ''; state.outbox.forEach((x) => body.append(h('div.li', chip(x.kind, 'info'), h('div.li-main', h('div.li-title', x.label), h('div.li-sub', x.detail)),
       h('button.btn.btn-sm.btn-ghost', { onclick: () => { state.outbox = state.outbox.filter((y) => y !== x); renderTray(); draw(); } }, 'Remove')))); if (!state.outbox.length) body.append(h('div.empty', 'Nothing waiting to send.')); };
     draw();
-    modal('Changes ready to send', h('div', body, h('p.small.muted', 'They go to the SMO in one go. Requests (dates, predecessors) change nothing until the SMO approves them.')),
-      (close) => [h('button.btn', { onclick: close }, 'Keep editing'), h('button.btn.btn-primary', { onclick: async () => { close(); if (state.outbox.length) await sendOutbox(); } }, 'Send to the SMO')]);
+    modal('Changes ready to send', h('div', body, h('p.small.muted', 'Best sent once, when all your changes for the period are made. Requests (dates, predecessors) change nothing until the SMO approves them.')),
+      (close) => [h('button.btn', { onclick: close }, 'Keep editing'), h('button.btn.btn-primary', { onclick: async () => { close(); if (state.outbox.length) await sendOutbox(); } }, 'Send all to the SMO')]);
   }
 
   // ---------- which tasks need the lead (shared by Start and My tasks) ----------
-  const WINDOW = 56;   // "coming up" means within the next 8 weeks
-  const within = (d, n = WINDOW) => d && d > M.today && days(M.today, d) <= n;
-  function why(p) {
+  // "Coming up" looks ahead a number of weeks the lead chooses (remembered for this visit).
+  state.weeks = state.weeks || 4;
+  const within = (d, n = state.weeks * 7) => d && d > M.today && days(M.today, d) <= n;
+  /** For your attention: in progress, or should have started. Coming up: starts or is due within the chosen weeks. */
+  function attention(p) {
     if (p.type === 'TSA exit' || p.status === 'Complete') return null;
     if (p.status === 'Not started' && p.start && p.start <= M.today) return { k: 'late', text: `Should have started ${fshort(p.start)}`, cls: 'r' };
-    if (p.status === 'In progress') return { k: 'now', text: within(p.finish) ? `In progress · due ${fshort(p.finish)}` : 'In progress', cls: 'info' };
-    if (within(p.start)) return { k: 'start', text: `Starts ${fshort(p.start)} (in ${days(M.today, p.start)} days)`, cls: 'n' };
-    if (within(p.finish)) return { k: 'due', text: `Due ${fshort(p.finish)} (in ${days(M.today, p.finish)} days)`, cls: 'a' };
+    if (p.status === 'In progress') return { k: 'now', text: `In progress · due ${fshort(p.finish)}`, cls: 'info' };
     return null;
   }
+  function coming(p) {
+    if (p.type === 'TSA exit' || p.status === 'Complete' || (attention(p) || {}).k === 'late') return null;
+    if (p.status !== 'In progress' && within(p.start)) return { k: 'start', d: p.start, text: `Starts ${fshort(p.start)} (in ${days(M.today, p.start)} days)`, cls: 'n' };
+    if (within(p.finish)) return { k: 'due', d: p.finish, text: `Due ${fshort(p.finish)} (in ${days(M.today, p.finish)} days)`, cls: 'a' };
+    return null;
+  }
+  const why = (p) => attention(p) || coming(p);
   const tsaName = (id) => (TSA.find((t) => t['TSA ID'] === id) || {})['Service name'] || id;
-  function openTask(id) { state.taskFilter = 'needs'; state.selTask = id; location.hash = 'tasks'; }
+  function openTask(id, filter) { state.taskFilter = filter || 'attention'; state.selTask = id; location.hash = 'tasks'; }
+  function weeksPicker(onchange) {
+    return h('label.weeks', 'Next ', h('select.input', { 'aria-label': 'Weeks ahead', onchange: (e) => { state.weeks = Number(e.target.value); onchange(); } },
+      [1, 2, 4, 6, 8, 12].map((n) => h('option', { value: n, selected: n === state.weeks }, String(n)))), ' weeks');
+  }
+  const addressed = (key) => pendingOf(key) || state.sent[key];
 
   // ======================================================================
   // Contributor: start screen (task-first)
   // ======================================================================
   function leadStart(main, dir = 'a') {
     const myTasks = D.plan.filter((p) => p.type !== 'TSA exit');
-    const done = myTasks.filter((p) => p.status === 'Complete').length;
-    const update = myTasks.filter((p) => ['now', 'late'].includes((why(p) || {}).k));
-    const nNow = update.filter((p) => why(p).k === 'now').length, nLate = update.length - nNow;
-    const coming = myTasks.filter((p) => ['start', 'due'].includes((why(p) || {}).k) || (why(p) && within(p.finish) && why(p).k === 'now'))
-      .map((p) => ({ p, d: why(p).k === 'start' ? p.start : p.finish, verb: why(p).k === 'start' ? 'Starts' : 'Due' })).sort((a, b) => a.d.localeCompare(b.d));
-    const overdueAct = D.raid.actions.filter((a) => a.status !== 'Closed' && a.due <= M.today);
+    const update = myTasks.filter((p) => attention(p));
+    const nNow = update.filter((p) => attention(p).k === 'now').length, nLate = update.length - nNow;
+    const updated = update.filter((p) => addressed('task:' + p.id)).length;
+    const overdue = [
+      ...D.raid.actions.filter((a) => a.status !== 'Closed' && a.due <= M.today).map((a) => ({ key: 'raid:' + a.id, label: `${a.id} ${a.title}` })),
+      ...D.raid.risks.filter((r) => r.status === 'Open' && r.review && r.review < M.today).map((r) => ({ key: 'raid:' + r.id, label: `${r.id} ${r.title}` })),
+      ...D.raid.issues.filter((r) => r.status === 'Open' && r.due && r.due < M.today).map((r) => ({ key: 'raid:' + r.id, label: `${r.id} ${r.title}` }))];
+    const fixed = overdue.filter((x) => addressed(x.key)).length;
+    const sections = state.submitted ? 6 : 3;
     const steps = [
-      { done: state.submitted, title: `Write your ${PERIOD} report`, sub: state.submitted ? 'Sent to the SMO. You can still change it until it is approved.' : `Due ${fdate(M.due)} (in ${dueIn} days). Last month's text and this month's facts are filled in.`, href: '#report', go: state.submitted ? 'View' : 'Start' },
-      { done: update.every((p) => state.sent['task:' + p.id]), title: `Update ${update.length} tasks`, sub: `${nNow} in progress${nLate ? ` and ${nLate} that should have started` : ''}. Status, % complete and a comment.`, href: '#tasks', go: 'Update',
-        list: update.map((p) => h('li', h('a', { href: '#tasks', onclick: (e) => { e.preventDefault(); openTask(p.id); } }, p.name), h('span.small.muted', ` · ${tsaName(p.tsa)} · `), chip(why(p).text, why(p).cls))) },
-      { done: overdueAct.every((a) => state.sent['raid:' + a.id]), title: `Close ${overdueAct.length} overdue action`, sub: overdueAct.map((a) => `${a.id} ${a.title} · due ${fdate(a.due)}`).join('; '), href: '#raid', go: 'Open',
-        click: () => { state.raidTab = 'actions'; state.raidSel = overdueAct[0] && overdueAct[0].id; } }];
+      { done: state.submitted, title: `Write your ${PERIOD} report`, sub: state.submitted ? 'Sent to the SMO. You can still change it until it is approved.' : `Due ${fdate(M.due)} (in ${dueIn} days). Last period's text and this period's facts are filled in.`, href: '#report', go: state.submitted ? 'View' : 'Start' },
+      { done: updated === update.length, title: `Update ${update.length} tasks in the Exit plan`, sub: `${nNow} in progress${nLate ? ` and ${nLate} that should have started` : ''}. In My tasks they are listed together under "For your attention", each marked with the reason.`, href: '#tasks', go: 'Show them',
+        click: () => { state.taskFilter = 'attention'; } },
+      { done: fixed === overdue.length, title: `Deal with ${overdue.length} overdue item${overdue.length === 1 ? '' : 's'}`, sub: overdue.map((x) => x.label).join('; ') || 'None', href: '#raid', go: 'Open',
+        click: () => { state.raidTab = 'actions'; } }];
     const left = steps.filter((x) => !x.done).length;
     const stepsEl = h('div.steps', steps.map((x, i) => h('div.step', { class: x.done ? 'done' : null, style: { alignItems: 'flex-start' } },
       h('span.step-n', x.done ? '✓' : String(i + 1)),
-      h('div.step-main', h('div.step-title', x.title), h('div.step-sub', x.sub), x.list ? h('ul.step-list', x.list) : null),
+      h('div.step-main', h('div.step-title', x.title), h('div.step-sub', x.sub)),
       h('a.step-go', { href: x.href, onclick: x.click || null }, x.go + ' →'))));
-    const comingCard = h('div.card', h('div.card-head', h('h2', 'Coming up in the next 8 weeks'), h('a.more', { href: '#tasks', onclick: () => { state.taskFilter = 'needs'; } }, 'All in My tasks →')),
-      coming.length ? h('div.list', coming.map(({ p, d, verb }) => h('div.li.click', { onclick: () => openTask(p.id) },
-        h('span.datebox', h('b', fshort(d).split(' ')[0]), h('span', fshort(d).split(' ')[1])),
-        h('div.li-main', h('div.li-title', p.name), h('div.li-sub', `${verb} in ${days(M.today, d)} days · ${tsaName(p.tsa)}`)), chip(verb, verb === 'Due' ? 'a' : 'n')))) :
-        h('div.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing starts or ends in the next 8 weeks.')));
-    const progress = h('div.card', h('div.card-head', h('h2', 'Your progress')),
+    const comingBox = h('div');
+    const drawComing = () => {
+      comingBox.textContent = '';
+      const list = myTasks.filter((p) => coming(p)).map((p) => ({ p, c: coming(p) })).sort((a, b) => a.c.d.localeCompare(b.c.d));
+      comingBox.append(list.length ? h('div.list', list.map(({ p, c }) => h('div.li.click', { onclick: () => openTask(p.id, 'coming') },
+        h('span.datebox', h('b', fshort(c.d).split(' ')[0]), h('span', fshort(c.d).split(' ')[1])),
+        h('div.li-main', h('div.li-title', p.name), h('div.li-sub', `${c.k === 'start' ? 'Starts' : 'Due'} in ${days(M.today, c.d)} days · ${tsaName(p.tsa)}`)), chip(c.k === 'start' ? 'Starts' : 'Due', c.k === 'start' ? 'n' : 'a')))) :
+        h('div.empty', h('div.empty-icon', '✓'), h('div.empty-title', `Nothing starts or is due in the next ${state.weeks} week${state.weeks === 1 ? '' : 's'}.`)));
+    };
+    drawComing();
+    const comingCard = h('div.card', h('div.card-head', h('h2', 'Coming up'), weeksPicker(drawComing), h('a.more', { href: '#tasks', onclick: () => { state.taskFilter = 'coming'; } }, 'In My tasks →')), comingBox);
+    const progress = h('div.card', h('div.card-head', h('h2', 'This period so far')),
       h('div.rings',
-        h('div.ring-item', ring(state.submitted ? 1 : 0.5, { label: state.submitted ? 'Sent' : '3/6', sub: 'report', color: state.submitted ? C.g : C.c1 }), 'Report sections done'),
-        h('div.ring-item', ring(done / myTasks.length, { label: pct(done / myTasks.length), sub: `${done} of ${myTasks.length}`, color: C.c1 }), 'Tasks complete'),
-        h('div.ring-item', ring(LEAD.exited / (LEAD.live + LEAD.exited || 1), { label: `${LEAD.exited}/${LEAD.live + LEAD.exited}`, sub: 'exited', color: C.c2 }), 'Services exited')));
+        h('div.ring-item', ring(sections / 6, { label: `${sections}/6`, sub: 'sections', color: state.submitted ? C.g : C.c1 }), state.submitted ? 'Report sent' : 'Report written'),
+        h('div.ring-item', ring(update.length ? updated / update.length : 1, { label: `${updated}/${update.length}`, sub: 'tasks', color: updated === update.length ? C.g : C.c1 }), 'Exit plan updates done'),
+        h('div.ring-item', ring(overdue.length ? fixed / overdue.length : 1, { label: `${fixed}/${overdue.length}`, sub: 'overdue', color: fixed === overdue.length ? C.g : C.r }), 'Overdue actions, risks and issues dealt with')));
     const glance = h('div.card', h('div.card-head', h('h2', 'Your workstream'), h('span.asat', 'From the Hub, as at ' + fdate(M.rd))),
       h('div.kv',
-        h('dt', 'RAG, last 6 months'), h('dd', ragDots(LEAD.rag, M.months6)),
+        h('dt', 'RAG, last 6 periods'), h('dd', ragDots(LEAD.rag, M.months6)),
         h('dt', 'Live services'), h('dd', `${LEAD.live} · ${mshort(LEAD.runRate)} a month`),
         h('dt', 'Next exit'), h('dd', fdate('2027-03-01') + ' (4 services)'),
         h('dt', 'Open risks'), h('dd', '1 red, 1 New (yours)'),
         h('dt', 'Date changes'), h('dd', state.dcr ? chip('1 awaiting approval', 'a') : 'None pending')));
-    const hello = `${left} thing${left === 1 ? '' : 's'} need${left === 1 ? 's' : ''} you this month`;
-    main.append(h('div.page', head(left ? hello : 'All done for this month', `Good morning, ${LEAD.lead.split(' ')[0]}. ${LEAD.name}, ${PERIOD} report.`, null, dir, `Workstream Updates · ${LEAD.code}`),
-      dir === 'b' ? h('div.grid.g3.lift', kpi('Report due', fshort(M.due), `in ${dueIn} days`), kpi('Tasks complete', pct(done / myTasks.length), `${done} of ${myTasks.length}`, [0.02, 0.05, 0.1, 0.14, 0.17, done / myTasks.length]), kpi('Run-rate', mshort(LEAD.runRate), `${LEAD.live} live services`)) : null,
-      h('div.grid.g2', h('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } }, stepsEl, left ? null : h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing else needs you this month. Well done.')), comingCard),
+    const hello = `${left} thing${left === 1 ? '' : 's'} for you this period`;
+    main.append(h('div.page', head(left ? hello : 'All done for this period', `Good morning, ${LEAD.lead.split(' ')[0]}. ${LEAD.name}, ${PERIOD} report.`, null, dir, `Workstream Updates · ${LEAD.code}`),
+      dir === 'b' ? h('div.grid.g3.lift', kpi('Report due', fshort(M.due), `in ${dueIn} days`), kpi('Exit plan updates', `${updated}/${update.length}`, 'tasks updated this period'), kpi('Overdue items', String(overdue.length - fixed), 'still to deal with')) : null,
+      h('div.grid.g2', h('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } }, stepsEl, left ? null : h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing else needs you this period. Well done.')), comingCard),
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } }, progress, glance))));
     renderTray();
   }
@@ -277,7 +298,7 @@
   // Contributor: My tasks (dates locked; request a date or predecessor change; arrows for links)
   // ======================================================================
   function leadTasks(main) {
-    let scope = 'exit', filter = state.taskFilter || 'needs', sel = state.selTask || null;
+    let scope = 'exit', filter = state.taskFilter || 'attention', sel = state.selTask || null;
     state.taskFilter = null; state.selTask = null;
     const t0 = '2026-07-01', t1 = '2027-07-31', span = days(t0, t1);
     const pos = (d) => Math.max(0, Math.min(100, (days(t0, d) / span) * 100));
@@ -287,10 +308,11 @@
     const visible = () => {
       const rows = all();
       if (filter === 'all' || scope !== 'exit') return rows;
-      const keep = new Set(rows.filter((p) => why(p)).map((p) => p.tsa));
-      return rows.filter((p) => p.type === 'TSA exit' ? keep.has(p.tsa) : !!why(p));
+      const test = filter === 'coming' ? coming : attention;
+      const keep = new Set(rows.filter((p) => test(p)).map((p) => p.tsa));
+      return rows.filter((p) => p.type === 'TSA exit' ? keep.has(p.tsa) : !!test(p));
     };
-    if (!sel) sel = (visible().find((x) => x.type !== 'TSA exit') || {}).id;
+    if (!sel || !visible().some((x) => x.id === sel)) sel = (visible().find((x) => x.type !== 'TSA exit') || {}).id;
     const byId = () => Object.fromEntries(D.plan.map((p) => [p.id, p]));
     const finishOf = (p) => (state.dcr && D.dc.chain.find((c) => c.id === p.id) || {}).to || p.finish;
     const drawList = () => {
@@ -301,14 +323,14 @@
         h('tbody', rows.map((p) => {
           const exit = p.type === 'TSA exit';
           const req = state.dcr && p.id === D.dc.item, moved = state.dcr && D.dc.chain.some((c) => c.id === p.id);
-          const w = why(p);
+          const w = filter === 'coming' ? coming(p) : filter === 'attention' ? attention(p) : null;
           const pend = pendingOf('task:' + p.id) || pendingOf('pred:' + p.id);
           const track = h('div.bar-track', h('span.today-line', { style: { left: pos(M.today) + '%' } }),
             exit ? null : h('span.bar', { 'data-bar': p.id, class: p.type !== 'Task' ? 'ms' : null, style: { left: pos(p.start) + '%', width: p.type !== 'Task' ? null : Math.max(1, pos(p.finish) - pos(p.start)) + '%', background: p.status === 'Complete' ? C.g : C.c1 }, 'data-tip': `${p.name}: ${fdate(p.start)} to ${fdate(p.finish)}` }),
             moved ? (() => { const c = D.dc.chain.find((x) => x.id === p.id); return h('span.bar.ghost', { style: { left: pos(p.start) + '%', width: Math.max(1, pos(c.to) - pos(p.start)) + '%' }, 'data-tip': `Proposed finish ${fdate(c.to)}` }); })() : null);
           return h('tr', { 'data-row': p.id, class: [exit ? '' : 'click', p.id === sel ? 'sel' : '', moved ? 'moved' : ''].join(' '), onclick: exit ? null : () => { sel = p.id; drawList(); drawPanel(); } },
             h('td', exit ? h('b', tsaName(p.tsa)) : h('div', { style: { paddingLeft: '10px' } }, p.name,
-              h('div.row', { style: { gap: '4px', marginTop: '3px' } }, w && filter === 'needs' ? chip(w.text, w.cls) : null, req ? chip('Date change requested', 'a') : moved ? chip('would move', 'a') : null, pend ? chip('Ready to send', 'info') : state.sent['task:' + p.id] ? chip('Sent', 'g') : null))),
+              h('div.row', { style: { gap: '4px', marginTop: '3px' } }, w ? chip(w.text, w.cls) : null, req ? chip('Date change requested', 'a') : moved ? chip('would move', 'a') : null, pend ? chip('Ready to send', 'info') : state.sent['task:' + p.id] ? chip('Sent', 'g') : null))),
             h('td.num', { style: { whiteSpace: 'nowrap' } }, fshort(p.finish) + ' ' + (p.finish || '').slice(2, 4)), h('td', exit ? null : track),
             h('td', exit ? null : chip(p.status, p.status === 'Complete' ? 'g' : p.status === 'In progress' ? 'info' : 'n')), h('td.n', exit ? '' : pct(p.pct || 0)));
         }))));
@@ -394,8 +416,10 @@
           req, h('div.field', h('label', 'Comment'), cm)),
         h('div.panel-foot', h('button.btn.btn-primary', { onclick: () => { p.status = st.value; p.pct = Number(pc.value) / 100; queue('task:' + p.id, 'Task update', p.name, `${st.value}, ${pc.value}% complete${cm.value ? ', with a comment' : ''}`, { item: p.id, status: st.value, pct: Number(pc.value) / 100, comment: cm.value }); drawList(); } }, 'Save')));
     };
-    const counts = { needs: visible().length };
-    const fbar = scope === 'exit' ? h('div.filters', [['needs', 'Needs you and coming up'], ['all', 'All tasks']].map(([k, l]) => h('button.fchip', { 'aria-pressed': String(k === filter), onclick: () => { filter = k; redraw(); } }, l))) : null;
+    const n = (f) => D.plan.filter((p) => f(p)).length;
+    const fbar = scope === 'exit' ? h('div.filters',
+      [['attention', 'For your attention', n(attention)], ['coming', 'Coming up', n(coming)], ['all', 'All tasks', null]].map(([k, l, c]) => h('button.fchip', { 'aria-pressed': String(k === filter), onclick: () => { filter = k; sel = null; redraw(); } }, l, c != null ? h('span.n', String(c)) : null)),
+      filter === 'coming' ? weeksPicker(() => { sel = null; redraw(); }) : null) : null;
     const seg = h('div.tabs', [['exit', 'Exit plan', D.plan.filter((p) => p.type !== 'TSA exit').length], ['f100', 'First 100 days', D.f100.length], ['day1', 'Day 1', D.day1.length]].map(([k, l, n]) =>
       h('button.tab', { 'aria-selected': String(k === scope), onclick: () => { scope = k; sel = null; redraw(); } }, l, h('span.n', String(n)))));
     function redraw() { main.textContent = ''; state.taskFilter = filter; state.selTask = sel; leadTasks.__scope = scope; leadTasks(main); }
@@ -404,7 +428,7 @@
     wrap.append(list, panel);
     addEventListener('resize', () => { const tw = list.querySelector('.tbl-wrap'); if (tw) drawArrows(tw, visible()); }, { once: true });
     main.append(h('div.page', head('My tasks', 'Your part of the plan, updated from the Hub. Change status, % complete and comments; ask the SMO to change dates or links.', h('span.asat', 'Updated from the Hub ' + fdate(M.today))),
-      seg, fbar, scope === 'exit' && filter === 'needs' ? h('div.small.muted', 'Showing tasks in progress, late to start, or starting or due in the next 8 weeks. Arrows show which task waits for which; red means the earlier one now finishes too late.') : null, wrap));
+      seg, fbar, scope === 'exit' && filter !== 'all' ? h('div.small.muted', (filter === 'attention' ? 'Tasks in progress, or that should have started. ' : `Tasks that start or are due in the next ${state.weeks} week${state.weeks === 1 ? '' : 's'}. `) + 'Arrows show which task waits for which; red means the earlier one now finishes too late.') : null, wrap));
     renderTray();
   }
 

@@ -207,7 +207,7 @@
   }
   function toast(text) {
     const t = h('div.toast', { role: 'status' }, text); document.body.append(t);
-    requestAnimationFrame(() => t.classList.add('show')); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+    requestAnimationFrame(() => t.classList.add('show')); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, Math.max(5000, 1800 + text.length * 45));
   }
   function modal(title, body, actions) {
     const back = h('div.modal-back', { onclick: (e) => { if (e.target === back) back.remove(); } },
