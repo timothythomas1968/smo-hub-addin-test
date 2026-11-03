@@ -1,0 +1,61 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "3d0b6f0e-2f7a-4c55-9a43-6b0f1d2e8c71",
+  "developer": {
+    "name": "Whisper Consulting",
+    "websiteUrl": "https://www.whisper-consulting.com",
+    "privacyUrl": "https://www.whisper-consulting.com",
+    "termsOfUseUrl": "https://www.whisper-consulting.com"
+  },
+  "name": {
+    "short": "SMO Hub proof",
+    "full": "SMO Hub connection proof"
+  },
+  "description": {
+    "short": "Test SMO Hub screens as Teams tabs.",
+    "full": "A test of SMO Hub contributor screens, the executive summary and the Finance view as Teams tabs, signed in with Microsoft 365. Demo data only."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#003A70",
+  "staticTabs": [
+    {
+      "entityId": "contributor",
+      "name": "My workstream",
+      "contentUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=contributor",
+      "websiteUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=contributor",
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "exec",
+      "name": "Executive summary",
+      "contentUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=exec",
+      "websiteUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=exec",
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "finance",
+      "name": "Finance",
+      "contentUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=finance",
+      "websiteUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=finance",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "permissions": [
+    "identity"
+  ],
+  "validDomains": [
+    "timothythomas1968.github.io",
+    "login.microsoftonline.com"
+  ]
+}
