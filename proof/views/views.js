@@ -16,7 +16,9 @@
   const svcRag = (r) => ({ g: 'Green', a: 'Amber', r: 'Red' }[ragClass(r)] || r);
   const sim = (t) => h('div.note-sim.no-print', 'Mock-up: ' + t);
 
-  function head(title, lede, actions, dir, eyebrow) {
+  // Direction B is the house style (Tim, 3 Nov 2026). A page shows direction A only when asked (polish.html?dir=a).
+  const DEF = () => (document.body.classList.contains('dir-a') ? 'a' : 'b');
+  function head(title, lede, actions, dir = DEF(), eyebrow) {
     if (dir === 'b') return h('div.band', eyebrow ? h('div.eyebrow', eyebrow) : null, h('div.page-head', h('div', h('h1', title), lede ? h('p.lede', lede) : null), actions || null));
     return h('div.page-head', h('div', h('h1', title), lede ? h('p.lede', lede) : null), actions || null);
   }
@@ -28,7 +30,7 @@
   // ======================================================================
   // SMO: Home (health check with the alerts)
   // ======================================================================
-  function smoHome(main, dir = 'a') {
+  function smoHome(main, dir = DEF()) {
     const reds = TSA.filter((t) => t['Service delivery RAG'] === 'Red' || t['Exit readiness RAG'] === 'Red').length;
     const ambers = TSA.filter((t) => [t['Service delivery RAG'], t['Exit readiness RAG']].includes('Amber')).length;
     const runTrend = D.burn.slice(0, D.burn.indexOf(burnNow) + 1).map((b) => b.fcFee);
@@ -157,7 +159,7 @@
   // ======================================================================
   // Contributor: start screen (task-first)
   // ======================================================================
-  function leadStart(main, dir = 'a') {
+  function leadStart(main, dir = DEF()) {
     const myTasks = D.plan.filter((p) => p.type !== 'TSA exit');
     const update = myTasks.filter((p) => attention(p));
     const nNow = update.filter((p) => attention(p).k === 'now').length, nLate = update.length - nNow;
@@ -567,7 +569,7 @@
   // ======================================================================
   // SMO: Workstream reports, submissions arriving
   // ======================================================================
-  function smoSubmissions(main, dir = 'a') {
+  function smoSubmissions(main, dir = DEF()) {
     const feed = h('div.feed'), tbody = h('tbody');
     const arrived = state.arrived;
     const rows = () => D.ws.map((w) => Object.assign({}, w, arrived.includes(w.code) ? { submitted: '2026-10-05T14:05' } : {}));
@@ -625,6 +627,7 @@
       h('div.box.warn', h('div.small.muted', 'Tasks and milestones'), h('div.big', String(dc.chain.length)), h('div.small', `move by +${dc.days} days`)),
       h('div.box.bad', h('div.small.muted', 'TSA exit date'), h('div.big', `+${dc.extraMonths} months`), h('div.small', h('span.strike', fdate(dc.oldExit)), ' → ', h('b', fdate(dc.newExit)))),
       h('div.box.bad', h('div.small.muted', 'Extra fees'), h('div.big', mshort(dc.cost)), h('div.small', `${dc.extraMonths} × ${money(dc.fee)} + ${pct(dc.markup)} mark-up`)),
+      dc.ptExtra ? h('div.box.warn', h('div.small.muted', 'Extra pass-through'), h('div.big', mshort(dc.ptExtra)), h('div.small', `${dc.ptIds.join(', ')} runs ${dc.extraMonths} more months`)) : null,
       h('div.box', h('div.small.muted', 'Notice deadline'), h('div.big', fshort(dc.extNotice)), h('div.small', 'Extension notice in time if decided by then')));
     const gantt = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
       dc.chain.map((c) => h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(120px, 34%) 1fr', gap: '10px', alignItems: 'center', fontSize: '12px' } },
@@ -648,7 +651,7 @@
           h('h2.cap', { style: { margin: '16px 0 8px' } }, 'Also check'),
           h('div.list', h('div.li', chip('Linked', 'a'), h('div.li-main', h('div.li-title', dc.dependent[0]), h('div.li-sub', 'Exits on the same date; it is not linked in the plan, so it does not move by itself'))),
             h('div.li', chip('Contract', 'g'), h('div.li-main', h('div.li-title', `Within the maximum extension (${dc.maxExt} months)`), h('div.li-sub', `Initial end ${fdate(dc.initialEnd)}`)))))),
-      h('div.callout', `On approval the Hub records change request ${dc.cr} in TSA Changes (exit ${fdate(dc.oldExit)} → ${fdate(dc.newExit)}, fee impact ${money(dc.cost)}). The new dates apply, and the existing TSA Changes rules update the exit date.`),
+      h('div.callout', `On approval the Hub records change request ${dc.cr} in TSA Changes (exit ${fdate(dc.oldExit)} → ${fdate(dc.newExit)}, fee impact ${money(dc.cost)}${dc.ptExtra ? `, plus ${money(dc.ptExtra)} pass-through` : ''}). The new dates apply, and the existing TSA Changes rules update the exit date.`),
       state.approved ? h('div.alert', h('div.alert-icon', '✓'), h('div.alert-body', h('div.alert-title', 'Approved. Dates applied and CR recorded.'), h('div.small.muted', 'Sara Lindqvist sees the new dates in My tasks the next time the Hub publishes.'))) :
         h('div.row', { style: { justifyContent: 'flex-end' } }, h('button.btn.btn-danger', { onclick: () => modal('Reject this date change?', h('div.field', h('label', 'Reason (sent to the lead)'), h('textarea.input', { rows: 3 })), (c) => [h('button.btn', { onclick: c }, 'Cancel'), h('button.btn.btn-primary', { onclick: () => { c(); toast('Rejected. Sara Lindqvist has been told.'); } }, 'Reject')]) }, 'Reject'),
           h('button.btn', { onclick: () => toast('Question drafted in Outlook') }, 'Ask a question'),
@@ -659,27 +662,33 @@
   // ======================================================================
   // Executive summary (one page; also the Teams tab and the PDF)
   // ======================================================================
-  function execSummary(main, dir = 'a') {
+  function execSummary(main, dir = DEF()) {
     const reds = TSA.filter((t) => t['Service delivery RAG'] === 'Red' || t['Exit readiness RAG'] === 'Red');
     const yr = D.quarters.filter((q) => q.q.endsWith('2026')), fc26 = yr.reduce((a, q) => a + q.fc, 0), bud26 = yr.reduce((a, q) => a + q.budget, 0);
-    const prog = D.ws.find((w) => w.code === 'GOV');
-    const totalSvc = TSA.filter((t) => t.Direction === 'Forward').length;
-    const exitedFwd = exited.filter((t) => t.Direction === 'Forward').length;
-    const k = (label, value, sub, cls) => h('div.card.kpi', { class: cls || null }, h('div.kpi-label', label), h('div.kpi-value', value), h('div.kpi-sub', sub));
+    const X = D.exits, gap = X.actual - X.plan;
+    const vsPlan = gap === 0 ? chip(`On plan · ${X.plan} planned by now`, 'g') : gap > 0 ? chip(`${gap} ahead of plan (${X.plan} planned)`, 'g') : chip(`${-gap} behind plan (${X.plan} planned)`, 'r');
+    const R = D.reverse;
+    const lastAct = [...D.burn].reverse().find((b) => b.actFee != null);
+    const k = (label, value, sub, cls, extra) => h('div.card.kpi', { class: cls || null }, h('div.kpi-label', label), h('div.kpi-value', value), extra || null, h('div.kpi-sub', sub));
+    const byRag = (r) => D.ws.filter((w) => w.rag[5] === r);
+    const wsCard = h('div.card', h('div.card-head', h('h2', 'Workstreams status reported')),
+      donut([{ label: 'Green', value: byRag('Green').length, color: C.g }, { label: 'Amber', value: byRag('Amber').length, color: C.a },
+        { label: 'Red', value: byRag('Red').length, color: C.r }], { size: 110, center: String(D.ws.length), centerSub: 'streams' }),
+      h('div', { style: { marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' } },
+        h('div.row', { style: { gap: '6px' } }, h('span.small', h('b', 'Red: ')), byRag('Red').length ? byRag('Red').map((w) => chip(`${w.code} ${w.name}`, 'r')) : h('span.small.muted', 'none this period')),
+        h('div.small', h('b', 'Amber: '), byRag('Amber').map((w) => w.code).join(', ') || 'none')));
     const sheet = h('div.sheet',
       h('div.masthead', h('div', h('div.eyebrow', `${M.programme} · executive summary · ${PERIOD}`),
         h('h2.headline', 'Exits are on course for mid-2027. Policy administration and the service desk need decisions this quarter.')),
         h('div', { style: { textAlign: 'right' } }, h('div', chip('Overall: Red', 'r')), h('div.small.masthead-sub', { style: { marginTop: '6px' } }, `${M.buyer} · SMO`))),
       h('div.sheet-body',
-        h('div.grid.g4', k('Services exited', `${exitedFwd} of ${totalSvc}`, `${live.length} still live · next exits ${fshort(nextExit)}`),
-          k('Monthly run-rate', mshort(burnNow.fcFee), `down from ${mshort(D.burn[0].fcFee)} at Close`),
+        h('div.grid.g4', k('Services exited', `${X.actual} of ${X.total}`, `${X.total - X.actual} forward services still live · next exits ${fshort(nextExit)}`, null, h('div', vsPlan)),
+          k('Monthly run-rate, forward services', mshort(burnNow.fcFee), `Reverse services: ${mshort(R.runRate)} a month (${R.live} live). Last invoiced forward month ${fmonth(lastAct.m)}: ${mshort(lastAct.actFee)}`),
           k('TSA fees 2026', mshort(fc26), `${pct(fc26 / bud26 - 1)} over budget`, 'alert'),
           k('One-off costs', mshort(D.oneoff.fac), `forecast at completion · budget ${mshort(D.oneoff.budget)}`)),
         h('div.grid', { style: { gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' } },
-          h('div.card', h('div.card-head', h('h2', 'TSA burn-down'), h('span.legend-inline', h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn, { h: 200 })),
-          h('div.card', h('div.card-head', h('h2', 'Workstreams')),
-            donut([{ label: 'Green', value: D.ws.filter((w) => w.rag[5] === 'Green').length, color: C.g }, { label: 'Amber', value: D.ws.filter((w) => w.rag[5] === 'Amber').length, color: C.a },
-              { label: 'Red', value: D.ws.filter((w) => w.rag[5] === 'Red').length, color: C.r }], { size: 110, center: String(D.ws.length), centerSub: 'streams' }))),
+          h('div.card', h('div.card-head', h('h2', 'TSA burn-down, forward services'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual (invoiced)'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn, { h: 200 })),
+          wsCard),
         h('div.grid.g2',
           h('div.card', h('div.card-head', h('h2', 'Decisions needed')),
             h('div.list', h('div.li', chip('Oct', 'r'), h('div.li-main', h('div.li-title', 'Data centre early exit (DEC-002)'), h('div.li-sub', 'Joint separation committee · saves fees if agreed this month'))),
@@ -693,7 +702,7 @@
   // ======================================================================
   // Governance pack: status section
   // ======================================================================
-  function packStatus(main, dir = 'a') {
+  function packStatus(main, dir = DEF()) {
     const trendOf = (r) => { const v = { Green: 0, Amber: 1, Red: 2 }; const d = v[r[5]] - v[r[4]]; return d < 0 ? ['▲ Improving', 'g'] : d > 0 ? ['▼ Worsening', 'r'] : ['– Stable', 'n']; };
     const mix = (w) => [{ label: 'Done', value: w.done, color: C.c1 }, { label: 'Late', value: w.late, color: C.r }, { label: 'To do', value: w.tasks - w.done - w.late, color: C.n }];
     const rowsA = D.ws.map((w) => { const [tl, tc] = trendOf(w.rag); return h('tr',
@@ -724,18 +733,36 @@
     const y = (yr) => D.quarters.filter((q) => q.q.endsWith(yr));
     const sum = (rows, k) => rows.reduce((a, q) => a + q[k], 0);
     const y26 = y('2026'), y27 = y('2027');
-    main.append(h('div.page', head('Finance', `TSA fees and one-off costs · ${M.programme} · read only, as at ${fdate(M.rd)}`, h('span.asat', 'Published by the SMO ' + fdate(M.today))),
-      h('div.grid.g4',
+    const PT = D.passThrough, ptYear = (yr) => PT.reduce((a, x) => a + Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0), 0);
+    const ptNow = PT.reduce((a, x) => a + (x.monthly[burnNow.m] || 0), 0);
+    const q2 = D.quarters.map((q) => Object.assign({}, q, { fees: q.act && q.q <= 'Q2 2026' ? q.act : q.fc }));
+    const ptCard = h('div.card', h('div.card-head', h('h2', 'Pass-through expenses'), h('span.small.muted', 'Charged at cost by the provider, outside the TSA fees'), sim('pass-through register simulated until workbook v0.11')),
+      h('div.grid.g3', { style: { marginBottom: '12px' } },
+        h('div.kpi', h('div.kpi-label', 'This month'), h('div.kpi-value', mshort(ptNow)), h('div.kpi-sub', `${PT.filter((x) => x.monthly[burnNow.m]).length} charges running`)),
+        h('div.kpi', h('div.kpi-label', '2026'), h('div.kpi-value', mshort(ptYear('2026'))), h('div.kpi-sub', `to date ${mshort(PT.reduce((a, x) => a + x.toDate, 0))}`)),
+        h('div.kpi', h('div.kpi-label', '2027'), h('div.kpi-value', mshort(ptYear('2027'))), h('div.kpi-sub', 'forecast'))),
+      h('div', { style: { overflowX: 'auto' } }, h('table.t', h('thead', h('tr', h('th', 'ID'), h('th', 'Charge'), h('th', 'Type'), h('th', 'TSA'), h('th.n', 'Per month'), h('th', 'Runs'), h('th.n', 'To date'), h('th.n', '2026'), h('th.n', '2027'))),
+        h('tbody', PT.map((x) => { const yrs = (yr) => Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0);
+          return h('tr', h('td.id', x.id), h('td', x.desc), h('td', x.cat), h('td', x.tsa || '–'), h('td.n', money(x.amount)), h('td.num', `${fmonth(x.from)} – ${fmonth(x.to)}`), h('td.n', money(x.toDate)), h('td.n', money(yrs('2026'))), h('td.n', money(yrs('2027')))); })),
+        h('tfoot', h('tr', h('td', { colspan: 6 }, 'Total'), h('td.n', money(PT.reduce((a, x) => a + x.toDate, 0))), h('td.n', money(ptYear('2026'))), h('td.n', money(ptYear('2027'))))))));
+    main.append(h('div.page', { style: { maxWidth: 'none' } }, head('Finance', `TSA fees, pass-through expenses and one-off costs · ${M.programme} · read only, as at ${fdate(M.rd)}`, h('span.asat', 'Published by the SMO ' + fdate(M.today))),
+      h('div.grid.g4', { class: DEF() === 'b' ? 'lift' : null },
         kpi('TSA fees 2026 (forecast)', mshort(sum(y26, 'fc')), `budget ${mshort(sum(y26, 'budget'))} · ${pct(sum(y26, 'fc') / sum(y26, 'budget') - 1)} over`),
         kpi('TSA fees 2027 (forecast)', mshort(sum(y27, 'fc')), `contract plan ${mshort(sum(y27, 'plan'))}`),
-        kpi('Run-rate now', mshort(burnNow.fcFee), `${burnNow.fcN} live services`, D.burn.slice(0, D.burn.indexOf(burnNow) + 1).map((b) => b.fcFee)),
-        kpi('One-off costs', mshort(D.oneoff.fac), `spent ${mshort(D.oneoff.actual)} · budget ${mshort(D.oneoff.budget)}`)),
+        kpi('Monthly run-rate now', mshort(burnNow.fcFee), `forward services · ${burnNow.fcN} live. Reverse: ${mshort(D.reverse.runRate)}`, D.burn.slice(0, D.burn.indexOf(burnNow) + 1).map((b) => b.fcFee)),
+        kpi('Pass-through, 2026', mshort(ptYear('2026')), `${PT.length} charges · ${mshort(ptNow)} this month`)),
+      h('div.card', h('div.card-head', h('h2', 'Expenses by quarter'), h('span.small.muted', 'TSA fees (actual where invoiced, then forecast), pass-through expenses and one-off costs (work orders)')),
+        columns(q2, [{ key: 'fees', label: 'TSA fees', color: C.c1 }, { key: 'pt', label: 'Pass-through expenses', color: C.c2 }, { key: 'wo', label: 'One-off costs (work orders)', color: C.c3 }], { stacked: true, w: 1100, h: 300 }),
+        h('div.small.muted', `Work orders: ${D.workOrders.map((w) => `${w.id} ${w.title} (${mshort(w.amount)}, ${fmonth(w.month)})`).join('; ')}. The separation programme's own one-off costs (${mshort(D.oneoff.fac)} forecast) are on the One-off costs sheet of the Finance workbook.`)),
+      ptCard,
       h('div.grid.g2',
         h('div.card', h('div.card-head', h('h2', 'TSA fees by quarter')), columns(D.quarters, [{ key: 'budget', label: 'Budget', color: C.c3 }, { key: 'plan', label: 'Contract plan', color: C.c2 }, { key: 'fc', label: 'Forecast', color: C.c1 }])),
-        h('div.card', h('div.card-head', h('h2', 'TSA burn-down'), h('span.legend-inline', h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn))),
-      h('div.tbl-wrap', h('table.t', h('thead', h('tr', h('th', 'Quarter'), h('th.n', 'Budget'), h('th.n', 'Contract plan'), h('th.n', 'Forecast'), h('th.n', 'Forecast less budget'))),
-        h('tbody', D.quarters.map((q) => h('tr', h('td', q.q), h('td.n', money(q.budget)), h('td.n', money(q.plan)), h('td.n', money(q.fc)), h('td.n', { style: { color: q.fc - q.budget > 0 ? 'var(--r-fg)' : 'var(--g-fg)' } }, (q.fc - q.budget > 0 ? '+' : '') + money(q.fc - q.budget))))),
-        h('tfoot', h('tr', h('td', 'Total'), h('td.n', money(sum(D.quarters, 'budget'))), h('td.n', money(sum(D.quarters, 'plan'))), h('td.n', money(sum(D.quarters, 'fc'))), h('td.n', money(sum(D.quarters, 'fc') - sum(D.quarters, 'budget'))))))),
+        h('div.card', h('div.card-head', h('h2', 'TSA burn-down'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn))),
+      h('div.tbl-wrap', h('table.t', h('thead', h('tr', h('th', 'Quarter'), h('th.n', 'Budget'), h('th.n', 'Contract plan'), h('th.n', 'Forecast'), h('th.n', 'Actual invoiced'), h('th.n', 'Forecast less budget'), h('th.n', 'Pass-through'), h('th.n', 'Work orders'))),
+        h('tbody', D.quarters.map((q) => h('tr', h('td', q.q), h('td.n', money(q.budget)), h('td.n', money(q.plan)), h('td.n', money(q.fc)), h('td.n', q.act ? money(q.act) : '–'),
+          h('td.n', { style: { color: q.fc - q.budget > 0 ? 'var(--r-fg)' : 'var(--g-fg)' } }, (q.fc - q.budget > 0 ? '+' : q.fc - q.budget < 0 ? '−' : '') + money(Math.abs(q.fc - q.budget))), h('td.n', money(q.pt)), h('td.n', q.wo ? money(q.wo) : '–')))),
+        h('tfoot', h('tr', h('td', 'Total'), h('td.n', money(sum(D.quarters, 'budget'))), h('td.n', money(sum(D.quarters, 'plan'))), h('td.n', money(sum(D.quarters, 'fc'))), h('td.n', money(sum(D.quarters, 'act'))),
+          h('td.n', money(sum(D.quarters, 'fc') - sum(D.quarters, 'budget'))), h('td.n', money(sum(D.quarters, 'pt'))), h('td.n', money(sum(D.quarters, 'wo'))))))),
       h('p.small.muted', 'The full Finance workbook (editable, with sensitivities, pass-through charges and one-off costs by period) is in design/samples.')));
   }
 

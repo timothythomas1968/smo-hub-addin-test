@@ -353,3 +353,6 @@ body:has(.tray) .toast { bottom: 84px; }
 .weeks { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .weeks select.input { width: auto; min-height: 30px; padding: 2px 8px; }
 .fchip .n { margin-left: 6px; font-weight: 500; opacity: .8; }
+.chart .lbl.act { fill: var(--ink); }
+.dir-b .band:not(:has(+ .lift)) { padding-bottom: 30px; margin-bottom: 0; }
+.ln.act { border-top: 3px solid var(--ink); }

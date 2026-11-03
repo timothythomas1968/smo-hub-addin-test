@@ -132,12 +132,19 @@
     const lastNon0 = (vals) => { let i = vals.length - 1; while (i > 0 && !vals[i]) i--; return Math.min(vals.length - 1, i + 1); };
     const fi = lastNon0(fv), pi = lastNon0(pv);
     const hits = rows.map((r, i) => s('rect', { x: x(i) - iw / rows.length / 2, y: T, width: iw / rows.length, height: ih, fill: 'transparent',
-      'data-tip': `${fmonth(r.m)}: forecast ${fmt(r['fc' + key])} · plan ${fmt(r['plan' + key])}` }));
+      'data-tip': `${fmonth(r.m)}: ${r['act' + key] != null ? 'actual ' + fmt(r['act' + key]) + ' · ' : ''}forecast ${fmt(r['fc' + key])} · plan ${fmt(r['plan' + key])}` }));
     return s('svg', { class: 'chart', viewBox: `0 0 ${w} ${hh}`, width: '100%', role: 'img', 'aria-label': 'TSA burn-down: monthly run-rate, plan against forecast' },
       grid, xl,
       s('path', { d: step(fv) + `V${y(0)}H${x(0)}Z`, fill: C.c1, opacity: 0.08 }),
       s('path', { d: step(pv), fill: 'none', stroke: C.plan, 'stroke-width': 2, 'stroke-dasharray': '5 4' }),
       s('path', { d: step(fv), fill: 'none', stroke: C.c1, 'stroke-width': 2.25 }),
+      (() => { // actuals from the Invoices log, up to the last invoiced month
+        const av = rows.map((r) => r['act' + key]); const last = av.reduce((a, v, i) => (v != null ? i : a), -1);
+        if (last < 0) return null;
+        const d = av.slice(0, last + 1).map((v, i) => (i ? `H${x(i).toFixed(1)}V${y(v).toFixed(1)}` : `M${x(0)} ${y(v).toFixed(1)}`)).join('') + `H${x(last + 1).toFixed(1)}`;
+        return [s('path', { d, fill: 'none', stroke: C.ink, 'stroke-width': 3 }), s('circle', { cx: x(last + 1), cy: y(av[last]), r: 3.5, fill: C.ink }),
+          s('text', { x: x(last + 1) - 4, y: y(av[last]) + 18, 'text-anchor': 'end', class: 'lbl act' }, 'Actual')];
+      })(),
       ti > 0 ? [s('line', { x1: x(ti), x2: x(ti), y1: T - 4, y2: T + ih, stroke: C.ink, 'stroke-width': 1, 'stroke-dasharray': '2 3' }),
         s('text', { x: x(ti) + 5, y: T + 6, class: 'ax strong' }, 'Today')] : null,
       (() => { let yf = Math.min(y(fv[fi - 1] || 0) + 4, T + ih - 4), yp = Math.min(y(pv[pi - 1] || 0) + 4, T + ih - 4);
@@ -147,13 +154,26 @@
   }
 
   /** Grouped columns: e.g. budget / plan / forecast by quarter. series: [{key,label,color}] */
-  function columns(rows, series, { w = 640, h: hh = 220, cat = 'q', fmt = mshort } = {}) {
+  function columns(rows, series, { w = 640, h: hh = 220, cat = 'q', fmt = mshort, stacked = false } = {}) {
     const L = 46, R = 8, T = 22, B = 24, iw = w - L - R, ih = hh - T - B;
-    const mx = Math.max(...rows.flatMap((r) => series.map((x) => r[x.key]))) * 1.1 || 1;
+    const mx = (stacked ? Math.max(...rows.map((r) => series.reduce((a, x) => a + (r[x.key] || 0), 0))) : Math.max(...rows.flatMap((r) => series.map((x) => r[x.key])))) * 1.12 || 1;
     const y = (v) => T + ih - (v / mx) * ih, gw = iw / rows.length, bw = Math.min(16, (gw - 14) / series.length);
     const out = [];
     for (let i = 0; i <= 4; i++) { const v = (mx / 4) * i; out.push(s('line', { x1: L, x2: L + iw, y1: y(v), y2: y(v), stroke: C.grid }), s('text', { x: L - 8, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }, fmt(v))); }
-    rows.forEach((r, i) => {
+    if (stacked) {
+      const bw2 = Math.min(34, gw - 18);
+      rows.forEach((r, i) => {
+        const bx = L + i * gw + (gw - bw2) / 2; let acc = 0; const tot = series.reduce((a, x) => a + (r[x.key] || 0), 0);
+        series.forEach((sr, j) => {
+          const v = r[sr.key] || 0; if (v <= 0) return;
+          const y0 = y(acc), y1 = y(acc + v), top = j === series.length - 1 || series.slice(j + 1).every((n) => !(r[n.key] > 0));
+          out.push(s('path', { d: top ? `M${bx} ${y0}V${y1 + 3}q0 -3 3 -3h${bw2 - 6}q3 0 3 3V${y0}Z` : `M${bx} ${y0}V${y1 + 1}H${bx + bw2}V${y0}Z`, fill: sr.color, 'data-tip': `${r[cat]} ${sr.label}: ${fmt(v)}` }));
+          acc += v;
+        });
+        if (tot > 0) out.push(s('text', { x: bx + bw2 / 2, y: y(tot) - 5, 'text-anchor': 'middle', class: 'ax strong' }, fmt(tot)));
+        out.push(s('text', { x: L + i * gw + gw / 2, y: hh - 6, 'text-anchor': 'middle', class: 'ax' }, r[cat]));
+      });
+    } else rows.forEach((r, i) => {
       const x0 = L + i * gw + (gw - bw * series.length - 2 * (series.length - 1)) / 2;
       series.forEach((sr, j) => {
         const v = r[sr.key], top = y(v), bx = x0 + j * (bw + 2);
@@ -161,7 +181,9 @@
       });
       out.push(s('text', { x: L + i * gw + gw / 2, y: hh - 6, 'text-anchor': 'middle', class: 'ax' }, r[cat]));
     });
-    const key = series.map((sr, j) => s('g', { transform: `translate(${L + j * 92} 4)` }, s('rect', { width: 10, height: 10, rx: 2, fill: sr.color }), s('text', { x: 14, y: 9, class: 'ax' }, sr.label)));
+    let kx = L;
+    const key = series.map((sr) => { const g = s('g', { transform: `translate(${kx} 4)` }, s('rect', { width: 10, height: 10, rx: 2, fill: sr.color }), s('text', { x: 14, y: 9, class: 'ax' }, sr.label)); kx += 26 + sr.label.length * 6; return g; });
+    const _unused = series.map((sr, j) => s('g', { transform: `translate(${L + j * 92} 4)` }, s('rect', { width: 10, height: 10, rx: 2, fill: sr.color }), s('text', { x: 14, y: 9, class: 'ax' }, sr.label)));
     return s('svg', { class: 'chart', viewBox: `0 0 ${w} ${hh}`, width: '100%', role: 'img', 'aria-label': series.map((x) => x.label).join(', ') + ' by ' + cat }, out, key);
   }
 

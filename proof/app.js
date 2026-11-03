@@ -46,6 +46,7 @@
     try { data = await source.load(); } catch (e) { msg('Could not open the Hub data', String(e.message || e)); return; }
     if (cfg.ws) data.meta.leadWs = cfg.ws;
     window.DEMO = data;
+    document.body.classList.add('dir-b');   // direction B is the house style
     window.SOURCE = source;
     await load('views/kit.js'); await load('views/views.js');
     const { K, V } = window;
