@@ -10,12 +10,12 @@
     "termsOfUseUrl": "https://www.whisper-consulting.com"
   },
   "name": {
-    "short": "SMO Hub proof",
-    "full": "SMO Hub connection proof"
+    "short": "TransitionSuite proof",
+    "full": "TransitionSuite connection proof"
   },
   "description": {
-    "short": "Test SMO Hub screens as Teams tabs.",
-    "full": "A test of SMO Hub contributor screens, the executive summary and the Finance view as Teams tabs, signed in with Microsoft 365. Demo data only."
+    "short": "Test TransitionSuite screens as Teams tabs.",
+    "full": "A test of TransitionSuite contributor screens, the executive summary and the Finance view as Teams tabs, signed in with Microsoft 365. Demo data only."
   },
   "icons": {
     "color": "color.png",

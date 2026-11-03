@@ -1,12 +1,12 @@
-// Microsoft Graph for SMO Hub. Libraries: only Microsoft's own, bundled with our files (Tim's named exceptions):
+// Microsoft Graph for TransitionSuite. Libraries: only Microsoft's own, bundled with our files (Tim's named exceptions):
 // MSAL (msal-browser) for silent sign-in, and the Teams library inside Teams.
 // Sign-in order: 1) silent, through Nested App Authentication (reuses the Office or Teams sign-in);
 // 2) a sign-in window: an Office dialog in Excel, the Teams sign-in window in Teams, a pop-up in a browser
 //    (our own authorisation code + PKCE in auth.html, no library).
 // window.GraphClient.create(cfg) -> { host, method, start(), signIn(), call(), siteId(), json(), put(), list helpers }
 // Connected-level data is kept in SharePoint lists (sensitivity labels never encrypt list items):
-//   "SMO Hub published"   the snapshot the Hub publishes, split into parts (Title, Payload)
-//   "SMO Hub submissions" one item per report, risk or date request (Title, Payload)
+//   "TransitionSuite published"   the snapshot the Hub publishes, split into parts (Title, Payload)
+//   "TransitionSuite submissions" one item per report, risk or date request (Title, Payload)
 (function () {
   'use strict';
   const GRAPH = 'https://graph.microsoft.com/v1.0';
@@ -84,7 +84,10 @@
     async function listId(name) {
       if (lists[name]) return lists[name];
       const r = await call(`/sites/${await siteId()}/lists?$select=id,displayName&$filter=displayName eq '${name.replace(/'/g, "''")}'`);
-      if (!r.value || !r.value[0]) { const e = new Error(`there is no list called "${name}" on the site`); e.status = 404; throw e; }
+      if (!r.value || !r.value[0]) {
+        if (name.startsWith('TransitionSuite ')) { const old = 'SMO Hub ' + name.slice(16); try { return (lists[name] = await listId(old)); } catch (e) { /* neither */ } }   // lists made before the rename
+        const e = new Error(`there is no list called "${name}" on the site`); e.status = 404; throw e;
+      }
       return (lists[name] = r.value[0].id);
     }
     async function listItems(name, filterTitlePrefix) {
@@ -104,12 +107,12 @@
       async json(path) { const sid = await siteId(); const t = await call(`/sites/${sid}/drive/root:/${inFolder(path)}:/content`); return typeof t === 'string' ? JSON.parse(t) : t; },
       async put(path, obj) { const sid = await siteId(); return call(`/sites/${sid}/drive/root:/${inFolder(path)}:/content`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj, null, 2) }); },
       /** The Hub publishes a snapshot as numbered parts of one JSON text. */
-      async publishSnapshot(obj, list = 'SMO Hub published') {
+      async publishSnapshot(obj, list = 'TransitionSuite published') {
         const text = JSON.stringify(obj), stamp = new Date().toISOString(), n = Math.ceil(text.length / PART);
         for (let i = 0; i < n; i++) await listAdd(list, `snapshot ${stamp} part ${String(i + 1).padStart(3, '0')} of ${String(n).padStart(3, '0')}`, text.slice(i * PART, (i + 1) * PART));
         return { parts: n, chars: text.length, stamp };
       },
-      async readSnapshot(list = 'SMO Hub published') {
+      async readSnapshot(list = 'TransitionSuite published') {
         const items = await listItems(list, 'snapshot ');
         if (!items.length) throw new Error(`nothing published yet in "${list}"`);
         const latest = items.map((f) => f.Title.split(' ')[1]).sort().pop();

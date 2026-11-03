@@ -78,7 +78,7 @@
         h('div.li', chip('60 days', 'info'), h('div.li-main', h('div.li-title', 'Obligations due'), h('div.li-sub', '3 obligations; first on 14 Oct'))),
         h('div.li', chip('Consents', 'info'), h('div.li-main', h('div.li-title', 'Third-party consents outstanding'), h('div.li-sub', '4 of 11 still awaited'))),
         h('div.li', chip('Set-up', 'n'), h('div.li-main', h('div.li-title', 'Set-up gaps'), h('div.li-sub', '2 services have no exit plan owner')))));
-    main.append(h('div.page', head(dir === 'b' ? `${PERIOD}: the programme at a glance` : 'Home', dir === 'b' ? `${M.programme}. Close was ${fdate(M.close)}; ${exited.length} services have exited.` : `${M.programme} · reporting ${PERIOD}`, null, dir, 'SMO Hub · Home'),
+    main.append(h('div.page', head(dir === 'b' ? `${PERIOD}: the programme at a glance` : 'Home', dir === 'b' ? `${M.programme}. Close was ${fdate(M.close)}; ${exited.length} services have exited.` : `${M.programme} · reporting ${PERIOD}`, null, dir, 'TransitionSuite · Home'),
       dir === 'b' ? kpis : null, alerts, dir === 'b' ? null : kpis,
       h('div.grid.g2', burn, reporting), h('div.grid.g3', mix, due, h('div.card', h('div.card-head', h('h2', 'Spend this year')),
         h('div.kpi-value', mshort(D.quarters.filter((q) => q.q.endsWith('2026')).reduce((a, q) => a + q.fc, 0))), h('div.small.muted', 'TSA fees forecast for 2026'),
@@ -695,7 +695,7 @@
               h('div.li', chip('Nov', 'a'), h('div.li-main', h('div.li-title', 'Policy administration: accept 6-week slip?'), h('div.li-sub', `Moves the exit to ${fdate(D.dc.newExit)}; ${mshort(D.dc.cost)} more in fees`))))),
           h('div.card', h('div.card-head', h('h2', 'Watch list')),
             h('div.list', reds.slice(0, 3).map((t) => h('div.li', chip('Red', 'r'), h('div.li-main', h('div.li-title', `${t['Service name']} (${t['TSA ID']})`), h('div.li-sub', t['Path to green'] || 'Path to green agreed with the seller'))))))),
-        h('div.sheet-foot', h('span', `Prepared by the SMO from the SMO Hub · data as at ${fdate(M.rd)} · plan and budget: baseline ${CUR.id}, approved ${fdate(CUR.approved)} (${CUR.decision})`), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional'))));
+        h('div.sheet-foot', h('span', `Prepared by the SMO with TransitionSuite · data as at ${fdate(M.rd)} · plan and budget: baseline ${CUR.id}, approved ${fdate(CUR.approved)} (${CUR.decision})`), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional'))));
     main.append(h('div.page', { style: { maxWidth: 'none' } }, sheet));
   }
 
@@ -834,7 +834,7 @@
         list.map((t) => h('div.card', { style: { breakInside: 'avoid' } }, h('div.card-head', h('h2', `${t['TSA ID']} · ${t['Service name']}`)),
           h('p.small', { style: { margin: '0 0 10px' } }, t['Service description']),
           h('div.grid.g4', groups.map(([g, ks]) => h('dl.kv', { style: { gridTemplateColumns: '1fr 1fr', fontSize: '11.5px' } }, h('div.kv-sec', { style: { marginTop: 0, borderTop: 0, paddingTop: 0 } }, g), ks.map((k) => [h('dt', k), h('dd', val(k, t[k]))])))))),
-        h('div.sheet-foot', h('span', 'From the SMO Hub TSA register. Fees in reporting currency (GBP) unless stated.'), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional')))));
+        h('div.sheet-foot', h('span', 'From the TransitionSuite Hub TSA register. Fees in reporting currency (GBP) unless stated.'), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional')))));
   }
 
   window.V = { smoBaselines, servicesPrint, smoHome, leadStart, leadReport, leadRaid, leadTasks, leadServices, smoCycle, smoSubmissions, smoApprovals, execSummary, packStatus, finance, svcRag, sim };

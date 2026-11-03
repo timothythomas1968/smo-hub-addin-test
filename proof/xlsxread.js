@@ -1,6 +1,6 @@
 // Read .xlsx files in the browser with no libraries: a small ZIP reader, the browser's own
 // DecompressionStream for the compressed parts, and DOMParser for the XML.
-// Used by "Import reports": the SMO picks several returned workstream report files at once.
+// Used by "Import reports": the programme office picks several returned workstream report files at once.
 // window.XlsxRead.open(File|ArrayBuffer) -> { sheets: [names], cell(sheet, 'C4') -> value }
 // window.XlsxRead.report(book) -> the workstream report in plain fields, with warnings.
 (function () {

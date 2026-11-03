@@ -21,11 +21,15 @@
     add(e, kids);
     return e;
   }
-  function add(e, kids) { for (const k of kids.flat(Infinity)) if (k != null && k !== false) e.append(k.nodeType ? k : String(k)); }
+  // The programme's own name for its team (set-up answer TeamName; the demo's is "Separation Management Office (SMO)").
+  // Screen text is written with "SMO"; it is shown with the programme's short name. Try ?team=IMO on any page.
+  const TEAM = (() => { try { return new URLSearchParams(location.search).get('team') || (D && D.meta && D.meta.teamShort) || 'SMO'; } catch (e) { return 'SMO'; } })();
+  const T = (s) => (TEAM === 'SMO' ? s : s.replace(/\bSMO\b/g, TEAM));
+  function add(e, kids) { for (const k of kids.flat(Infinity)) if (k != null && k !== false) e.append(k.nodeType ? k : T(String(k))); }
   function s(tag, attrs, ...kids) {
     const e = document.createElementNS(SVGNS, tag);
     for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, v);
-    for (const k of kids.flat(Infinity)) if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+    for (const k of kids.flat(Infinity)) if (k != null) e.append(k.nodeType ? k : document.createTextNode(T(String(k))));
     return e;
   }
 
@@ -211,24 +215,23 @@
     const scrim = h('div.scrim', { onclick: () => nav.classList.remove('open') });
     const top = h('header.top',
       h('button.menu-btn', { type: 'button', onclick: () => nav.classList.toggle('open'), 'aria-label': 'Menu' }, '☰'),
-      h('div.brand', h('div.brand-mark', logo()), h('div.brand-text', h('div.brand-name', o.brand || 'SMO Hub'), h('div.brand-sub', o.sub || D.meta.programme))),
+      h('div.brand', h('div.brand-mark', logo()), h('div.brand-text', h('div.brand-name', o.brand || 'TransitionSuite'), h('div.brand-sub', o.sub || D.meta.programme))),
       h('div.top-right', o.topRight || h('span.top-period', 'Reporting ' + fmonth(D.meta.rd))));
     const main = h('main.main');
     document.body.textContent = '';
     document.body.append(h('div.app', { class: 'mode-' + o.mode }, top, h('div.body', nav, scrim, main)));
     return main;
   }
-  function logo() {
-    return s('svg', { viewBox: '0 0 24 24', width: 18, height: 18, 'aria-hidden': 'true' },
-      s('rect', { x: 3, y: 3, width: 8, height: 8, rx: 1.5, fill: '#003A70' }), s('rect', { x: 13, y: 3, width: 8, height: 8, rx: 1.5, fill: '#007BFF' }),
-      s('rect', { x: 3, y: 13, width: 8, height: 8, rx: 1.5, fill: '#007BFF' }), s('rect', { x: 13, y: 13, width: 8, height: 8, rx: 1.5, fill: '#003A70' }));
+  function logo() {   // the TransitionSuite mark (design/brand/transitionsuite-mark.svg) in its white tile
+    return s('svg', { viewBox: '0 0 48 48', width: 20, height: 20, 'aria-hidden': 'true' },
+      s('path', { d: 'M8 6 H25 L17 42 H8 A2 2 0 0 1 6 40 V8 A2 2 0 0 1 8 6 Z', fill: '#003A70' }), s('path', { d: 'M31 6 H40 A2 2 0 0 1 42 8 V40 A2 2 0 0 1 40 42 H23 Z', fill: '#007BFF' }));
   }
   function router(routes, def) {
     const go = () => { const k = (location.hash || '#' + def).slice(1).split('?')[0]; (routes[k] || routes[def])(k); window.scrollTo(0, 0); };
     addEventListener('hashchange', go); go();
   }
   function toast(text) {
-    const t = h('div.toast', { role: 'status' }, text); document.body.append(t);
+    const t = h('div.toast', { role: 'status' }, text);   // h() applies the team name document.body.append(t);
     requestAnimationFrame(() => t.classList.add('show')); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, Math.max(5000, 1800 + text.length * 45));
   }
   function modal(title, body, actions) {
@@ -246,5 +249,5 @@
     return src.submit(kind, payload);
   }
 
-  window.K = { submit, D, h, s, C, fdate, fshort, fmonth, fmon, ftime, money, mshort, pct, days, ws, tsa, ragClass, spark, ring, donut, ragDots, stackBar, burndown, columns, meter, delta, shell, router, toast, modal, chip, skeleton };
+  window.K = { TEAM, T, submit, D, h, s, C, fdate, fshort, fmonth, fmon, ftime, money, mshort, pct, days, ws, tsa, ragClass, spark, ring, donut, ragDots, stackBar, burndown, columns, meter, delta, shell, router, toast, modal, chip, skeleton };
 })();
