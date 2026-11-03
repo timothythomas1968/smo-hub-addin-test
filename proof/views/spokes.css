@@ -335,3 +335,18 @@ textarea.input { min-height: 76px; resize: vertical; line-height: 1.45; }
 .masthead-sub { color: var(--muted); }
 .dir-b .masthead-sub { color: var(--on-navy); }
 .embed .top, .embed .nav { display: none; }
+
+/* changes ready to send (contributor screens) */
+.tray { position: fixed; z-index: 30; left: 220px; right: 0; bottom: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(16, 36, 64, .10); padding: 10px 28px calc(10px + env(safe-area-inset-bottom, 0px)); animation: pop .2s var(--ease); }
+.tray-text { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; }
+.tray-text .small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body:has(.tray) .main { padding-bottom: 110px; }
+@media (max-width: 760px) { .tray { left: 0; padding-left: 14px; padding-right: 14px; } }
+.step-list { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.step-list a { font-weight: 600; text-decoration: none; }
+.step-list a:hover { text-decoration: underline; }
+.datebox { flex: 0 0 44px; height: 44px; border-radius: 8px; background: var(--selected); color: var(--navy); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.datebox b { font-size: 16px; } .datebox span { font-size: 11px; font-weight: 600; }
+div.step { cursor: default; }
+div.step:hover { transform: none; }
+body:has(.tray) .toast { bottom: 84px; }

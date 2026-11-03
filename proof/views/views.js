@@ -86,19 +86,89 @@
   }
 
   // ======================================================================
+  // Contributor: changes ready to send (from any screen)
+  // ======================================================================
+  // Every change a lead makes (task updates, RAID updates, date and predecessor requests) waits here
+  // until the lead sends it. The tray sits at the bottom of every contributor screen.
+  state.outbox = state.outbox || [];
+  state.sent = state.sent || {};
+  function queue(key, kind, label, detail, payload) {
+    const i = state.outbox.findIndex((x) => x.key === key);
+    const item = { key, kind, label, detail, payload };
+    if (i >= 0) state.outbox[i] = item; else state.outbox.push(item);
+    delete state.sent[key];
+    renderTray();
+    toast('Ready to send. Send it from the bar at the bottom of any screen.');
+  }
+  const pendingOf = (key) => state.outbox.some((x) => x.key === key);
+  async function sendOutbox(extra) {
+    const items = state.outbox.slice();
+    await K.submit('updates', { ws: LEAD.code, items: items.map(({ kind, label, detail, payload }) => ({ kind, label, detail, payload })) });
+    items.forEach((x) => { state.sent[x.key] = true; });
+    state.outbox = [];
+    renderTray();
+    if (!extra) { toast(`${items.length} change${items.length === 1 ? '' : 's'} sent to the SMO`); window.dispatchEvent(new HashChangeEvent('hashchange')); }
+    return items;
+  }
+  function renderTray() {
+    let t = document.querySelector('.tray');
+    const n = state.outbox.length;
+    if (!n) { if (t) t.remove(); return; }
+    if (!t) { t = h('div.tray', { role: 'region', 'aria-label': 'Changes ready to send' }); document.body.append(t); }
+    t.textContent = '';
+    t.append(h('div.tray-text', h('b', `${n} change${n === 1 ? '' : 's'} ready to send`), h('span.small.muted', state.outbox.slice(0, 3).map((x) => x.label).join(' · ') + (n > 3 ? ' …' : ''))),
+      h('button.btn', { onclick: reviewOutbox }, 'Review'), h('button.btn.btn-primary', { onclick: async (e) => { e.currentTarget.disabled = true; try { await sendOutbox(); } catch (err) { toast('Could not send: ' + err.message); e.currentTarget.disabled = false; } } }, 'Send to the SMO'));
+  }
+  function reviewOutbox() {
+    const body = h('div.list');
+    const draw = () => { body.textContent = ''; state.outbox.forEach((x) => body.append(h('div.li', chip(x.kind, 'info'), h('div.li-main', h('div.li-title', x.label), h('div.li-sub', x.detail)),
+      h('button.btn.btn-sm.btn-ghost', { onclick: () => { state.outbox = state.outbox.filter((y) => y !== x); renderTray(); draw(); } }, 'Remove')))); if (!state.outbox.length) body.append(h('div.empty', 'Nothing waiting to send.')); };
+    draw();
+    modal('Changes ready to send', h('div', body, h('p.small.muted', 'They go to the SMO in one go. Requests (dates, predecessors) change nothing until the SMO approves them.')),
+      (close) => [h('button.btn', { onclick: close }, 'Keep editing'), h('button.btn.btn-primary', { onclick: async () => { close(); if (state.outbox.length) await sendOutbox(); } }, 'Send to the SMO')]);
+  }
+
+  // ---------- which tasks need the lead (shared by Start and My tasks) ----------
+  const WINDOW = 56;   // "coming up" means within the next 8 weeks
+  const within = (d, n = WINDOW) => d && d > M.today && days(M.today, d) <= n;
+  function why(p) {
+    if (p.type === 'TSA exit' || p.status === 'Complete') return null;
+    if (p.status === 'Not started' && p.start && p.start <= M.today) return { k: 'late', text: `Should have started ${fshort(p.start)}`, cls: 'r' };
+    if (p.status === 'In progress') return { k: 'now', text: within(p.finish) ? `In progress · due ${fshort(p.finish)}` : 'In progress', cls: 'info' };
+    if (within(p.start)) return { k: 'start', text: `Starts ${fshort(p.start)} (in ${days(M.today, p.start)} days)`, cls: 'n' };
+    if (within(p.finish)) return { k: 'due', text: `Due ${fshort(p.finish)} (in ${days(M.today, p.finish)} days)`, cls: 'a' };
+    return null;
+  }
+  const tsaName = (id) => (TSA.find((t) => t['TSA ID'] === id) || {})['Service name'] || id;
+  function openTask(id) { state.taskFilter = 'needs'; state.selTask = id; location.hash = 'tasks'; }
+
+  // ======================================================================
   // Contributor: start screen (task-first)
   // ======================================================================
   function leadStart(main, dir = 'a') {
     const myTasks = D.plan.filter((p) => p.type !== 'TSA exit');
     const done = myTasks.filter((p) => p.status === 'Complete').length;
-    const thisMonth = myTasks.filter((p) => p.status === 'In progress').length;
+    const update = myTasks.filter((p) => ['now', 'late'].includes((why(p) || {}).k));
+    const nNow = update.filter((p) => why(p).k === 'now').length, nLate = update.length - nNow;
+    const coming = myTasks.filter((p) => ['start', 'due'].includes((why(p) || {}).k) || (why(p) && within(p.finish) && why(p).k === 'now'))
+      .map((p) => ({ p, d: why(p).k === 'start' ? p.start : p.finish, verb: why(p).k === 'start' ? 'Starts' : 'Due' })).sort((a, b) => a.d.localeCompare(b.d));
+    const overdueAct = D.raid.actions.filter((a) => a.status !== 'Closed' && a.due <= M.today);
     const steps = [
       { done: state.submitted, title: `Write your ${PERIOD} report`, sub: state.submitted ? 'Sent to the SMO. You can still change it until it is approved.' : `Due ${fdate(M.due)} (in ${dueIn} days). Last month's text and this month's facts are filled in.`, href: '#report', go: state.submitted ? 'View' : 'Start' },
-      { done: false, title: `Update ${thisMonth} tasks in progress`, sub: 'Status, % complete and a comment. Dates are locked; ask for a change if one moves.', href: '#tasks', go: 'Update' },
-      { done: false, title: 'Close 1 overdue action', sub: 'AC-0002 Share revised policy migration plan with seller · due ' + fdate('2026-10-05'), href: '#raid', go: 'Open' }];
+      { done: update.every((p) => state.sent['task:' + p.id]), title: `Update ${update.length} tasks`, sub: `${nNow} in progress${nLate ? ` and ${nLate} that should have started` : ''}. Status, % complete and a comment.`, href: '#tasks', go: 'Update',
+        list: update.map((p) => h('li', h('a', { href: '#tasks', onclick: (e) => { e.preventDefault(); openTask(p.id); } }, p.name), h('span.small.muted', ` · ${tsaName(p.tsa)} · `), chip(why(p).text, why(p).cls))) },
+      { done: overdueAct.every((a) => state.sent['raid:' + a.id]), title: `Close ${overdueAct.length} overdue action`, sub: overdueAct.map((a) => `${a.id} ${a.title} · due ${fdate(a.due)}`).join('; '), href: '#raid', go: 'Open',
+        click: () => { state.raidTab = 'actions'; state.raidSel = overdueAct[0] && overdueAct[0].id; } }];
     const left = steps.filter((x) => !x.done).length;
-    const stepsEl = h('div.steps', steps.map((x, i) => h('a.step', { href: x.href, class: x.done ? 'done' : null },
-      h('span.step-n', x.done ? '✓' : String(i + 1)), h('div.step-main', h('div.step-title', x.title), h('div.step-sub', x.sub)), h('span.step-go', x.go + ' →'))));
+    const stepsEl = h('div.steps', steps.map((x, i) => h('div.step', { class: x.done ? 'done' : null, style: { alignItems: 'flex-start' } },
+      h('span.step-n', x.done ? '✓' : String(i + 1)),
+      h('div.step-main', h('div.step-title', x.title), h('div.step-sub', x.sub), x.list ? h('ul.step-list', x.list) : null),
+      h('a.step-go', { href: x.href, onclick: x.click || null }, x.go + ' →'))));
+    const comingCard = h('div.card', h('div.card-head', h('h2', 'Coming up in the next 8 weeks'), h('a.more', { href: '#tasks', onclick: () => { state.taskFilter = 'needs'; } }, 'All in My tasks →')),
+      coming.length ? h('div.list', coming.map(({ p, d, verb }) => h('div.li.click', { onclick: () => openTask(p.id) },
+        h('span.datebox', h('b', fshort(d).split(' ')[0]), h('span', fshort(d).split(' ')[1])),
+        h('div.li-main', h('div.li-title', p.name), h('div.li-sub', `${verb} in ${days(M.today, d)} days · ${tsaName(p.tsa)}`)), chip(verb, verb === 'Due' ? 'a' : 'n')))) :
+        h('div.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing starts or ends in the next 8 weeks.')));
     const progress = h('div.card', h('div.card-head', h('h2', 'Your progress')),
       h('div.rings',
         h('div.ring-item', ring(state.submitted ? 1 : 0.5, { label: state.submitted ? 'Sent' : '3/6', sub: 'report', color: state.submitted ? C.g : C.c1 }), 'Report sections done'),
@@ -111,17 +181,284 @@
         h('dt', 'Next exit'), h('dd', fdate('2027-03-01') + ' (4 services)'),
         h('dt', 'Open risks'), h('dd', '1 red, 1 New (yours)'),
         h('dt', 'Date changes'), h('dd', state.dcr ? chip('1 awaiting approval', 'a') : 'None pending')));
-    const hello = dir === 'b' ? `${left ? left + ' things need you' : 'All done'} this month` : `${left} thing${left === 1 ? '' : 's'} need${left === 1 ? 's' : ''} you this month`;
-    main.append(h('div.page', head(hello, `Good morning, ${LEAD.lead.split(' ')[0]}. ${LEAD.name}, ${PERIOD} report.`, null, dir, `Workstream Updates · ${LEAD.code}`),
+    const hello = `${left} thing${left === 1 ? '' : 's'} need${left === 1 ? 's' : ''} you this month`;
+    main.append(h('div.page', head(left ? hello : 'All done for this month', `Good morning, ${LEAD.lead.split(' ')[0]}. ${LEAD.name}, ${PERIOD} report.`, null, dir, `Workstream Updates · ${LEAD.code}`),
       dir === 'b' ? h('div.grid.g3.lift', kpi('Report due', fshort(M.due), `in ${dueIn} days`), kpi('Tasks complete', pct(done / myTasks.length), `${done} of ${myTasks.length}`, [0.02, 0.05, 0.1, 0.14, 0.17, done / myTasks.length]), kpi('Run-rate', mshort(LEAD.runRate), `${LEAD.live} live services`)) : null,
-      h('div.grid.g2', h('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } }, stepsEl, left ? null : h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing else needs you this month. Well done.'))),
+      h('div.grid.g2', h('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } }, stepsEl, left ? null : h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing else needs you this month. Well done.')), comingCard),
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } }, progress, glance))));
+    renderTray();
+  }
+
+  // ======================================================================
+  // Contributor: My RAID (view and update own workstream's items)
+  // ======================================================================
+  function leadRaid(main) {
+    const R = D.raid;
+    let tab = state.raidTab || state.raidTabLast || 'risks', sel = state.raidSel || null;
+    state.raidTab = null; state.raidSel = null;
+    const wrap = h('div.split'), body = h('div.grow'), panel = h('div.panel');
+    const items = () => ({ risks: R.risks, issues: R.issues, actions: R.actions, decisions: R.decisions }[tab]);
+    const keyOf = (r) => 'raid:' + (r.id === 'New' ? 'new-' + r.title : r.id);
+    const mark = (r) => pendingOf(keyOf(r)) ? chip('Ready to send', 'info') : state.sent[keyOf(r)] ? chip('Sent', 'g') : null;
+    const drawBody = () => {
+      body.textContent = '';
+      const rows = { risks: (r) => [r.id === 'New' ? chip('New', 'new') : r.id, h('span', r.title, mark(r) ? h('div', mark(r)) : null), h('span', `${r.l}×${r.i} = ${r.score} `, chip(r.rating)), r.owner || '–', r.status === 'New' ? 'Waiting for the SMO' : fdate(r.review)],
+        issues: (r) => [r.id, h('span', r.title, mark(r) ? h('div', mark(r)) : null), chip(r.priority, r.priority === 'High' ? 'a' : 'n'), r.owner, fdate(r.due)],
+        actions: (r) => [r.id, h('span', r.title, mark(r) ? h('div', mark(r)) : null), r.status !== 'Closed' && r.due <= M.today ? chip('Overdue', 'r') : chip(r.status, r.status === 'Closed' ? 'g' : 'n'), r.owner, fdate(r.due)],
+        decisions: (r) => [r.id, h('span', r.title, mark(r) ? h('div', mark(r)) : null), chip(r.status, r.status === 'Made' ? 'g' : 'a'), r.owner, fdate(r.needed)] }[tab];
+      const hd = { risks: ['ID', 'Risk', 'Score', 'Owner', 'Review by'], issues: ['ID', 'Issue', 'Priority', 'Owner', 'Due'], actions: ['ID', 'Action', 'Status', 'Owner', 'Due'], decisions: ['ID', 'Decision needed', 'Status', 'Owner', 'Needed by'] }[tab];
+      const list = items();
+      body.append(list.length ? h('div.tbl-wrap', h('table.t', h('thead', h('tr', hd.map((x) => h('th', x)))), h('tbody', list.map((r) => h('tr.click', { class: keyOf(r) === sel ? 'sel' : null, onclick: () => { sel = keyOf(r); drawBody(); drawPanel(); } },
+        rows(r).map((c, i) => h(i === 0 ? 'td.id' : 'td', c))))))) :
+        h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing open here.'), h('div.small', 'Raise one if something new comes up.')));
+    };
+    const drawPanel = () => {
+      panel.textContent = '';
+      const r = items().find((x) => keyOf(x) === sel);
+      if (!r) { panel.append(h('div.panel-body', h('div.empty', h('div.empty-title', 'Pick an item to update it'), h('div.small', 'Your changes go to the SMO as proposals. The Hub shows them until the SMO accepts them.')))); return; }
+      const f = {};
+      const sel_ = (k, opts, v) => (f[k] = h('select.input', opts.map((o) => h('option', { selected: o === v }, o))));
+      const txt = (k, v, rows = 2) => { const t = h('textarea.input', { rows }); t.value = v || ''; return (f[k] = t); };
+      const dt_ = (k, v) => (f[k] = h('input.input', { type: 'date', value: v || '' }));
+      let fields;
+      if (tab === 'risks') {
+        let l = r.l, i = r.i; const score = h('b'), rate = h('span');
+        const upd = () => { score.textContent = String(l * i); rate.textContent = ''; rate.append(chip(l * i >= 15 ? 'Red' : l * i >= 8 ? 'Amber' : 'Green')); };
+        const scale = (cur, set) => { const e = h('div.seg'); [1, 2, 3, 4, 5].forEach((n) => e.append(h('button', { type: 'button', 'aria-pressed': String(n === cur), onclick: () => { set(n); [...e.children].forEach((b) => b.setAttribute('aria-pressed', String(+b.textContent === n))); upd(); } }, String(n)))); return e; };
+        upd(); f.li = () => ({ likelihood: l, impact: i });
+        fields = [h('div.grid.g2', h('div.field', h('span.label', 'Likelihood (1-5)'), scale(l, (v) => (l = v))), h('div.field', h('span.label', 'Impact (1-5)'), scale(i, (v) => (i = v)))),
+          h('div.row', h('span.label.muted', 'Score'), score, rate, h('span.small.muted', 'works out as you pick')),
+          h('div.field', h('label', 'Mitigation / response'), txt('mitigation', r.mit, 3)),
+          h('div.grid.g2', h('div.field', h('label', 'Review by'), dt_('review', r.review)), h('div.field', h('label', 'Status'), sel_('status', r.status === 'New' ? ['New'] : ['Open', 'Closed'], r.status)))];
+      } else if (tab === 'issues') {
+        fields = [h('div.grid.g2', h('div.field', h('label', 'Priority'), sel_('priority', ['High', 'Medium', 'Low'], r.priority)), h('div.field', h('label', 'Status'), sel_('status', ['Open', 'Closed'], r.status))),
+          h('div.field', h('label', 'Due date'), dt_('due', r.due)), h('div.field', h('label', 'Resolution'), txt('resolution', r.resolution, 3))];
+      } else if (tab === 'actions') {
+        fields = [h('div.grid.g2', h('div.field', h('label', 'Status'), sel_('status', ['Open', 'Closed'], r.status)), h('div.field', h('label', 'Due date'), dt_('due', r.due))),
+          h('div.field', h('label', 'What was done'), txt('note', '', 3)), h('div.small.muted', `Raised at the ${r.forum}. Linked to ${r.linked}.`)];
+      } else {
+        fields = [h('div.field', h('label', 'Status'), sel_('status', ['Open', 'Made'], r.status)), h('div.field', h('label', 'Needed by'), dt_('needed', r.needed)), h('div.field', h('label', 'Decision'), txt('decision', r.decision, 3))];
+      }
+      panel.append(h('div.panel-head', h('div', h('div.small.muted', `${r.id === 'New' ? 'New risk (yours)' : r.id} · ${LEAD.code}`), h('h2', r.title))),
+        h('div.panel-body', fields, h('div.field', h('label', 'Comment for the SMO'), txt('comment', '', 2))),
+        h('div.panel-foot', h('button.btn.btn-primary', { onclick: () => {
+          const out = {}; for (const [k, v] of Object.entries(f)) out[k] = typeof v === 'function' ? v() : v.value;
+          const changed = Object.entries(out).filter(([k, v]) => v && typeof v !== 'object' && String(v) !== String(r[k] ?? '')).map(([k]) => k);
+          queue(keyOf(r), { risks: 'Risk', issues: 'Issue', actions: 'Action', decisions: 'Decision' }[tab], `${r.id === 'New' ? 'New risk' : r.id}: ${r.title}`, changed.length ? 'Changed: ' + changed.join(', ') : 'Updated', { id: r.id, ...out });
+          drawBody();
+        } }, 'Save change')));
+    };
+    const tabs = h('div.tabs', { role: 'tablist' }, [['risks', 'Risks', R.risks.length], ['issues', 'Issues', R.issues.length], ['actions', 'Actions', R.actions.length], ['decisions', 'Decisions', R.decisions.length]].map(([k, l, n]) =>
+      h('button.tab', { role: 'tab', 'aria-selected': String(k === tab), onclick: (e) => { tab = k; state.raidTabLast = k; sel = null; [...tabs.children].forEach((b) => b.setAttribute('aria-selected', String(b === e.currentTarget))); drawBody(); drawPanel(); } }, l, h('span.n', String(n)))));
+    drawBody(); drawPanel();
+    wrap.append(body, panel);
+    main.append(h('div.page', head('My RAID', `${LEAD.name} only. Pick an item to update it. Your changes and new items go to the SMO and show in the Hub marked New until the SMO accepts them.`,
+      h('button.btn.btn-primary', { onclick: () => raiseDialog() }, '+ Raise a risk or issue')),
+    h('div.legend-inline', h('span', chip('New', 'new'), 'raised by you, waiting for the SMO'), h('span', chip('Ready to send', 'info'), 'changed here, not sent yet')), tabs, wrap));
+    renderTray();
+  }
+  function raiseDialog() {
+    let l = 3, i = 4;
+    const score = h('span'), rate = h('span');
+    const upd = () => { const s = l * i; score.textContent = String(s); rate.textContent = ''; rate.append(chip(s >= 15 ? 'Red' : s >= 8 ? 'Amber' : 'Green')); };
+    const scale = (cur, set) => { const e = h('div.seg'); [1, 2, 3, 4, 5].forEach((n) => e.append(h('button', { type: 'button', 'aria-pressed': String(n === cur), onclick: () => { set(n); [...e.children].forEach((b) => b.setAttribute('aria-pressed', String(+b.textContent === n))); upd(); } }, String(n)))); return e; };
+    upd();
+    const title = h('input.input', { value: 'Seller staff leave before knowledge transfer completes' });
+    modal('Raise a risk', h('div.grid', { style: { gap: '12px' } },
+      h('div.field', h('label', 'Risk'), title),
+      h('div.field', h('label', 'TSA'), h('select.input', D.tsa.filter((r) => r[3] === LEAD.code).map((r) => h('option', `${r[0]} ${r[1]}`)))),
+      h('div.grid.g2', h('div.field', h('span.label', 'Likelihood'), scale(l, (v) => (l = v))), h('div.field', h('span.label', 'Impact'), scale(i, (v) => (i = v)))),
+      h('div.row', h('span.label.muted', 'Score'), h('b', score), rate, h('span.small.muted', 'works out as you pick')),
+      h('div.field', h('label', 'Mitigation / response'), h('textarea.input', { rows: 2 }))),
+    (close) => [h('button.btn', { onclick: close }, 'Cancel'), h('button.btn.btn-primary', { onclick: () => { close(); queue('raid:raise-' + title.value, 'New risk', title.value, `Score ${l * i}`, { ws: LEAD.code, likelihood: l, impact: i, title: title.value }); } }, 'Add')]);
+  }
+
+  // ======================================================================
+  // Contributor: My tasks (dates locked; request a date or predecessor change; arrows for links)
+  // ======================================================================
+  function leadTasks(main) {
+    let scope = 'exit', filter = state.taskFilter || 'needs', sel = state.selTask || null;
+    state.taskFilter = null; state.selTask = null;
+    const t0 = '2026-07-01', t1 = '2027-07-31', span = days(t0, t1);
+    const pos = (d) => Math.max(0, Math.min(100, (days(t0, d) / span) * 100));
+    const wrap = h('div.split'), list = h('div.grow'), panel = h('div.panel');
+    const all = () => scope === 'exit' ? D.plan : scope === 'day1' ? D.day1.map((x) => ({ id: x.id, type: 'Task', name: x.name, finish: x.due, start: x.due, status: x.status, pct: x.status === 'Complete' ? 1 : 0, owner: x.owner, pred: [] }))
+      : D.f100.map((x) => ({ id: x.id, type: 'Task', name: x.name, finish: x.due, start: x.due, status: x.status, pct: x.status === 'Complete' ? 1 : 0, owner: x.owner, pred: [] }));
+    const visible = () => {
+      const rows = all();
+      if (filter === 'all' || scope !== 'exit') return rows;
+      const keep = new Set(rows.filter((p) => why(p)).map((p) => p.tsa));
+      return rows.filter((p) => p.type === 'TSA exit' ? keep.has(p.tsa) : !!why(p));
+    };
+    if (!sel) sel = (visible().find((x) => x.type !== 'TSA exit') || {}).id;
+    const byId = () => Object.fromEntries(D.plan.map((p) => [p.id, p]));
+    const finishOf = (p) => (state.dcr && D.dc.chain.find((c) => c.id === p.id) || {}).to || p.finish;
+    const drawList = () => {
+      list.textContent = '';
+      const rows = visible();
+      const tw = h('div.tbl-wrap', { style: { position: 'relative' } });
+      tw.append(h('table.t', h('thead', h('tr', h('th', 'Activity'), h('th', 'Finish 🔒'), h('th', { style: { minWidth: '300px' } }, 'Jul 2026 → Jul 2027'), h('th', 'Status'), h('th.n', '%'))),
+        h('tbody', rows.map((p) => {
+          const exit = p.type === 'TSA exit';
+          const req = state.dcr && p.id === D.dc.item, moved = state.dcr && D.dc.chain.some((c) => c.id === p.id);
+          const w = why(p);
+          const pend = pendingOf('task:' + p.id) || pendingOf('pred:' + p.id);
+          const track = h('div.bar-track', h('span.today-line', { style: { left: pos(M.today) + '%' } }),
+            exit ? null : h('span.bar', { 'data-bar': p.id, class: p.type !== 'Task' ? 'ms' : null, style: { left: pos(p.start) + '%', width: p.type !== 'Task' ? null : Math.max(1, pos(p.finish) - pos(p.start)) + '%', background: p.status === 'Complete' ? C.g : C.c1 }, 'data-tip': `${p.name}: ${fdate(p.start)} to ${fdate(p.finish)}` }),
+            moved ? (() => { const c = D.dc.chain.find((x) => x.id === p.id); return h('span.bar.ghost', { style: { left: pos(p.start) + '%', width: Math.max(1, pos(c.to) - pos(p.start)) + '%' }, 'data-tip': `Proposed finish ${fdate(c.to)}` }); })() : null);
+          return h('tr', { 'data-row': p.id, class: [exit ? '' : 'click', p.id === sel ? 'sel' : '', moved ? 'moved' : ''].join(' '), onclick: exit ? null : () => { sel = p.id; drawList(); drawPanel(); } },
+            h('td', exit ? h('b', tsaName(p.tsa)) : h('div', { style: { paddingLeft: '10px' } }, p.name,
+              h('div.row', { style: { gap: '4px', marginTop: '3px' } }, w && filter === 'needs' ? chip(w.text, w.cls) : null, req ? chip('Date change requested', 'a') : moved ? chip('would move', 'a') : null, pend ? chip('Ready to send', 'info') : state.sent['task:' + p.id] ? chip('Sent', 'g') : null))),
+            h('td.num', { style: { whiteSpace: 'nowrap' } }, fshort(p.finish) + ' ' + (p.finish || '').slice(2, 4)), h('td', exit ? null : track),
+            h('td', exit ? null : chip(p.status, p.status === 'Complete' ? 'g' : p.status === 'In progress' ? 'info' : 'n')), h('td.n', exit ? '' : pct(p.pct || 0)));
+        }))));
+      list.append(tw);
+      requestAnimationFrame(() => drawArrows(tw, rows));
+    };
+    // Finish-to-start arrows from each predecessor's bar to its successor's bar. Red when the predecessor now finishes after the successor starts.
+    function drawArrows(tw, rows) {
+      tw.querySelector('svg.links')?.remove();
+      const base = tw.getBoundingClientRect(), ids = new Set(rows.map((r) => r.id)), B = byId();
+      const box = (id) => { const e = tw.querySelector(`[data-bar="${id}"]`); if (!e) return null; const r = e.getBoundingClientRect(); return { l: r.left - base.left + tw.scrollLeft, r: r.right - base.left + tw.scrollLeft, y: (r.top + r.bottom) / 2 - base.top + tw.scrollTop }; };
+      const svg = K.s('svg', { class: 'links', width: tw.scrollWidth, height: tw.scrollHeight, style: 'position:absolute;left:0;top:0;pointer-events:none;overflow:visible' },
+        K.s('defs', {}, ['n', 'r'].map((k) => K.s('marker', { id: 'ah-' + k, viewBox: '0 0 6 6', refX: 5, refY: 3, markerWidth: 6, markerHeight: 6, orient: 'auto' }, K.s('path', { d: 'M0 0L6 3L0 6Z', fill: k === 'r' ? C.r : '#7C8796' })))));
+      for (const p of rows) for (const q of (p.pred || [])) {
+        if (!ids.has(q)) continue;
+        const a = box(q), b = box(p.id); if (!a || !b) continue;
+        const late = B[q] && finishOf(B[q]) > p.start;
+        const x1 = a.r, y1 = a.y, x2 = b.l - 1, y2 = b.y;
+        const d = x2 - x1 >= 10 ? `M${x1} ${y1}H${x1 + 5}V${y2}H${x2}` : `M${x1} ${y1}H${x1 + 5}V${y2 - 8}H${x2 - 7}V${y2}H${x2}`;
+        svg.append(K.s('path', { d, fill: 'none', stroke: late ? C.r : '#9AA5B4', 'stroke-width': late ? 1.6 : 1.1, 'marker-end': `url(#ah-${late ? 'r' : 'n'})` }));
+      }
+      tw.append(svg);
+    }
+    const drawPanel = () => {
+      panel.textContent = '';
+      const p = all().find((x) => x.id === sel);
+      if (!p) { panel.append(h('div.panel-body', h('div.empty', h('div.empty-title', 'Pick a task to update it')))); return; }
+      let asking = null;
+      const st = h('select.input', ['Not started', 'In progress', 'Complete'].map((o) => h('option', { selected: o === p.status }, o)));
+      const pc = h('input.input', { type: 'number', min: 0, max: 100, value: Math.round((p.pct || 0) * 100) });
+      const cm = h('textarea.input', { rows: 2 });
+      st.addEventListener('change', () => { if (st.value === 'Complete') pc.value = 100; });
+      const req = h('div');
+      const B = byId();
+      const drawReq = () => {
+        req.textContent = '';
+        const preds = (p.pred || []).map((q) => B[q]).filter(Boolean);
+        req.append(h('div.field', h('span.label', 'Comes after (predecessors)'),
+          preds.length ? h('div.list', preds.map((q) => h('div.li', { style: { padding: '6px 0' } }, h('div.li-main', h('div.li-title', q.name), h('div.li-sub', `${q.id} · finishes ${fdate(finishOf(q))}`)),
+            finishOf(q) > p.start ? chip('Finishes after this starts', 'r') : null))) : h('div.small.muted', 'Nothing. This task can start on its own.')));
+        if (state.dcr && p.id === D.dc.item) req.append(h('div.callout', h('b', 'Date change requested'), h('div', `Finish ${fdate(D.dc.from)} → ${fdate(D.dc.to)}. ${D.dc.chain.length - 1} later tasks would move with it. Waiting for the SMO.`)));
+        if (pendingOf('pred:' + p.id)) req.append(h('div.callout', h('b', 'Predecessor change ready to send'), h('div', state.outbox.find((x) => x.key === 'pred:' + p.id).detail)));
+        if (!asking) {
+          req.append(h('div.row', h('button.btn', { onclick: () => { asking = 'date'; drawReq(); } }, 'Request a date change'), h('button.btn', { onclick: () => { asking = 'pred'; drawReq(); } }, 'Propose a predecessor change')));
+          return;
+        }
+        const card = h('div.card', { style: { boxShadow: 'none', background: 'var(--input)', display: 'flex', flexDirection: 'column', gap: '10px' } });
+        const why_ = h('textarea.input', { rows: 3 });
+        if (asking === 'date') {
+          const nd = h('input.input', { type: 'date', value: p.id === D.dc.item ? D.dc.to : '' });
+          if (p.id === D.dc.item) why_.value = D.dc.reason;
+          const fx = h('div.small');
+          const calc = () => { const n = nd.value ? days(p.finish, nd.value) : 0; fx.textContent = !n ? '' : p.id === D.dc.item ? `+${n} days. This moves ${D.dc.chain.length - 1} later tasks and the cut-over to ${fdate(D.dc.chain[D.dc.chain.length - 1].to)}, after the TSA exit date. The SMO will see the cost before deciding.` : `${n > 0 ? '+' : ''}${n} days.`; };
+          nd.addEventListener('input', calc); calc();
+          card.append(h('b', 'Request a date change'), h('div.field', h('label', 'Proposed finish date'), nd), fx, h('div.field', h('label', 'Why it needs to move'), why_),
+            h('div.row', h('button.btn', { onclick: () => { asking = null; drawReq(); } }, 'Cancel'),
+              h('button.btn.btn-primary', { onclick: () => { if (p.id === D.dc.item) state.dcr = true; queue('date:' + p.id, 'Date change', p.name, `Finish ${fdate(p.finish)} → ${fdate(nd.value)}`, { item: p.id, from: p.finish, to: nd.value, reason: why_.value }); asking = null; drawList(); drawPanel(); } }, 'Add request')));
+        } else {
+          const others = D.plan.filter((x) => x.tsa === p.tsa && x.id !== p.id && x.type !== 'TSA exit');
+          const keep = {}; (p.pred || []).forEach((q) => { keep[q] = true; });
+          const boxes = (p.pred || []).map((q) => h('label.row', { style: { gap: '8px' } }, h('input', { type: 'checkbox', checked: true, onchange: (e) => { keep[q] = e.target.checked; } }), `Keep: ${B[q] ? B[q].name : q}`));
+          const add = h('select.input', h('option', { value: '' }, 'Add a predecessor (optional)'), others.filter((x) => !(p.pred || []).includes(x.id)).map((x) => h('option', { value: x.id }, `${x.name} (finishes ${fshort(x.finish)})`)));
+          card.append(h('b', 'Propose a predecessor change'), h('div.small.muted', 'Untick a predecessor that no longer matters, or add one. The SMO checks the effect on other tasks before accepting.'),
+            boxes.length ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } }, boxes) : null, add, h('div.field', h('label', 'Why'), why_),
+            h('div.row', h('button.btn', { onclick: () => { asking = null; drawReq(); } }, 'Cancel'),
+              h('button.btn.btn-primary', { onclick: () => {
+                const removed = (p.pred || []).filter((q) => !keep[q]), added = add.value ? [add.value] : [];
+                if (!removed.length && !added.length) { toast('Untick a predecessor or pick one to add'); return; }
+                const txt = [removed.length ? 'remove ' + removed.map((q) => B[q].name).join(', ') : '', added.length ? 'add ' + B[added[0]].name : ''].filter(Boolean).join('; ');
+                queue('pred:' + p.id, 'Predecessor change', p.name, txt.charAt(0).toUpperCase() + txt.slice(1), { item: p.id, remove: removed, add: added, reason: why_.value });
+                asking = null; drawList(); drawPanel();
+              } }, 'Add proposal')));
+        }
+        req.append(card);
+      };
+      drawReq();
+      panel.append(h('div.panel-head', h('div', h('div.small.muted', `${p.id} · ${tsaName(p.tsa)}`), h('h2', p.name))),
+        h('div.panel-body',
+          why(p) ? h('div', chip(why(p).text, why(p).cls)) : null,
+          h('div.grid.g2', h('div.field', h('label', 'Status'), st), h('div.field', h('label', '% complete'), pc)),
+          h('div.grid.g2', h('div.field', h('label', 'Start'), h('input.input', { readonly: true, value: fdate(p.start) })), h('div.field', h('label', 'Finish'), h('input.input', { readonly: true, value: fdate(p.finish) }))),
+          h('span.lock', '🔒 Dates and links come from the Hub\'s main plan. Changing them needs the SMO\'s approval.'),
+          req, h('div.field', h('label', 'Comment'), cm)),
+        h('div.panel-foot', h('button.btn.btn-primary', { onclick: () => { p.status = st.value; p.pct = Number(pc.value) / 100; queue('task:' + p.id, 'Task update', p.name, `${st.value}, ${pc.value}% complete${cm.value ? ', with a comment' : ''}`, { item: p.id, status: st.value, pct: Number(pc.value) / 100, comment: cm.value }); drawList(); } }, 'Save')));
+    };
+    const counts = { needs: visible().length };
+    const fbar = scope === 'exit' ? h('div.filters', [['needs', 'Needs you and coming up'], ['all', 'All tasks']].map(([k, l]) => h('button.fchip', { 'aria-pressed': String(k === filter), onclick: () => { filter = k; redraw(); } }, l))) : null;
+    const seg = h('div.tabs', [['exit', 'Exit plan', D.plan.filter((p) => p.type !== 'TSA exit').length], ['f100', 'First 100 days', D.f100.length], ['day1', 'Day 1', D.day1.length]].map(([k, l, n]) =>
+      h('button.tab', { 'aria-selected': String(k === scope), onclick: () => { scope = k; sel = null; redraw(); } }, l, h('span.n', String(n)))));
+    function redraw() { main.textContent = ''; state.taskFilter = filter; state.selTask = sel; leadTasks.__scope = scope; leadTasks(main); }
+    if (leadTasks.__scope) { scope = leadTasks.__scope; leadTasks.__scope = null; if (!all().some((x) => x.id === sel)) sel = (visible().find((x) => x.type !== 'TSA exit') || {}).id; }
+    drawList(); drawPanel();
+    wrap.append(list, panel);
+    addEventListener('resize', () => { const tw = list.querySelector('.tbl-wrap'); if (tw) drawArrows(tw, visible()); }, { once: true });
+    main.append(h('div.page', head('My tasks', 'Your part of the plan, updated from the Hub. Change status, % complete and comments; ask the SMO to change dates or links.', h('span.asat', 'Updated from the Hub ' + fdate(M.today))),
+      seg, fbar, scope === 'exit' && filter === 'needs' ? h('div.small.muted', 'Showing tasks in progress, late to start, or starting or due in the next 8 weeks. Arrows show which task waits for which; red means the earlier one now finishes too late.') : null, wrap));
+    renderTray();
+  }
+
+  // ======================================================================
+  // Contributor: My services (whole register, every field; detail below the list)
+  // ======================================================================
+  function leadServices(main, opts = {}) {
+    let wsF = opts.ws || LEAD.code, q = '', sel = null;
+    const wsList = [...new Set(TSA.map((t) => t.Workstream))];
+    const table = h('div'), detail = h('div', { style: { scrollMarginTop: '72px' } });
+    const filt = () => TSA.filter((t) => (wsF === 'All' || t.Workstream === wsF) && (!q || (t['TSA ID'] + ' ' + t['Service name'] + ' ' + t['Service description']).toLowerCase().includes(q)));
+    const drawTable = () => {
+      const rows = filt(); table.textContent = '';
+      const total = rows.filter((t) => t.Status !== 'Exited').reduce((a, t) => a + (Number(t['Monthly fee (reporting currency)']) || 0), 0);
+      table.append(h('div.tbl-wrap', { style: { maxHeight: '46vh' } }, h('table.t', h('thead', h('tr', ['TSA ID', 'Service', 'WS', 'Direction', 'Status', 'Delivery', 'Readiness', 'Forecast exit'].map((x) => h('th', x)), h('th.n', 'Monthly fee'))),
+        h('tbody', rows.map((t) => h('tr.click', { class: sel === t['TSA ID'] ? 'sel' : null, onclick: () => { sel = t['TSA ID']; drawTable(); drawDetail(); detail.scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+          h('td.id', t['TSA ID']), h('td', t['Service name']), h('td', t.Workstream), h('td', t.Direction), h('td', chip(t.Status, t.Status === 'Exited' ? 'n' : t.Status === 'Extended' ? 'a' : 'g')),
+          h('td', chip(t['Service delivery RAG'])), h('td', chip(t['Exit readiness RAG'])),
+          h('td.num', fdate(t['Forecast exit date'])), h('td.n', t['Monthly fee (reporting currency)'] ? money(t['Monthly fee (reporting currency)']) : '–')))),
+        h('tfoot', h('tr', h('td', { colspan: 8 }, `${rows.length} services · live run-rate`), h('td.n', money(total)))))));
+    };
+    const groups = [['Service', ['Service description', 'Direction', 'Status', 'Sub-function', 'Line of business', 'Critical', 'Schedule ref', 'Service levels', 'Dependent services']],
+      ['Dates', ['Service start', 'Initial term (months)', 'Initial end date', 'Planned exit date', 'Forecast exit date', 'Actual exit date', 'Exit notice deadline', 'Extension notice deadline']],
+      ['Fees', ['Fee currency', 'Monthly fee (key input)', 'Monthly fee (reporting currency)', 'Charging basis', 'Fee basis note', 'Inside fee cap', 'Mark-up starts', 'Billing stops']],
+      ['People and parties', ['Provider service owner', 'Recipient service owner', 'Provider entity', 'Recipient entity']],
+      ['Exit', ['Exit route', 'Exit plan status', 'Exit hypothesis', 'Entanglement', 'Exit complexity', 'Service delivery RAG', 'Exit readiness RAG', 'Path to green', 'Latest SLA result']],
+      ['Contract terms', ['On-time exit notice (days)', 'Early exit notice (days)', 'Extension notice (days)', 'Extension allowed', 'Maximum extension (months)', 'Partial exit allowed']]];
+    const val = (k, v) => v === '' || v == null ? '–' : /date|deadline|start|stops|starts/i.test(k) && /^\d{4}-/.test(v) ? fdate(v) : /fee \(/i.test(k) && typeof v === 'number' ? money(v) : String(v);
+    const drawDetail = () => {
+      detail.textContent = '';
+      const t = TSA.find((x) => x['TSA ID'] === sel);
+      if (!t) { detail.append(h('div.card.empty', h('div.empty-title', 'Pick a service to see every field'), h('div.small', 'Fees, dates, owners, exit route and contract terms show here, below the list.'))); return; }
+      detail.append(h('div.card', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } },
+        h('div.row', h('div', { style: { flex: '1 1 300px' } }, h('div.small.muted', `${t['TSA ID']} · ${t.Workstream} · ${t.Direction}`), h('h2', { style: { fontSize: '18px' } }, t['Service name'])),
+          chip(t.Status, t.Status === 'Exited' ? 'n' : t.Status === 'Extended' ? 'a' : 'g'), h('div', { style: { textAlign: 'right' } }, h('div.kpi-value', { style: { fontSize: '22px' } }, t['Monthly fee (reporting currency)'] ? money(t['Monthly fee (reporting currency)']) : '–'), h('div.small.muted', 'a month'))),
+        h('p', { style: { margin: 0, maxWidth: '90ch' } }, t['Service description']),
+        h('div.grid.g3', groups.map(([g, ks]) => h('div', h('div.kv-sec', { style: { marginTop: 0, borderTop: 0, paddingTop: 0 } }, g),
+          h('dl.kv', ks.filter((k) => k !== 'Service description').map((k) => [h('dt', k), h('dd', val(k, t[k]))]))))),
+        h('div.small.muted', 'Read only. Ask the SMO to change a service.')));
+    };
+    const wsSel = h('select.input', { style: { width: 'auto' }, 'aria-label': 'Workstream', onchange: (e) => { wsF = e.target.value; sel = null; drawTable(); drawDetail(); } },
+      h('option', { value: 'All' }, 'All workstreams'), wsList.map((w) => h('option', { value: w, selected: w === wsF }, `${w}${ws(w) ? ' · ' + ws(w).name : ''}`)));
+    drawTable(); drawDetail();
+    main.append(h('div.page', head('My services', 'The whole TSA register. It opens on your workstream; pick any other to look across. Pick a service to see every field below.', h('div.row.no-print', h('span.asat', 'As at ' + fdate(M.rd)), h('button.btn', { onclick: () => print() }, 'Print or save as PDF'))),
+      h('div.filters.no-print', wsSel, h('input.search', { type: 'search', placeholder: 'Search services', 'aria-label': 'Search services', oninput: (e) => { q = e.target.value.toLowerCase(); drawTable(); } })),
+      table, detail));
+    renderTray();
   }
 
   // ======================================================================
   // Contributor: My report
   // ======================================================================
   function leadReport(main) {
+    setTimeout(renderTray);
     if (state.submitted) return reportSent(main);
     const last = LEAD;
     let rag = 'Amber', trend = 'Stable';
@@ -151,15 +488,17 @@
             D.raid.decisions.map((r) => h('tr', h('td', h('input', { type: 'checkbox', 'aria-label': 'Include ' + r.title })), h('td.id', r.id), h('td', r.title), h('td', chip(r.status, 'g')), h('td', r.owner)))))),
         h('div.row', { style: { marginTop: '10px' } }, h('a.btn.btn-sm', { href: '#raid' }, '+ Raise a risk or issue'))),
       h('div.card', { style: { position: 'sticky', bottom: '12px', boxShadow: 'var(--sh28)' } },
-        h('div.row', h('div', { style: { flex: '1 1 260px' } }, h('b', 'Ready to send?'), h('div.small.muted', 'Submit sends your report, task updates, new risks and date requests to the SMO in one go.')),
+        h('div.row', h('div', { style: { flex: '1 1 260px' } }, h('b', 'Ready to send?'), h('div.small.muted', 'Submit sends your report, plus any task and RAID changes still waiting, to the SMO in one go.')),
           h('button.btn.btn-primary', { onclick: () => submitDialog(main, () => Object.assign({ ws: LEAD.code, month: M.rd.slice(0, 8) + '01', rag, trend, risks: D.raid.risks.filter((r) => r.status === 'New'), issues: D.raid.issues }, Object.fromEntries(Object.entries(vals).map(([k, t]) => [k, t.value])))) }, 'Submit to the SMO')))));
   }
   function submitDialog(main, payload) {
-    modal('Submit your September report?', h('div', h('p', { style: { margin: '0 0 10px' } }, 'This goes to the SMO now:'),
-      h('div.list', [['Workstream report', 'RAG Amber, trend Stable, 6 commentary boxes'], ['Task updates', '3 tasks: status and % complete'], ['New risk', 'Reconciliation breaks found in rehearsal 2'],
-        ['Date change request', state.dcr ? 'Build and configure cloned system, +6 weeks' : 'None']].map(([a, b]) => h('div.li', h('span.chip.g', '✓'), h('div.li-main', h('div.li-title', a), h('div.li-sub', b))))),
-      h('p.small.muted', 'You can still change it until the SMO approves it.')),
-    (close) => [h('button.btn', { onclick: close }, 'Not yet'), h('button.btn.btn-primary', { onclick: async (e) => { e.currentTarget.disabled = true; e.currentTarget.textContent = 'Sending…'; try { const r = await K.submit('report', payload()); state.where = r.where; close(); state.submitted = true; main.textContent = ''; reportSent(main); } catch (err) { close(); toast('Could not send: ' + err.message); } } }, 'Submit')]);
+    const extra = state.outbox.slice();
+    modal(`Submit your ${PERIOD} report?`, h('div', h('p', { style: { margin: '0 0 10px' } }, 'This goes to the SMO now:'),
+      h('div.list', h('div.li', h('span.chip.g', '✓'), h('div.li-main', h('div.li-title', 'Workstream report'), h('div.li-sub', 'RAG, trend and 6 commentary boxes'))),
+        extra.map((x) => h('div.li', h('span.chip.g', '✓'), h('div.li-main', h('div.li-title', `${x.kind}: ${x.label}`), h('div.li-sub', x.detail))))),
+      extra.length ? null : h('p.small.muted', 'Nothing else is waiting. Task and RAID changes can be sent from any screen at any time.'),
+      h('p.small.muted', 'You can still change the report until the SMO approves it.')),
+    (close) => [h('button.btn', { onclick: close }, 'Not yet'), h('button.btn.btn-primary', { onclick: async (e) => { e.currentTarget.disabled = true; e.currentTarget.textContent = 'Sending…'; try { const r = await K.submit('report', payload()); if (state.outbox.length) await sendOutbox(true); state.where = r.where; state.sentWith = extra; close(); state.submitted = true; main.textContent = ''; reportSent(main); } catch (err) { close(); toast('Could not send: ' + err.message); } } }, 'Submit')]);
   }
   function reportSent(main) {
     main.append(h('div.page', h('div.card.success',
@@ -168,153 +507,8 @@
       h('p.lede', { style: { textAlign: 'center' } }, `Your ${PERIOD} report reached the Hub at 14:05 on ${fdate(M.today)}. Maya Okafor sees it on Home now.`), state.where ? h('div.small.muted', 'Saved as: ' + state.where) : null,
       h('div.list', { style: { width: 'min(460px, 100%)', textAlign: 'left' } },
         h('div.li', chip('In', 'g'), h('div.li-main', h('div.li-title', 'Workstream report'), h('div.li-sub', 'Goes into Consolidated WS Reporting when approved'))),
-        h('div.li', chip('New', 'new'), h('div.li-main', h('div.li-title', '1 risk added to the RAID log'), h('div.li-sub', 'Marked New until the SMO adopts it'))),
-        h('div.li', chip('Waiting', 'a'), h('div.li-main', h('div.li-title', '1 date change awaiting approval'), h('div.li-sub', 'Nothing moves until the SMO approves it')))),
+        (state.sentWith || []).map((x) => h('div.li', chip(/request|change$/i.test(x.kind) ? 'Waiting' : 'In', /request|change$/i.test(x.kind) ? 'a' : 'g'), h('div.li-main', h('div.li-title', `${x.kind}: ${x.label}`), h('div.li-sub', /request|change$/i.test(x.kind) ? 'Nothing moves until the SMO approves it' : x.detail))))),
       h('div.row', h('a.btn', { href: '#start' }, 'Back to start'), h('button.btn', { onclick: () => { state.submitted = false; main.textContent = ''; leadReport(main); } }, 'Change my report')))));
-  }
-
-  // ======================================================================
-  // Contributor: My RAID
-  // ======================================================================
-  function leadRaid(main) {
-    let tab = 'risks';
-    const R = D.raid;
-    const body = h('div');
-    const draw = () => {
-      body.textContent = '';
-      const rows = { risks: R.risks.map((r) => [r.id === 'New' ? chip('New', 'new') : r.id, r.title, r.tsa, h('span', `${r.l}×${r.i} = ${r.score} `, chip(r.rating)), r.owner, r.status === 'New' ? 'Sent to the SMO' : fdate(r.review)]),
-        issues: R.issues.map((r) => [r.id, r.title, r.tsa, chip(r.priority, r.priority === 'High' ? 'a' : 'n'), r.owner, fdate(r.due)]),
-        actions: R.actions.map((r) => [r.id, r.title, r.linked, r.due < M.today || r.due === M.today ? chip('Due today', 'r') : chip(r.status, 'n'), r.owner, fdate(r.due)]),
-        decisions: R.decisions.map((r) => [r.id, r.title, '', chip(r.status, r.status === 'Made' ? 'g' : 'a'), r.owner, fdate(r.needed)]) }[tab];
-      const hd = { risks: ['ID', 'Risk', 'TSA', 'Score', 'Owner', 'Review by'], issues: ['ID', 'Issue', 'TSA', 'Priority', 'Owner', 'Due'], actions: ['ID', 'Action', 'Linked', 'Status', 'Owner', 'Due'], decisions: ['ID', 'Decision needed', '', 'Status', 'Owner', 'Needed by'] }[tab];
-      body.append(rows.length ? h('div.tbl-wrap', h('table.t', h('thead', h('tr', hd.map((x) => h('th', x)))), h('tbody', rows.map((r) => h('tr.click', r.map((c, i) => h(i === 0 ? 'td.id' : 'td', c))))))) :
-        h('div.card.empty', h('div.empty-icon', '✓'), h('div.empty-title', 'Nothing open here.'), h('div.small', 'Raise one if something new comes up.')));
-    };
-    const tabs = h('div.tabs', { role: 'tablist' }, [['risks', 'Risks', R.risks.length], ['issues', 'Issues', R.issues.length], ['actions', 'Actions', R.actions.length], ['decisions', 'Decisions', R.decisions.length]].map(([k, l, n]) =>
-      h('button.tab', { role: 'tab', 'aria-selected': String(k === tab), onclick: (e) => { tab = k; [...tabs.children].forEach((b) => b.setAttribute('aria-selected', String(b === e.currentTarget))); draw(); } }, l, h('span.n', String(n)))));
-    draw();
-    main.append(h('div.page', head('My RAID', `${LEAD.name} only. What you raise or change goes to the SMO as a proposal and shows in the Hub marked New.`,
-      h('button.btn.btn-primary', { onclick: () => raiseDialog() }, '+ Raise a risk or issue')),
-    h('div.legend-inline', h('span', chip('New', 'new'), 'raised by you, waiting for the SMO'), h('span', chip('Suggested', 'sugg'), 'from the starter library (SMO only)')), tabs, body));
-  }
-  function raiseDialog() {
-    let l = 3, i = 4;
-    const score = h('span'), rate = h('span');
-    const upd = () => { const s = l * i; score.textContent = String(s); rate.textContent = ''; rate.append(chip(s >= 15 ? 'Red' : s >= 8 ? 'Amber' : 'Green')); };
-    const scale = (cur, set) => { const e = h('div.seg'); [1, 2, 3, 4, 5].forEach((n) => e.append(h('button', { type: 'button', 'aria-pressed': String(n === cur), onclick: () => { set(n); [...e.children].forEach((b) => b.setAttribute('aria-pressed', String(+b.textContent === n))); upd(); } }, String(n)))); return e; };
-    upd();
-    modal('Raise a risk', h('div.grid', { style: { gap: '12px' } },
-      h('div.field', h('label', 'Risk'), h('input.input', { value: 'Seller staff leave before knowledge transfer completes' })),
-      h('div.field', h('label', 'TSA'), h('select.input', D.tsa.filter((r) => r[3] === LEAD.code).map((r) => h('option', `${r[0]} ${r[1]}`)))),
-      h('div.grid.g2', h('div.field', h('span.label', 'Likelihood'), scale(l, (v) => (l = v))), h('div.field', h('span.label', 'Impact'), scale(i, (v) => (i = v)))),
-      h('div.row', h('span.label.muted', 'Score'), h('b', score), rate, h('span.small.muted', 'works out as you pick')),
-      h('div.field', h('label', 'Mitigation / response'), h('textarea.input', { rows: 2 }))),
-    (close) => [h('button.btn', { onclick: close }, 'Cancel'), h('button.btn.btn-primary', { onclick: async () => { try { await K.submit('risk', { ws: LEAD.code, likelihood: l, impact: i, title: document.querySelector('.modal input.input').value }); close(); toast('Risk sent to the SMO. It shows in the Hub marked New.'); } catch (err) { toast('Could not send: ' + err.message); } } }, 'Send to the SMO')]);
-  }
-
-  // ======================================================================
-  // Contributor: My tasks (dates locked; request a date change)
-  // ======================================================================
-  function leadTasks(main) {
-    let scope = 'exit', sel = state.dcr ? D.dc.item : 'SP-CUS-0044';
-    const t0 = '2026-07-01', t1 = '2027-07-31', span = days(t0, t1);
-    const pos = (d) => Math.max(0, Math.min(100, (days(t0, d) / span) * 100));
-    const wrap = h('div.split'), list = h('div.grow'), panel = h('div.panel');
-    const items = () => scope === 'exit' ? D.plan : scope === 'day1' ? D.day1.map((x) => ({ id: x.id, type: 'Task', name: x.name, finish: x.due, start: x.due, status: x.status, pct: x.status === 'Complete' ? 1 : 0, owner: x.owner }))
-      : D.f100.map((x) => ({ id: x.id, type: 'Task', name: x.name, finish: x.due, start: x.due, status: x.status, pct: x.status === 'Complete' ? 1 : 0, owner: x.owner }));
-    const drawList = () => {
-      list.textContent = '';
-      const rows = items();
-      list.append(h('div.tbl-wrap', h('table.t', h('thead', h('tr', h('th', 'Activity'), h('th', 'Finish 🔒'), h('th', { style: { minWidth: '160px' } }, 'Jul 26 → Jul 27'), h('th', 'Status'), h('th.n', '%'))),
-        h('tbody', rows.map((p) => {
-          const exit = p.type === 'TSA exit';
-          const req = state.dcr && p.id === D.dc.item, moved = state.dcr && D.dc.chain.some((c) => c.id === p.id);
-          const track = h('div.bar-track', h('span.today-line', { style: { left: pos(M.today) + '%' } }),
-            exit ? null : h('span.bar', { class: p.type !== 'Task' ? 'ms' : null, style: { left: pos(p.start) + '%', width: Math.max(1, pos(p.finish) - pos(p.start)) + '%', background: p.status === 'Complete' ? C.g : C.c1 } }),
-            moved ? (() => { const c = D.dc.chain.find((x) => x.id === p.id); return h('span.bar.ghost', { style: { left: pos(p.start) + '%', width: Math.max(1, pos(c.to) - pos(p.start)) + '%' }, 'data-tip': `Proposed finish ${fdate(c.to)}` }); })() : null);
-          return h('tr', { class: [exit ? '' : 'click', p.id === sel ? 'sel' : '', moved ? 'moved' : ''].join(' '), onclick: exit ? null : () => { sel = p.id; drawList(); drawPanel(); } },
-            h('td', exit ? h('b', p.name) : h('div', { style: { paddingLeft: '10px' } }, p.name, req ? h('div', chip('Date change requested', 'a')) : moved ? h('div.small.muted', 'would move') : null)),
-            h('td.num', { style: { whiteSpace: 'nowrap' } }, fshort(p.finish) + ' ' + (p.finish || '').slice(2, 4)), h('td', exit ? null : track),
-            h('td', exit ? null : chip(p.status, p.status === 'Complete' ? 'g' : p.status === 'In progress' ? 'info' : 'n')), h('td.n', exit ? '' : pct(p.pct || 0)));
-        })))));
-    };
-    const drawPanel = () => {
-      panel.textContent = '';
-      const p = items().find((x) => x.id === sel) || items().find((x) => x.type !== 'TSA exit');
-      if (!p) return;
-      let asking = false;
-      const st = h('select.input', ['Not started', 'In progress', 'Complete'].map((o) => h('option', { selected: o === p.status }, o)));
-      const pc = h('input.input', { type: 'number', min: 0, max: 100, value: Math.round((p.pct || 0) * 100) });
-      const req = h('div');
-      const drawReq = () => {
-        req.textContent = '';
-        if (state.dcr && p.id === D.dc.item) { req.append(h('div.callout', h('b', 'Date change requested'), h('div', `Finish ${fdate(D.dc.from)} → ${fdate(D.dc.to)}. ${D.dc.chain.length - 1} later tasks would move with it. Waiting for the SMO.`))); return; }
-        if (!asking) { req.append(h('button.btn', { onclick: () => { asking = true; drawReq(); } }, 'Request a date change')); return; }
-        const nd = h('input.input', { type: 'date', value: p.id === D.dc.item ? D.dc.to : '' });
-        const why = h('textarea.input', { rows: 3 }); if (p.id === D.dc.item) why.value = D.dc.reason;
-        const fx = h('div.small');
-        const calc = () => { const n = nd.value ? days(p.finish, nd.value) : 0; fx.textContent = !n ? '' : p.id === D.dc.item ? `+${n} days. This moves ${D.dc.chain.length - 1} later tasks and the cut-over to ${fdate(D.dc.chain[D.dc.chain.length - 1].to)}, after the TSA exit date. The SMO will see the cost before deciding.` : `${n > 0 ? '+' : ''}${n} days.`; };
-        nd.addEventListener('input', calc); calc();
-        req.append(h('div.card', { style: { boxShadow: 'none', background: 'var(--input)', display: 'flex', flexDirection: 'column', gap: '10px' } },
-          h('div.field', h('label', 'Proposed finish date'), nd), fx, h('div.field', h('label', 'Why it needs to move'), why),
-          h('div.row', h('button.btn', { onclick: () => { asking = false; drawReq(); } }, 'Cancel'),
-            h('button.btn.btn-primary', { onclick: async () => { try { await K.submit('date-change', { ws: LEAD.code, item: p.id, name: p.name, from: p.finish, to: nd.value, reason: why.value }); state.dcr = true; toast('Date change sent to the SMO for approval'); drawList(); drawPanel(); } catch (err) { toast('Could not send: ' + err.message); } } }, 'Send request'))));
-      };
-      drawReq();
-      panel.append(h('div.panel-head', h('div', h('div.small.muted', p.id), h('h2', p.name))),
-        h('div.panel-body',
-          h('div.grid.g2', h('div.field', h('label', 'Status'), st), h('div.field', h('label', '% complete'), pc)),
-          h('div.grid.g2', h('div.field', h('label', 'Start'), h('input.input', { readonly: true, value: fdate(p.start) })), h('div.field', h('label', 'Finish'), h('input.input', { readonly: true, value: fdate(p.finish) }))),
-          h('span.lock', '🔒 Dates come from the Hub\'s main plan and update from there. A change needs the SMO\'s approval.'),
-          req, h('div.field', h('label', 'Comment'), h('textarea.input', { rows: 2 }))),
-        h('div.panel-foot', h('button.btn.btn-primary', { onclick: () => toast('Saved. It goes to the Hub when you submit.') }, 'Save')));
-    };
-    const seg = h('div.tabs', [['exit', 'Exit plan', D.plan.filter((p) => p.type !== 'TSA exit').length], ['f100', 'First 100 days', D.f100.length], ['day1', 'Day 1', D.day1.length]].map(([k, l, n]) =>
-      h('button.tab', { 'aria-selected': String(k === scope), onclick: (e) => { scope = k; [...seg.children].forEach((b) => b.setAttribute('aria-selected', String(b === e.currentTarget))); sel = (items().find((x) => x.type !== 'TSA exit') || {}).id; drawList(); drawPanel(); } }, l, h('span.n', String(n)))));
-    drawList(); drawPanel();
-    wrap.append(list, panel);
-    main.append(h('div.page', head('My tasks', 'Your part of the plan, updated from the Hub. Change status, % complete and comments; dates are locked.', h('span.asat', 'Updated from the Hub ' + fdate(M.today))),
-      h('div.callout', `Day 1 (${fdate(M.close)}) and the First 100 days are behind you, so the Exit plan comes first. Earlier lists stay here to look back on.`), seg, wrap));
-  }
-
-  // ======================================================================
-  // Contributor: My services (whole register, every field)
-  // ======================================================================
-  function leadServices(main, opts = {}) {
-    let wsF = opts.ws || LEAD.code, q = '', sel = null;
-    const wsList = [...new Set(TSA.map((t) => t.Workstream))];
-    const table = h('div.grow'), panel = h('div.panel');
-    const filt = () => TSA.filter((t) => (wsF === 'All' || t.Workstream === wsF) && (!q || (t['TSA ID'] + ' ' + t['Service name'] + ' ' + t['Service description']).toLowerCase().includes(q)));
-    const drawTable = () => {
-      const rows = filt(); table.textContent = '';
-      const total = rows.filter((t) => t.Status !== 'Exited').reduce((a, t) => a + (Number(t['Monthly fee (reporting currency)']) || 0), 0);
-      table.append(h('div.tbl-wrap', h('table.t', h('thead', h('tr', ['TSA ID', 'Service', 'WS', 'Direction', 'Status', 'Forecast exit'].map((x) => h('th', x)), h('th.n', 'Monthly fee'))),
-        h('tbody', rows.map((t) => h('tr.click', { class: sel === t['TSA ID'] ? 'sel' : null, onclick: () => { sel = t['TSA ID']; drawTable(); drawPanel(); } },
-          h('td.id', t['TSA ID']), h('td', t['Service name']), h('td', t.Workstream), h('td', t.Direction), h('td', chip(t.Status, t.Status === 'Exited' ? 'n' : t.Status === 'Extended' ? 'a' : 'g')),
-          h('td.num', fdate(t['Forecast exit date'])), h('td.n', t['Monthly fee (reporting currency)'] ? money(t['Monthly fee (reporting currency)']) : '–')))),
-        h('tfoot', h('tr', h('td', { colspan: 6 }, `${rows.length} services · live run-rate`), h('td.n', money(total)))))));
-    };
-    const groups = [['Service', ['Service description', 'Direction', 'Status', 'Sub-function', 'Line of business', 'Critical', 'Schedule ref', 'Service levels', 'Dependent services']],
-      ['Dates', ['Service start', 'Initial term (months)', 'Initial end date', 'Planned exit date', 'Forecast exit date', 'Actual exit date', 'Exit notice deadline', 'Extension notice deadline']],
-      ['Fees', ['Fee currency', 'Monthly fee (key input)', 'Monthly fee (reporting currency)', 'Charging basis', 'Fee basis note', 'Inside fee cap', 'Mark-up starts', 'Billing stops']],
-      ['People', ['Provider service owner', 'Recipient service owner', 'Provider entity', 'Recipient entity']],
-      ['Exit', ['Exit route', 'Exit plan status', 'Exit hypothesis', 'Entanglement', 'Exit complexity', 'Service delivery RAG', 'Exit readiness RAG', 'Path to green', 'Latest SLA result']],
-      ['Contract terms', ['On-time exit notice (days)', 'Early exit notice (days)', 'Extension notice (days)', 'Extension allowed', 'Maximum extension (months)', 'Partial exit allowed']]];
-    const val = (k, v) => v === '' || v == null ? '–' : /date|deadline|start|stops|starts/i.test(k) && /^\d{4}-/.test(v) ? fdate(v) : /fee \(/i.test(k) && typeof v === 'number' ? money(v) : String(v);
-    const drawPanel = () => {
-      panel.textContent = '';
-      const t = TSA.find((x) => x['TSA ID'] === sel);
-      if (!t) { panel.append(h('div.panel-body', h('div.empty', h('div.empty-title', 'Pick a service'), h('div.small', 'Every field from the TSA register shows here, including fees.')))); return; }
-      panel.append(h('div.panel-head', h('div', h('div.small.muted', t['TSA ID'] + ' · ' + t.Workstream), h('h2', t['Service name']))),
-        h('div.panel-body', h('dl.kv', groups.map(([g, ks]) => [h('div.kv-sec', g), ks.map((k) => [h('dt', k), h('dd', val(k, t[k]))])]))),
-        h('div.panel-foot', h('span.small.muted', 'Read only. Ask the SMO to change a service.')));
-    };
-    const wsSel = h('select.input', { style: { width: 'auto' }, 'aria-label': 'Workstream', onchange: (e) => { wsF = e.target.value; sel = null; drawTable(); drawPanel(); } },
-      h('option', { value: 'All' }, 'All workstreams'), wsList.map((w) => h('option', { value: w, selected: w === wsF }, `${w}${ws(w) ? ' · ' + ws(w).name : ''}`)));
-    drawTable(); drawPanel();
-    main.append(h('div.page', head('My services', 'The whole TSA register. It opens on your workstream; pick any other to look across.', h('div.row.no-print', h('span.asat', 'As at ' + fdate(M.rd)), h('button.btn', { onclick: () => print() }, 'Print or save as PDF'))),
-      h('div.filters.no-print', wsSel, h('input.search', { type: 'search', placeholder: 'Search services', 'aria-label': 'Search services', oninput: (e) => { q = e.target.value.toLowerCase(); drawTable(); } })),
-      h('div.split', table, panel)));
   }
 
   // ======================================================================
