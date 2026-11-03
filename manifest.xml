@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- SMO Hub add-in manifest. tools/build.py replaces https://timothythomas1968.github.io/smo-hub-addin-test with the HTTPS address the files are served from. -->
+<!-- TransitionSuite add-in manifest (control IDs keep the old SMOHub names so nothing needs re-sideloading). tools/build.py replaces https://timothythomas1968.github.io/smo-hub-addin-test with the HTTPS address the files are served from. -->
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
            xsi:type="TaskPaneApp">
   <Id>bd363564-91bc-40c1-a3f6-31d090fce9d7</Id>
-  <Version>0.9.0.0</Version>
+  <Version>0.9.1.0</Version>
   <ProviderName>Whisper Consulting</ProviderName>
   <DefaultLocale>en-GB</DefaultLocale>
-  <DisplayName DefaultValue="SMO Hub (test)"/>
-  <Description DefaultValue="Screens for running a separation and TSA programme from the SMO Hub workbook."/>
+  <DisplayName DefaultValue="TransitionSuite (test)"/>
+  <Description DefaultValue="TransitionSuite by Whisper Consulting: screens for running a separation and TSA programme from the Hub workbook."/>
   <IconUrl DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://www.whisper-consulting.com"/>
@@ -80,13 +80,13 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://timothythomas1968.github.io/smo-hub-addin-test/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="SMO Hub is ready"/>
-        <bt:String id="Group.Label" DefaultValue="SMO Hub"/>
-        <bt:String id="Open.Label" DefaultValue="SMO Hub (test)"/>
+        <bt:String id="GetStarted.Title" DefaultValue="TransitionSuite is ready"/>
+        <bt:String id="Group.Label" DefaultValue="TransitionSuite"/>
+        <bt:String id="Open.Label" DefaultValue="TransitionSuite (test)"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Open SMO Hub from the Home tab. Drag the panel's left edge to make it wider."/>
-        <bt:String id="Open.Tip" DefaultValue="Open the SMO Hub screens for this workbook."/>
+        <bt:String id="GetStarted.Description" DefaultValue="Open TransitionSuite from the Home tab. Drag the panel's left edge to make it wider."/>
+        <bt:String id="Open.Tip" DefaultValue="Open the TransitionSuite screens for this workbook."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

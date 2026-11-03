@@ -40,6 +40,20 @@ let US = false;
 export function setEdition(e) { US = e === 'US'; }
 export const isUS = () => US;
 
+// The programme's own name for the team that runs it (SMO, IMO, PMO, Transition Office...), from the
+// workbook's set-up answer TeamName (short form TeamShort). Screens say team() + ' lead', 'From the ' + team()...
+// A workbook from before v0.11 has no answer; its own text says "SMO", so the panel keeps "SMO" for it.
+let TEAM = 'SMO';
+export function setTeam(names) {
+  const short = String((names && names.TeamShort) || '').trim(), full = String((names && names.TeamName) || '').trim();
+  if (short) TEAM = short;
+  else if (full) { const m = /\(([^)]+)\)/.exec(full); TEAM = m ? m[1].trim() : full; }
+  else TEAM = names && 'TeamName' in names && names.TeamName !== undefined && names.TeamName !== null ? ed('programme office') : 'SMO';
+}
+export const team = () => TEAM;
+/** "the SMO", "the programme office": an abbreviation keeps its capitals; a phrase is lower case after "the". */
+export const theTeam = () => (/^[A-Z]{2,5}$/.test(TEAM) ? 'the ' + TEAM : 'the ' + TEAM.charAt(0).toLowerCase() + TEAM.slice(1));
+
 // UK -> US spelling. The same list, in the same order, as GLOSS in workbook/builder/hub3_a.py:
 // keep the two in step, because the US workbook's own column names and dropdown values go through it too.
 export const GLOSS = [['programme', 'program'], ['Programme', 'Program'], ['organisation', 'organization'], ['Organisation', 'Organization'],

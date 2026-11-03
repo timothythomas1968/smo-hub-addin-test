@@ -13,6 +13,25 @@
     "ai": false
    },
    {
+    "name": "TeamName",
+    "q": "What does your programme call the team that runs it?",
+    "fmt": "text",
+    "dv": {
+     "pick": [
+      "Separation Management Office (SMO)",
+      "Integration Management Office (IMO)",
+      "Programme Management Office (PMO)",
+      "Transition Office",
+      "Programme team"
+     ],
+     "free": true
+    },
+    "help": "Pick one, or type your own. The Hub, the panel and the packs then say, for example, \"IMO lead\" and \"PMO commentary\". The short form is the part in brackets, if there is one.",
+    "example": "Separation Management Office (SMO)",
+    "required": true,
+    "ai": false
+   },
+   {
     "name": "BuyerName",
     "q": "What is the buyer's name for this transaction?",
     "fmt": "text",
@@ -47,12 +66,12 @@
    },
    {
     "name": "HubOwner",
-    "q": "Who runs this Hub (usually the SMO lead)?",
+    "q": "Who runs this Hub (usually your team's lead)?",
     "fmt": "text",
     "dv": {
      "name": "L_People"
     },
-    "help": "Suggested automatically once the People sheet has someone with the role SMO lead. Used as interviewer, approver and engagement owner.",
+    "help": "Suggested automatically once the People sheet has someone with your team's lead role (for example \"SMO lead\"). Used as interviewer, approver and engagement owner.",
     "example": "Maya Okafor",
     "required": false,
     "ai": false
@@ -425,7 +444,7 @@
     "q": "How many days before exit is the first readiness interview?",
     "fmt": "int",
     "dv": null,
-    "help": "Readiness interviews: before each service ends, the SMO lead meets the workstream lead to check nine areas are ready. Leave all four blank if this programme does not hold them: nothing is then scheduled or flagged.",
+    "help": "Readiness interviews: before each service ends, your team's lead meets the workstream lead to check nine areas are ready. Leave all four blank if this programme does not hold them: nothing is then scheduled or flagged.",
     "example": "90",
     "required": false,
     "ai": false

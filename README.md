@@ -1,11 +1,11 @@
-# Loading the SMO Hub add-in into Excel (test build)
+# Loading the TransitionSuite add-in into Excel (test build)
 
 The test build is served from GitHub Pages:
 
 - Manifest: https://timothythomas1968.github.io/smo-hub-addin-test/manifest.xml
 - Browser preview (demo data, no Excel needed): https://timothythomas1968.github.io/smo-hub-addin-test/taskpane.html
 
-Use the demo workbook **SMO Hub (UK) v0.10 Complete DEMO.xlsx**. The add-in reads and writes whichever SMO Hub workbook is open.
+Use the demo workbook **TransitionSuite Hub (UK) v0.11 Complete DEMO.xlsx**. The add-in reads and writes whichever Hub workbook is open.
 
 First, download `manifest.xml` from the link above (right-click, Save link as).
 
@@ -16,8 +16,8 @@ First, download `manifest.xml` from the link above (right-click, Save link as).
    `~/Library/Containers/com.microsoft.Excel/Data/Documents/`
 3. If there is no folder called `wef` there, create it. Copy `manifest.xml` into `wef`.
 4. Open Excel and the demo workbook.
-5. On the **Home** tab, click **SMO Hub (test)** at the right-hand end of the ribbon.
-   If it isn't there: **Home → Add-ins** (or **Insert → My Add-ins**), and pick SMO Hub (test) under Developer add-ins.
+5. On the **Home** tab, click **TransitionSuite (test)** at the right-hand end of the ribbon.
+   If it isn't there: **Home → Add-ins** (or **Insert → My Add-ins**), and pick TransitionSuite (test) under Developer add-ins.
 6. Drag the panel's left edge to make it as wide as you like.
 
 ## Windows (Excel for Microsoft 365)
@@ -27,7 +27,7 @@ First, download `manifest.xml` from the link above (right-click, Save link as).
 1. Open the demo workbook.
 2. **Home → Add-ins → More Add-ins → My Add-ins → Upload My Add-in**.
 3. Browse to `manifest.xml` and click **Upload**.
-4. Click **SMO Hub (test)** on the Home tab.
+4. Click **TransitionSuite (test)** on the Home tab.
 
 **Option B: shared-folder catalogue (works with any account)**
 
@@ -36,7 +36,7 @@ First, download `manifest.xml` from the link above (right-click, Save link as).
 3. In Excel: **File → Options → Trust Center → Trust Center Settings → Trusted Add-in Catalogs**.
 4. Paste the network path into **Catalog Url**, click **Add catalog**, tick **Show in Menu**, click **OK** twice.
 5. Close and reopen Excel. Open the demo workbook.
-6. **Home → Add-ins → More Add-ins → SHARED FOLDER**, pick **SMO Hub (test)**, click **Add**.
+6. **Home → Add-ins → More Add-ins → SHARED FOLDER**, pick **TransitionSuite (test)**, click **Add**.
 
 ## Excel on the web
 
@@ -77,7 +77,7 @@ Every screen is built:
   - invoice settings, letterhead and logo, tax per service, and the charges log;
   - print or save as PDF.
 - **Governance pack:**
-  - one pack per forum, shared or internal, with SMO commentary and sections you switch on or off;
+  - one pack per forum, shared or internal, with the team's commentary and sections you switch on or off;
   - the fees by year and by quarter;
   - print or save as PDF.
 - **Day 1 plan** and **First 100 days:** filters, status changed in the row, editing, adding and deleting.

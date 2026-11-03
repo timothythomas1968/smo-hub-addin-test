@@ -1,7 +1,7 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
-// (from there it flows into Consolidated WS Reporting and the RAID logs). The SMO sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso } from '../util.js?v=0.9.0.20261102192530';
-import { personLabel } from '../form.js?v=0.9.0.20261102192530';
+// (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam } from '../util.js?v=0.9.1.20261103220325';
+import { personLabel } from '../form.js?v=0.9.1.20261103220325';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -47,7 +47,7 @@ export default {
         h('div', h('h1', `Workstream report · ${fmtMonth(RD)}`),
           h('p.lede', 'Each lead\'s monthly status. It flows into Consolidated WS Reporting, Home and the governance pack; risks, issues and decisions listed here appear on the RAID logs.')),
         h('div.card', { style: { padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
-          h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, 'Reporting date (set by the SMO)'),
+          h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, `Reporting date (set by ${theTeam()})`),
           [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')])),
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } },
         h('span.small', { style: { fontWeight: 700, color: 'var(--navy)' } }, `${nDone} of ${list.length} reports in`),
@@ -192,7 +192,7 @@ function form(ctx, w, wsRow, s) {
   const url = (() => { try { return Office.context.document.url || ''; } catch (e) { return ''; } })();
   const RD = Number(store.names.RD) || 0;
   const mail = `mailto:?subject=${encodeURIComponent(`${w.name}: workstream report for ${fmtMonth(RD)}`)}&body=${encodeURIComponent(
-    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${fmtMonth(RD)} in the SMO Hub: open the workbook, then SMO Hub > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : ''}\nThank you.`)}`;
+    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${fmtMonth(RD)} in TransitionSuite: open the Hub workbook, then TransitionSuite > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : ''}\nThank you.`)}`;
 
   return h('div',
     h('div', { style: { padding: '16px 18px 12px', borderBottom: '1px solid var(--line-soft)', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' } },

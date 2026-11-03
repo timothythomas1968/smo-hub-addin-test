@@ -1,6 +1,6 @@
-// Governance pack: one pack per forum, built live from the registers, with SMO commentary, the client's letterhead,
+// Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed } from '../util.js?v=0.9.0.20261102192530';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam } from '../util.js?v=0.9.1.20261103220325';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -54,7 +54,7 @@ export default {
     const side = h('aside.panel', { 'aria-label': 'Pack contents' },
       h('div.panel-head', h('span.panel-id', f.joint ? 'Shared with the other party' : 'Internal'), h('h2.panel-title', 'Contents')),
       h('div.panel-body',
-        h('label.field', h('span.field-label', 'SMO commentary for this pack'), commIn),
+        h('label.field', h('span.field-label', `${team()} commentary for this pack`), commIn),
         h('div.sec', 'Sections'),
         SECTIONS.map(([k, label, kind]) => {
           const locked = kind === 'auto' || (kind === 'internal' && f.joint);
@@ -117,7 +117,7 @@ function buildPack(store, f, on, commentary) {
   parts.push(h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: '14px' } },
     tiles.map(([l, v, col]) => h('div', { style: { border: '1px solid var(--line)', borderRadius: '6px', padding: '8px 10px' } }, h('div.small', { style: { fontWeight: 700, color: 'var(--muted)', letterSpacing: '.6px', fontSize: '10.5px' } }, l.toUpperCase()), h('div', { style: { fontSize: '18px', fontWeight: 700, color: col || 'var(--ink)' } }, v)))));
   parts.push(h('div', { style: { display: commentary ? '' : 'none', marginTop: '14px', background: 'var(--selected)', borderLeft: '4px solid var(--navy)', padding: '10px 14px', borderRadius: '4px' } },
-    h('div.small', { style: { fontWeight: 700, color: 'var(--navy)', letterSpacing: '.6px' } }, 'FROM THE SMO'), h('div', { id: 'pack-comm', style: { whiteSpace: 'pre-wrap', marginTop: '2px' } }, commentary)));
+    h('div.small', { style: { fontWeight: 700, color: 'var(--navy)', letterSpacing: '.6px' } }, `FROM ${theTeam().toUpperCase()}`), h('div', { id: 'pack-comm', style: { whiteSpace: 'pre-wrap', marginTop: '2px' } }, commentary)));
 
   if (on('status')) {
     parts.push(cap('Workstream status', `Consolidated WS Reporting, ${fmtMonth(per)}`));

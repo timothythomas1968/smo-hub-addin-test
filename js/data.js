@@ -5,9 +5,9 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS } from './util.js?v=0.9.0.20261102192530';
+import { ed, isUS, setTeam } from './util.js?v=0.9.1.20261103220325';
 
-const SCALAR_NAMES = ['ProgName', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
+const SCALAR_NAMES = ['ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
@@ -202,6 +202,7 @@ export class Store {
     const lists = new Set(LIST_NAMES);
     Object.values(this.schema).forEach((t) => t.cols.forEach((c) => { if (c.dv && c.dv.name) lists.add(c.dv.name); }));
     this.names = await this.src.readNames([...SCALAR_NAMES, ...lists]);
+    setTeam(this.names);
   }
 
   /** Make sure these tables are loaded and fresh. */
@@ -296,6 +297,10 @@ export class Store {
     this.lastWrite = Date.now();
     pairs.forEach(([n, v]) => { this.names[n] = v; });
     Object.keys(this.t).forEach((t) => this.stale.add(t));
+    if (pairs.some(([n]) => n === 'TeamName')) {   // the short form is worked out in the workbook from the answer
+      if (this.src instanceof ExcelSource) await this.reloadNames();
+      else { this.names.TeamShort = ''; setTeam(this.names); }
+    }
   }
   async writeCells(sheet, cells) {
     this.lastWrite = Date.now();

@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS } from '../util.js?v=0.9.0.20261102192530';
-import { buildForm, personLabel } from '../form.js?v=0.9.0.20261102192530';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS } from '../util.js?v=0.9.1.20261103220325';
+import { buildForm, personLabel } from '../form.js?v=0.9.1.20261103220325';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -26,7 +26,7 @@ async function load(ctx, page) {
       const qs = await (await fetch(new URL('../../data/questions.json', import.meta.url))).json();
       // US edition: the questions, help and dropdown values as the US workbook spells them. Group names stay as keys for STEPS.
       ui.qs = !isUS() ? qs : qs.map((g) => ({ ...g, qs: g.qs.map((q) => ({ ...q, q: ed(q.q), help: ed(q.help),
-        example: usDate(ed(q.example_us ?? q.example)), dv: Array.isArray(q.dv) ? q.dv.map((x) => ed(x)) : q.dv })) }));
+        example: usDate(ed(q.example_us ?? q.example)), dv: Array.isArray(q.dv) ? q.dv.map((x) => ed(x)) : q.dv && q.dv.pick ? { pick: q.dv.pick.map((x) => ed(x)), free: true } : q.dv })) }));
     }
     if (ui.gen !== store.gen) { ui.gen = store.gen; ui.vals = null; }
     if (!ui.vals) ui.vals = await store.readNamesNow(ui.qs.flatMap((g) => g.qs.map((q) => q.name)));
@@ -106,8 +106,16 @@ function questionsStep(ctx, groupNames, groups, relevant) {
     const cur = q.name in ui.edits ? ui.edits[q.name] : V[q.name];
     const set = (v) => { ui.edits[q.name] = v; };
     let el;
+    if (!(q.name in V) && store.src && store.src.constructor && store.src.constructor.name === 'ExcelSource') {
+      // A workbook from before this question existed (e.g. the team's name, new in Hub v0.11)
+      el = h('div.small.muted', 'Not in this workbook yet: it arrives with TransitionSuite Hub v0.11.');
+    }
     const opts = Array.isArray(q.dv) ? q.dv : q.dv && q.dv.name ? store.options({ h: q.name, t: 'I', dv: q.dv }) : null;
-    if (opts) {
+    if (el) { /* already decided above */ } else if (q.dv && q.dv.free) {   // pick from the list, or type your own
+      const id = 'dl-' + q.name;
+      el = h('span', h('input', { type: 'text', list: id, value: blank(cur) ? '' : String(cur), style: inp(), 'aria-label': q.q, oninput: (e) => set(e.target.value.trim()) }),
+        h('datalist', { id }, q.dv.pick.map((o) => h('option', { value: o }))));
+    } else if (opts) {
       el = h('select', { style: inp() }, h('option', { value: '' }, ''), [...new Set([String(cur ?? ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, q.dv && q.dv.name === 'L_People' ? personLabel(store, o) : o)));
       el.value = blank(cur) ? '' : String(cur);
       el.addEventListener('change', () => { set(el.value); if (q.name === 'ExtCount' || q.name === 'Perspective') { ui.vals[q.name] = el.value; saveEdits(ctx).then(() => ctx.rerender()); } });

@@ -1,4 +1,4 @@
-/* SMO Hub add-in: option B design system (deep navy + charcoal, IBM Plex Sans). */
+/* TransitionSuite add-in: option B design system (deep navy + charcoal, IBM Plex Sans). */
 @font-face { font-family: 'IBM Plex Sans'; font-weight: 400; font-display: swap; src: url('../fonts/ibm-plex-sans-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Sans'; font-weight: 500; font-display: swap; src: url('../fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Sans'; font-weight: 600; font-display: swap; src: url('../fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2'); }
@@ -31,7 +31,11 @@ a:hover { color: var(--navy); }
 .brand { display: flex; align-items: center; gap: 10px; padding: 8px 0; min-width: 0; }
 .brand-mark { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 7px; background: #fff; display: grid; place-items: center; }
 .brand-text { display: flex; flex-direction: column; min-width: 0; }
-.brand-name { font-weight: 700; font-size: 15px; }
+.brand-name { font-size: 15px; display: flex; align-items: baseline; gap: 0; white-space: nowrap; }
+.brand-name b { font-weight: 700; color: #fff; }
+.brand-suite { font-weight: 400; color: var(--on-navy); }
+.brand-by { font-size: 11px; font-weight: 400; color: var(--on-navy); margin-left: 8px; opacity: .9; }
+@media (max-width: 420px) { .brand-by { display: none; } }
 .brand-sub { font-size: 12px; color: var(--on-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top-right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .top-label { font-size: 12px; color: var(--on-navy); }

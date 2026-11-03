@@ -1,20 +1,20 @@
-// SMO Hub add-in shell: header, navigation, routing between screens.
-import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.0.20261102192530';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.0.20261102192530';
-import { openRDDialog } from './rd.js?v=0.9.0.20261102192530';
-import home from './screens/home.js?v=0.9.0.20261102192530';
-import register from './screens/register.js?v=0.9.0.20261102192530';
-import raid from './screens/raid.js?v=0.9.0.20261102192530';
-import dates from './screens/dates.js?v=0.9.0.20261102192530';
-import interview from './screens/interview.js?v=0.9.0.20261102192530';
-import report from './screens/report.js?v=0.9.0.20261102192530';
-import invoice from './screens/invoice.js?v=0.9.0.20261102192530';
-import pack from './screens/pack.js?v=0.9.0.20261102192530';
-import plan from './screens/plan.js?v=0.9.0.20261102192530';
-import setup from './screens/setup.js?v=0.9.0.20261102192530';
-import { day1, f100 } from './screens/checklist.js?v=0.9.0.20261102192530';
+// TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
+import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.1.20261103220325';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.1.20261103220325';
+import { openRDDialog } from './rd.js?v=0.9.1.20261103220325';
+import home from './screens/home.js?v=0.9.1.20261103220325';
+import register from './screens/register.js?v=0.9.1.20261103220325';
+import raid from './screens/raid.js?v=0.9.1.20261103220325';
+import dates from './screens/dates.js?v=0.9.1.20261103220325';
+import interview from './screens/interview.js?v=0.9.1.20261103220325';
+import report from './screens/report.js?v=0.9.1.20261103220325';
+import invoice from './screens/invoice.js?v=0.9.1.20261103220325';
+import pack from './screens/pack.js?v=0.9.1.20261103220325';
+import plan from './screens/plan.js?v=0.9.1.20261103220325';
+import setup from './screens/setup.js?v=0.9.1.20261103220325';
+import { day1, f100 } from './screens/checklist.js?v=0.9.1.20261103220325';
 
-export const VERSION = '0.9.0';
+export const VERSION = '0.9.1';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -61,7 +61,7 @@ function shell() {
       h('button.icon-btn.menu-btn', { type: 'button', 'aria-label': 'Menu', onclick: () => document.querySelector('.nav').classList.toggle('open') }, '☰ Menu'),
       h('div.brand',
         h('div.brand-mark', svgMark()),
-        h('div.brand-text', h('span.brand-name', 'SMO Hub'), h('span.brand-sub', `${n.ProgName || ed('Separation programme')} · ${side}`))),
+        h('div.brand-text', h('span.brand-name', h('b', 'Transition'), h('span.brand-suite', 'Suite'), h('span.brand-by', 'by Whisper Consulting')), h('span.brand-sub', `${n.ProgName || ed('Separation programme')} · ${side}`))),
       h('div.top-right',
         h('span.top-label', 'Reporting to'), h('button.top-date', { type: 'button', title: 'Change the reporting date', onclick: changeRD }, fmtDate(n.RD) || 'not set'),
         preview ? h('span.pill-top.pill-preview', 'BROWSER PREVIEW') : null)),
@@ -101,20 +101,21 @@ function widthHint() {
   try { off = localStorage.getItem('smohub.wideHint') === 'off'; } catch (e) { /* storage unavailable */ }
   if (off) return null;
   const el = h('div.hint-wide', { role: 'note' },
-    h('span', h('b', 'Tip: '), 'drag the left edge of this panel to make it wider. SMO Hub works best at half the screen or more.'),
+    h('span', h('b', 'Tip: '), 'drag the left edge of this panel to make it wider. TransitionSuite works best at half the screen or more.'),
     h('button.link-btn', { type: 'button', onclick: () => { el.remove(); try { localStorage.setItem('smohub.wideHint', 'off'); } catch (e) { /* ignore */ } } }, 'Hide'));
   const fit = () => { el.style.display = window.innerWidth < 900 ? '' : 'none'; };
   fit(); window.addEventListener('resize', fit);
   return el;
 }
 
+// The TransitionSuite mark (design/brand/transitionsuite-mark.svg): one square cleanly split in two, in its white tile.
 function svgMark() {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', '18'); svg.setAttribute('height', '18'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
-  const p = document.createElementNS(ns, 'path');
-  p.setAttribute('d', 'M4 7h16M4 12h10M4 17h7'); p.setAttribute('stroke', '#003A70'); p.setAttribute('stroke-width', '2.4'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('fill', 'none');
-  svg.appendChild(p);
+  svg.setAttribute('width', '20'); svg.setAttribute('height', '20'); svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('aria-hidden', 'true');
+  for (const [d, fill] of [['M8 6 H25 L17 42 H8 A2 2 0 0 1 6 40 V8 A2 2 0 0 1 8 6 Z', '#003A70'], ['M31 6 H40 A2 2 0 0 1 42 8 V40 A2 2 0 0 1 40 42 H23 Z', '#007BFF']]) {
+    const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); p.setAttribute('fill', fill); svg.appendChild(p);
+  }
   return svg;
 }
 
@@ -156,19 +157,19 @@ async function refresh() {
 function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 
 async function start(inExcel) {
-  document.body.replaceChildren(loading('Opening SMO Hub…'));
+  document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.9.0.20261102192530')).json();
+    const schema = await (await fetch('data/schema.json?v=0.9.1.20261103220325')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
-      const res = await fetch('data/demo-data.json?v=0.9.0.20261102192530');
-      if (!res.ok) throw new Error('SMO Hub runs inside Excel. Open your SMO Hub workbook in Excel and choose SMO Hub on the Home tab.');
+      const res = await fetch('data/demo-data.json?v=0.9.1.20261103220325');
+      if (!res.ok) throw new Error('TransitionSuite runs inside Excel. Open your TransitionSuite Hub workbook in Excel and choose TransitionSuite on the Home tab.');
       src = new PreviewSource(await res.json());
     }
     const store = new Store(src, schema);
     await store.init();
-    if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like an SMO Hub. Open the SMO Hub workbook, then open the add-in again.');
+    if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like a TransitionSuite Hub. Open the Hub workbook, then open TransitionSuite again.');
     setEdition(store.names.Edition);
     if (inExcel) {
       // Open this panel automatically whenever this workbook is opened (the flag is saved inside the workbook).
@@ -184,7 +185,7 @@ async function start(inExcel) {
     await render();
   } catch (e) {
     console.error(e);
-    document.body.replaceChildren(h('div', { style: { padding: '24px' } }, h('h1', 'SMO Hub'), h('p.banner.warn', e.message || String(e))));
+    document.body.replaceChildren(h('div', { style: { padding: '24px' } }, h('h1', 'TransitionSuite'), h('p.banner.warn', e.message || String(e))));
   }
 }
 

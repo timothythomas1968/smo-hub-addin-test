@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.0.20261102192530';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.1.20261103220325';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -145,9 +145,9 @@ function exportBox(store, shown, RD, rerender) {
     h('span.small', 'Keep them in a calendar of their own, so they can be removed in one go:'),
     h('ol.small', { style: { margin: '0', paddingLeft: '18px' } },
       h('li', 'Download the file below (only the types switched on above).'),
-      h('li', 'In Outlook: Add calendar → Create blank calendar, and name it SMO Hub.'),
-      h('li', 'Add calendar → Upload from file: choose the file and the SMO Hub calendar.')),
-    h('span.small.muted', 'Classic Outlook: open the file and choose to open it as a new calendar. To remove the dates later, delete the SMO Hub calendar.'),
+      h('li', 'In Outlook: Add calendar → Create blank calendar, and name it TransitionSuite.'),
+      h('li', 'Add calendar → Upload from file: choose the file and the TransitionSuite calendar.')),
+    h('span.small.muted', 'Classic Outlook: open the file and choose to open it as a new calendar. To remove the dates later, delete the TransitionSuite calendar.'),
     h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } }, sel,
       h('button.btn.btn-sm.btn-primary', { type: 'button', onclick: () => { const u = until(); exportIcs(shown.filter((e) => e.type !== 'forum' && e.d >= RD && e.d <= u), ui.off.has('forum') ? [] : store.records('tblForums'), RD, u); } }, 'Download (.ics)'),
       h('button.link-btn', { type: 'button', onclick: () => { ui.exp = false; rerender(); } }, 'Close')));
@@ -158,9 +158,9 @@ function exportIcs(evs, forums, from, until) {
   const pad = (n) => String(n).padStart(2, '0');
   const dt = (s) => { const d = fromSerial(s); return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`; };
   const esc = (s) => String(s || '').replace(/[\\,;]/g, (c) => '\\' + c).replace(/\n/g, ' ');
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whisper Consulting//SMO Hub//EN', 'X-WR-CALNAME:SMO Hub key dates'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Whisper Consulting//TransitionSuite//EN', 'X-WR-CALNAME:TransitionSuite key dates'];
   const stamp = 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
-  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'CATEGORIES:SMO Hub', 'END:VEVENT'));
+  evs.forEach((e, i) => lines.push('BEGIN:VEVENT', `UID:smohub-${e.type}-${e.d}-${i}`, stamp, `DTSTART;VALUE=DATE:${dt(e.d)}`, `SUMMARY:${esc(e.title)}`, `DESCRIPTION:${esc(e.sub)}`, 'TRANSP:TRANSPARENT', 'CATEGORIES:TransitionSuite', 'END:VEVENT'));
   const rule = { Weekly: 'FREQ=WEEKLY', Fortnightly: 'FREQ=WEEKLY;INTERVAL=2', Monthly: 'FREQ=MONTHLY', Quarterly: 'FREQ=MONTHLY;INTERVAL=3' };
   forums.forEach((r, i) => {
     let f = Number(r.get('First meeting'));
@@ -176,13 +176,13 @@ function exportIcs(evs, forums, from, until) {
     const tm = /^(\d{1,2}):(\d\d)/.exec(String(r.get('Time') || ''));
     const start = tm ? `DTSTART:${dt(f)}T${pad(tm[1])}${tm[2]}00` : `DTSTART;VALUE=DATE:${dt(f)}`;
     lines.push('BEGIN:VEVENT', `UID:smohub-forum-${i}`, stamp, start, tm ? 'DURATION:PT1H' : '', `RRULE:${rr};UNTIL=${dt(until)}T235959Z`,
-      `SUMMARY:${esc(r.get('Forum'))}`, 'CATEGORIES:SMO Hub', `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
+      `SUMMARY:${esc(r.get('Forum'))}`, 'CATEGORIES:TransitionSuite', `DESCRIPTION:${esc([r.get('Joint or internal'), r.get('Chair') && 'Chair ' + r.get('Chair')].filter(Boolean).join(' · '))}`, 'END:VEVENT');
   });
   lines.push('END:VCALENDAR');
   try {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([lines.filter(Boolean).join('\r\n')], { type: 'text/calendar' }));
-    a.download = 'SMO Hub key dates.ics';
+    a.download = 'TransitionSuite key dates.ics';
     document.body.appendChild(a); a.click(); a.remove();
   } catch (e) { toast('Download is not available here', true); }
 }

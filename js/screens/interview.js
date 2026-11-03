@@ -1,9 +1,9 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso } from '../util.js?v=0.9.0.20261102192530';
-import { personLabel } from '../form.js?v=0.9.0.20261102192530';
-import { colName } from '../data.js?v=0.9.0.20261102192530';
-import { todaySerial } from './checklist.js?v=0.9.0.20261102192530';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam } from '../util.js?v=0.9.1.20261103220325';
+import { personLabel } from '../form.js?v=0.9.1.20261103220325';
+import { colName } from '../data.js?v=0.9.1.20261103220325';
+import { todaySerial } from './checklist.js?v=0.9.1.20261103220325';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;
@@ -55,7 +55,7 @@ export default {
 
     return h('div.page',
       h('div.page-head',
-        h('div', h('h1', 'Readiness interviews'), h('p.lede', 'Before a service exits, the SMO lead meets the workstream lead to check nine areas are ready. Up to four interviews per service, timed back from the exit date.')),
+        h('div', h('h1', 'Readiness interviews'), h('p.lede', `Before a service exits, ${theTeam()} lead meets the workstream lead to check nine areas are ready. Up to four interviews per service, timed back from the exit date.`)),
         h('button.btn', { type: 'button', onclick: () => store.show('tblReadiness').catch((e) => toast(e.message, true)) }, 'Exit Readiness sheet')),
       h('div.tiles',
         h('button.tile', { type: 'button', class: nOver ? 'red' : 'green', onclick: () => go({ filter: 'due' }) }, h('span.tile-label', 'Overdue'), h('span.tile-value', String(nOver)), h('span.tile-sub', 'services with a missed interview')),
