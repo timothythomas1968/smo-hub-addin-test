@@ -356,3 +356,11 @@ body:has(.tray) .toast { bottom: 84px; }
 .chart .lbl.act { fill: var(--ink); }
 .dir-b .band:not(:has(+ .lift)) { padding-bottom: 30px; margin-bottom: 0; }
 .ln.act { border-top: 3px solid var(--ink); }
+.year-tile { position: relative; }
+.year-tag { position: absolute; top: 14px; right: 16px; font-size: 22px; font-weight: 700; color: var(--navy); background: var(--selected); border-radius: 8px; padding: 2px 10px; letter-spacing: -.3px; }
+.dir-b .year-tag { font-size: 24px; }
+.year-tile .kpi-label { padding-right: 76px; }
+.year-tile.over .kpi-value { color: var(--r-fg); }
+.band .seg button { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.3); }
+.band .seg button[aria-pressed="true"]:not(.g):not(.a):not(.r) { background: #fff; color: var(--navy); }
+.band .seg { border-color: rgba(255,255,255,.35); }

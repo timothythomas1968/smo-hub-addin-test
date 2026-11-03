@@ -666,7 +666,7 @@
     const reds = TSA.filter((t) => t['Service delivery RAG'] === 'Red' || t['Exit readiness RAG'] === 'Red');
     const yr = D.quarters.filter((q) => q.q.endsWith('2026')), fc26 = yr.reduce((a, q) => a + q.fc, 0), bud26 = yr.reduce((a, q) => a + q.budget, 0);
     const X = D.exits, gap = X.actual - X.plan;
-    const vsPlan = gap === 0 ? chip(`On plan · ${X.plan} planned by now`, 'g') : gap > 0 ? chip(`${gap} ahead of plan (${X.plan} planned)`, 'g') : chip(`${-gap} behind plan (${X.plan} planned)`, 'r');
+    const vsPlan = gap === 0 ? chip(`On plan · ${X.plan} planned by now (${CUR.id})`, 'g') : gap > 0 ? chip(`${gap} ahead of plan (${X.plan} planned)`, 'g') : chip(`${-gap} behind plan (${X.plan} planned)`, 'r');
     const R = D.reverse;
     const lastAct = [...D.burn].reverse().find((b) => b.actFee != null);
     const k = (label, value, sub, cls, extra) => h('div.card.kpi', { class: cls || null }, h('div.kpi-label', label), h('div.kpi-value', value), extra || null, h('div.kpi-sub', sub));
@@ -687,7 +687,7 @@
           k('TSA fees 2026', mshort(fc26), `${pct(fc26 / bud26 - 1)} over budget`, 'alert'),
           k('One-off costs', mshort(D.oneoff.fac), `forecast at completion · budget ${mshort(D.oneoff.budget)}`)),
         h('div.grid', { style: { gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' } },
-          h('div.card', h('div.card-head', h('h2', 'TSA burn-down, forward services'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual (invoiced)'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn, { h: 200 })),
+          h('div.card', h('div.card-head', h('h2', 'TSA burn-down, forward services'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual (invoiced)'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), `Baseline ${CUR.id}`))), burndown(D.burn, { h: 200, plan: 'b1', planLabel: `Baseline ${CUR.id}` })),
           wsCard),
         h('div.grid.g2',
           h('div.card', h('div.card-head', h('h2', 'Decisions needed')),
@@ -695,7 +695,7 @@
               h('div.li', chip('Nov', 'a'), h('div.li-main', h('div.li-title', 'Policy administration: accept 6-week slip?'), h('div.li-sub', `Moves the exit to ${fdate(D.dc.newExit)}; ${mshort(D.dc.cost)} more in fees`))))),
           h('div.card', h('div.card-head', h('h2', 'Watch list')),
             h('div.list', reds.slice(0, 3).map((t) => h('div.li', chip('Red', 'r'), h('div.li-main', h('div.li-title', `${t['Service name']} (${t['TSA ID']})`), h('div.li-sub', t['Path to green'] || 'Path to green agreed with the seller'))))))),
-        h('div.sheet-foot', h('span', `Prepared by the SMO from the SMO Hub · data as at ${fdate(M.rd)}`), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional'))));
+        h('div.sheet-foot', h('span', `Prepared by the SMO from the SMO Hub · data as at ${fdate(M.rd)} · plan and budget: baseline ${CUR.id}, approved ${fdate(CUR.approved)} (${CUR.decision})`), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional'))));
     main.append(h('div.page', { style: { maxWidth: 'none' } }, sheet));
   }
 
@@ -729,41 +729,87 @@
   // ======================================================================
   // Finance (read-only view; also a Teams tab)
   // ======================================================================
+  // Which baseline the plan and budget come from (current B1 unless the reader asks for the original contract).
+  const BASES = D.baselines, CUR = BASES.find((b) => b.current);
+  state.base = state.base || CUR.id;
+  const baseNote = () => { const b = BASES.find((x) => x.id === state.base); return `${b.id}: ${b.name}${b.decision ? ` (${b.decision}, ${fdate(b.approved)})` : ''}`; };
+  function baseChip() { return h('span.chip.info', { 'data-tip': BASES.find((x) => x.id === state.base).reason }, `Against baseline ${state.base}${state.base === CUR.id ? ' (current)' : ' (original)'}`); }
+
   function finance(main) {
-    const y = (yr) => D.quarters.filter((q) => q.q.endsWith(yr));
-    const sum = (rows, k) => rows.reduce((a, q) => a + q[k], 0);
-    const y26 = y('2026'), y27 = y('2027');
+    const yrs = (yr) => D.quarters.filter((q) => q.q.endsWith(yr));
+    const sum = (rows, k) => rows.reduce((a, q) => a + (q[k] || 0), 0);
+    const planK = state.base === 'B0' ? 'plan' : 'b1', budK = state.base === 'B0' ? 'budget0' : 'budget';
     const PT = D.passThrough, ptYear = (yr) => PT.reduce((a, x) => a + Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0), 0);
     const ptNow = PT.reduce((a, x) => a + (x.monthly[burnNow.m] || 0), 0);
+    const thisYear = M.rd.slice(0, 4);
+    const ocDone = D.oneoff.actual;
+    const yearTile = (year, label, value, sub, cls) => h('div.card.kpi.year-tile.hov', { class: cls || null }, h('div.year-tag', year), h('div.kpi-label', label), h('div.kpi-value', value), h('div.kpi-sub', sub));
+    const tsaYear = (yr) => { const f = sum(yrs(yr), 'fc'), bud = sum(yrs(yr), budK); return yearTile(yr, 'TSA fees forecast', mshort(f), `budget ${mshort(bud)} · ${f >= bud ? pct(f / bud - 1) + ' over' : pct(1 - f / bud) + ' under'}`, f > bud * 1.02 ? 'over' : null); };
+    const revYear = (yr) => yearTile(yr, 'rTSA fees forecast', mshort(sum(yrs(yr), 'rev')), `we provide · baseline ${mshort(D.burn.filter((b) => b.m.startsWith(yr)).reduce((a, b) => a + b.revPlan, 0))}`);
     const q2 = D.quarters.map((q) => Object.assign({}, q, { fees: q.act && q.q <= 'Q2 2026' ? q.act : q.fc }));
     const ptCard = h('div.card', h('div.card-head', h('h2', 'Pass-through expenses'), h('span.small.muted', 'Charged at cost by the provider, outside the TSA fees'), sim('pass-through register simulated until workbook v0.11')),
-      h('div.grid.g3', { style: { marginBottom: '12px' } },
-        h('div.kpi', h('div.kpi-label', 'This month'), h('div.kpi-value', mshort(ptNow)), h('div.kpi-sub', `${PT.filter((x) => x.monthly[burnNow.m]).length} charges running`)),
-        h('div.kpi', h('div.kpi-label', '2026'), h('div.kpi-value', mshort(ptYear('2026'))), h('div.kpi-sub', `to date ${mshort(PT.reduce((a, x) => a + x.toDate, 0))}`)),
-        h('div.kpi', h('div.kpi-label', '2027'), h('div.kpi-value', mshort(ptYear('2027'))), h('div.kpi-sub', 'forecast'))),
       h('div', { style: { overflowX: 'auto' } }, h('table.t', h('thead', h('tr', h('th', 'ID'), h('th', 'Charge'), h('th', 'Type'), h('th', 'TSA'), h('th.n', 'Per month'), h('th', 'Runs'), h('th.n', 'To date'), h('th.n', '2026'), h('th.n', '2027'))),
-        h('tbody', PT.map((x) => { const yrs = (yr) => Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0);
-          return h('tr', h('td.id', x.id), h('td', x.desc), h('td', x.cat), h('td', x.tsa || '–'), h('td.n', money(x.amount)), h('td.num', `${fmonth(x.from)} – ${fmonth(x.to)}`), h('td.n', money(x.toDate)), h('td.n', money(yrs('2026'))), h('td.n', money(yrs('2027')))); })),
+        h('tbody', PT.map((x) => { const y_ = (yr) => Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0);
+          return h('tr', h('td.id', x.id), h('td', x.desc), h('td', x.cat), h('td', x.tsa || '–'), h('td.n', money(x.amount)), h('td.num', `${fmonth(x.from)} – ${fmonth(x.to)}`), h('td.n', money(x.toDate)), h('td.n', money(y_('2026'))), h('td.n', money(y_('2027')))); })),
         h('tfoot', h('tr', h('td', { colspan: 6 }, 'Total'), h('td.n', money(PT.reduce((a, x) => a + x.toDate, 0))), h('td.n', money(ptYear('2026'))), h('td.n', money(ptYear('2027'))))))));
-    main.append(h('div.page', { style: { maxWidth: 'none' } }, head('Finance', `TSA fees, pass-through expenses and one-off costs · ${M.programme} · read only, as at ${fdate(M.rd)}`, h('span.asat', 'Published by the SMO ' + fdate(M.today))),
-      h('div.grid.g4', { class: DEF() === 'b' ? 'lift' : null },
-        kpi('TSA fees 2026 (forecast)', mshort(sum(y26, 'fc')), `budget ${mshort(sum(y26, 'budget'))} · ${pct(sum(y26, 'fc') / sum(y26, 'budget') - 1)} over`),
-        kpi('TSA fees 2027 (forecast)', mshort(sum(y27, 'fc')), `contract plan ${mshort(sum(y27, 'plan'))}`),
+    const baseSel = h('div.seg', { role: 'group', 'aria-label': 'Compare with' }, BASES.map((b) => h('button', { type: 'button', 'aria-pressed': String(b.id === state.base), onclick: () => { state.base = b.id; main.textContent = ''; finance(main); } }, b.id === CUR.id ? `${b.id} current baseline` : `${b.id} original contract`)));
+    main.append(h('div.page', { style: { maxWidth: 'none' } }, head('Finance', `TSA fees, pass-through expenses and one-off costs · ${M.programme} · read only, as at ${fdate(M.rd)}`, h('div.row', h('span.small', { style: { color: 'var(--on-navy)' } }, 'Compare with'), baseSel)),
+      h('div.grid.g4', { class: DEF() === 'b' ? 'lift' : null }, tsaYear('2026'), tsaYear('2027'), revYear('2026'), revYear('2027')),
+      h('div.grid.g3',
         kpi('Monthly run-rate now', mshort(burnNow.fcFee), `forward services · ${burnNow.fcN} live. Reverse: ${mshort(D.reverse.runRate)}`, D.burn.slice(0, D.burn.indexOf(burnNow) + 1).map((b) => b.fcFee)),
-        kpi('Pass-through, 2026', mshort(ptYear('2026')), `${PT.length} charges · ${mshort(ptNow)} this month`)),
-      h('div.card', h('div.card-head', h('h2', 'Expenses by quarter'), h('span.small.muted', 'TSA fees (actual where invoiced, then forecast), pass-through expenses and one-off costs (work orders)')),
-        columns(q2, [{ key: 'fees', label: 'TSA fees', color: C.c1 }, { key: 'pt', label: 'Pass-through expenses', color: C.c2 }, { key: 'wo', label: 'One-off costs (work orders)', color: C.c3 }], { stacked: true, w: 1100, h: 300 }),
-        h('div.small.muted', `Work orders: ${D.workOrders.map((w) => `${w.id} ${w.title} (${mshort(w.amount)}, ${fmonth(w.month)})`).join('; ')}. The separation programme's own one-off costs (${mshort(D.oneoff.fac)} forecast) are on the One-off costs sheet of the Finance workbook.`)),
-      ptCard,
+        yearTile(thisYear, 'Pass-through expenses', mshort(ptYear(thisYear)), `${PT.length} charges · ${mshort(ptNow)} this month`),
+        yearTile(thisYear, 'One-off costs', mshort(sum(yrs(thisYear), 'oc') + sum(yrs(thisYear), 'wo')), `separation costs and work orders · spent ${mshort(ocDone)} to date · ${mshort(D.oneoff.fac)} at completion`)),
+      h('div.small.muted', `Plan and budget from ${baseNote()}. Change the baseline on the SMO's Baselines screen.`),
+      h('div.card', h('div.card-head', h('h2', 'Expenses by quarter'), h('span.small.muted', 'TSA fees (actual where invoiced, then forecast), pass-through, work orders and one-off separation costs')),
+        columns(q2, [{ key: 'fees', label: 'TSA fees', color: C.c1 }, { key: 'pt', label: 'Pass-through', color: C.c2 }, { key: 'wo', label: 'Work orders', color: C.c3 }, { key: 'oc', label: 'One-off separation costs', color: C.c4 }], { stacked: true, w: 1100, h: 320 })),
       h('div.grid.g2',
-        h('div.card', h('div.card-head', h('h2', 'TSA fees by quarter')), columns(D.quarters, [{ key: 'budget', label: 'Budget', color: C.c3 }, { key: 'plan', label: 'Contract plan', color: C.c2 }, { key: 'fc', label: 'Forecast', color: C.c1 }])),
-        h('div.card', h('div.card-head', h('h2', 'TSA burn-down'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), 'Contract plan'))), burndown(D.burn))),
-      h('div.tbl-wrap', h('table.t', h('thead', h('tr', h('th', 'Quarter'), h('th.n', 'Budget'), h('th.n', 'Contract plan'), h('th.n', 'Forecast'), h('th.n', 'Actual invoiced'), h('th.n', 'Forecast less budget'), h('th.n', 'Pass-through'), h('th.n', 'Work orders'))),
-        h('tbody', D.quarters.map((q) => h('tr', h('td', q.q), h('td.n', money(q.budget)), h('td.n', money(q.plan)), h('td.n', money(q.fc)), h('td.n', q.act ? money(q.act) : '–'),
-          h('td.n', { style: { color: q.fc - q.budget > 0 ? 'var(--r-fg)' : 'var(--g-fg)' } }, (q.fc - q.budget > 0 ? '+' : q.fc - q.budget < 0 ? '−' : '') + money(Math.abs(q.fc - q.budget))), h('td.n', money(q.pt)), h('td.n', q.wo ? money(q.wo) : '–')))),
-        h('tfoot', h('tr', h('td', 'Total'), h('td.n', money(sum(D.quarters, 'budget'))), h('td.n', money(sum(D.quarters, 'plan'))), h('td.n', money(sum(D.quarters, 'fc'))), h('td.n', money(sum(D.quarters, 'act'))),
-          h('td.n', money(sum(D.quarters, 'fc') - sum(D.quarters, 'budget'))), h('td.n', money(sum(D.quarters, 'pt'))), h('td.n', money(sum(D.quarters, 'wo'))))))),
-      h('p.small.muted', 'The full Finance workbook (editable, with sensitivities, pass-through charges and one-off costs by period) is in design/samples.')));
+        h('div.card', h('div.card-head', h('h2', 'TSA fees by quarter'), baseChip()), columns(D.quarters, [{ key: budK, label: 'Budget', color: C.c3 }, { key: planK, label: 'Baseline', color: C.c2 }, { key: 'fc', label: 'Forecast', color: C.c1 }])),
+        h('div.card', h('div.card-head', h('h2', 'TSA burn-down'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), `Baseline ${state.base}`))),
+          burndown(D.burn, { plan: state.base === 'B0' ? 'plan' : 'b1', planLabel: `Baseline ${state.base}` }))),
+      ptCard,
+      h('div.tbl-wrap', h('table.t', h('thead', h('tr', h('th', 'Quarter'), h('th.n', 'Budget'), h('th.n', `Baseline ${state.base}`), h('th.n', 'Forecast'), h('th.n', 'Actual invoiced'), h('th.n', 'Forecast less budget'), h('th.n', 'rTSA fees'), h('th.n', 'Pass-through'), h('th.n', 'Work orders'), h('th.n', 'One-off costs'))),
+        h('tbody', D.quarters.map((q) => { const v = q.fc - q[budK]; return h('tr', h('td', q.q), h('td.n', money(q[budK])), h('td.n', money(q[planK])), h('td.n', money(q.fc)), h('td.n', q.act ? money(q.act) : '–'),
+          h('td.n', { style: { color: v > 0 ? 'var(--r-fg)' : 'var(--g-fg)' } }, (v > 0 ? '+' : v < 0 ? '−' : '') + money(Math.abs(v))), h('td.n', money(q.rev)), h('td.n', money(q.pt)), h('td.n', q.wo ? money(q.wo) : '–'), h('td.n', money(q.oc))); })),
+        h('tfoot', h('tr', h('td', 'Total'), h('td.n', money(sum(D.quarters, budK))), h('td.n', money(sum(D.quarters, planK))), h('td.n', money(sum(D.quarters, 'fc'))), h('td.n', money(sum(D.quarters, 'act'))),
+          h('td.n', money(sum(D.quarters, 'fc') - sum(D.quarters, budK))), h('td.n', money(sum(D.quarters, 'rev'))), h('td.n', money(sum(D.quarters, 'pt'))), h('td.n', money(sum(D.quarters, 'wo'))), h('td.n', money(sum(D.quarters, 'oc'))))))),
+      h('p.small.muted', 'The full Finance workbook (editable, with sensitivities) is in design/samples.')));
+  }
+
+  // ======================================================================
+  // SMO: Baselines (re-baseline for exceptional circumstances, with an approving decision)
+  // ======================================================================
+  function smoBaselines(main) {
+    const items = [['exits', 'Planned exit dates', 'Per service, in the TSA register'], ['fees', 'TSA fee plan', 'Follows the exit dates'], ['budget', 'TSA fee budget', 'Finance\'s budget by quarter'],
+      ['tasks', 'Plan task baseline dates', 'Baseline start and finish in the Exit plan'], ['oneoff', 'One-off cost budgets', 'Per cost line'], ['pt', 'Pass-through budget', 'Per charge']];
+    const hist = h('div.card', h('div.card-head', h('h2', 'Baselines')),
+      h('div.list', BASES.slice().reverse().map((b) => h('div.li', { style: { alignItems: 'flex-start' } }, h('span.step-n', b.id),
+        h('div.li-main', h('div.li-title', b.name, ' ', b.current ? chip('Current', 'g') : chip('Kept for reference', 'n')),
+          h('div.li-sub', `${b.decision ? `${b.decision} · ` : ''}${b.by} · ${fdate(b.approved)}`), h('div.small', { style: { marginTop: '4px' } }, b.reason),
+          (b.changes || []).length ? h('ul.step-list', b.changes.map((c) => h('li', `${c.what}: ${fdate(c.from)} → ${fdate(c.to)}`))) : null)))));
+    const effect = h('div.card', h('div.card-head', h('h2', 'What the reports compare against')),
+      h('div.list',
+        h('div.li', h('div.li-main', h('div.li-title', 'Exits planned by now'), h('div.li-sub', `${D.exits.plan} on ${CUR.id} · ${D.exits.contract} on the original contract · ${D.exits.actual} actual`)), chip('On plan', 'g')),
+        h('div.li', h('div.li-main', h('div.li-title', 'Exits planned by the end of 2026'), h('div.li-sub', `${D.exits.b1ByYearEnd} on ${CUR.id} · forecast ${D.exits.fcByYearEnd}`))),
+        h('div.li', h('div.li-main', h('div.li-title', 'TSA fees 2027'), h('div.li-sub', `${mshort(D.quarters.filter((q) => q.q.endsWith('2027')).reduce((a, q) => a + q.b1, 0))} on ${CUR.id} · ${mshort(D.quarters.filter((q) => q.q.endsWith('2027')).reduce((a, q) => a + q.plan, 0))} on the original contract`)))),
+      h('p.small.muted', 'Reports show variances against the current baseline. The original stays visible, so leadership can always see the full story.'));
+    let draft = false;
+    const form = h('div');
+    const drawForm = () => {
+      form.textContent = '';
+      if (!draft) { form.append(h('div.card', h('div.row', h('div', { style: { flex: '1 1 300px' } }, h('h2', 'Re-baseline'), h('div.small.muted', 'For exceptional circumstances, when leadership agrees the plan itself has changed. It needs an approving decision, and it is recorded, not overwritten.')),
+        h('button.btn.btn-primary', { onclick: () => { draft = true; drawForm(); } }, 'Start a re-baseline')))); return; }
+      const dec = h('select.input', h('option', { value: '' }, 'Pick the approving decision'), D.raid.decisions.map((d) => h('option', `${d.id} ${d.title} (${d.status})`)), h('option', 'DEC-002 Data centre early exit (Open)'));
+      const go = h('button.btn.btn-primary', { disabled: true, onclick: () => { toast('B2 saved as a draft. It becomes current when the decision is recorded as Made.'); draft = false; drawForm(); } }, 'Save B2 as draft');
+      dec.addEventListener('change', () => { go.disabled = !dec.value; });
+      form.append(h('div.card', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } }, h('h2', 'New baseline B2'),
+        h('div.field', h('span.label', 'What moves to the new baseline'), h('div.grid.g3', items.map(([k, l, sub]) => h('label.row', { style: { gap: '8px', alignItems: 'flex-start' } }, h('input', { type: 'checkbox', checked: ['exits', 'fees', 'budget'].includes(k) }), h('span', h('b', l), h('div.small.muted', sub)))))),
+        h('div.grid.g2', h('div.field', h('label', 'Takes effect from'), h('input.input', { type: 'month', value: '2026-10' })), h('div.field', h('label', 'Approving decision (required)'), dec)),
+        h('div.field', h('label', 'Why (shown on the reports)'), h('textarea.input', { rows: 3 }, 'Data centre exit brought forward to June 2027 after the seller agreed early exit.')),
+        h('div.callout', 'Preview: TSA-TEC-001 Data centre hosting planned exit 1 Sep 2027 → 1 Jun 2027; TSA fee baseline 2027 down £420k; budget follows. Everything else stays on B1.'),
+        h('div.row', { style: { justifyContent: 'flex-end' } }, h('button.btn', { onclick: () => { draft = false; drawForm(); } }, 'Cancel'), go)));
+    };
+    drawForm();
+    main.append(h('div.page', head('Baselines', 'What the plan and budget are measured against. Re-baselining keeps the history: the original contract is never lost.'), form, h('div.grid.g2', hist, effect)));
   }
 
   // ======================================================================
@@ -791,5 +837,5 @@
         h('div.sheet-foot', h('span', 'From the SMO Hub TSA register. Fees in reporting currency (GBP) unless stated.'), h('span', 'Demo data: Fernhallow Mutual and Quillmere Life are fictional')))));
   }
 
-  window.V = { servicesPrint, smoHome, leadStart, leadReport, leadRaid, leadTasks, leadServices, smoCycle, smoSubmissions, smoApprovals, execSummary, packStatus, finance, svcRag, sim };
+  window.V = { smoBaselines, servicesPrint, smoHome, leadStart, leadReport, leadRaid, leadTasks, leadServices, smoCycle, smoSubmissions, smoApprovals, execSummary, packStatus, finance, svcRag, sim };
 })();

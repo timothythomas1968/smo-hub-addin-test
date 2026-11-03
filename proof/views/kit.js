@@ -58,7 +58,7 @@
   });
 
   // ---------- charts ----------
-  const C = { c1: '#2C6CB0', c2: '#1B9A8B', c3: '#8A63C8', plan: '#8794A6', grid: '#E6EAF0', ink: '#3A4250', muted: '#5A6573', g: '#3AA265', a: '#E0A030', r: '#D9534F', n: '#C9D2DE', track: '#E6EBF1' };
+  const C = { c1: '#2C6CB0', c2: '#1B9A8B', c3: '#8A63C8', c4: '#B8601F', plan: '#8794A6', grid: '#E6EAF0', ink: '#3A4250', muted: '#5A6573', g: '#3AA265', a: '#E0A030', r: '#D9534F', n: '#C9D2DE', track: '#E6EBF1' };
 
   /** Sparkline: last point marked. */
   function spark(vals, { w = 96, h: hh = 28, color = C.c1, fill = true } = {}) {
@@ -115,9 +115,9 @@
   }
 
   /** Burn-down: monthly run-rate, plan (dashed) against forecast (solid), today line, labels at the line ends. */
-  function burndown(rows, { w = 640, h: hh = 220, today = D.meta.today, key = 'Fee', fmt = mshort, compact = false } = {}) {
+  function burndown(rows, { w = 640, h: hh = 220, today = D.meta.today, key = 'Fee', fmt = mshort, compact = false, plan = 'plan', planLabel = 'Plan' } = {}) {
     const L = 46, R = compact ? 56 : 92, T = 14, B = 24, iw = w - L - R, ih = hh - T - B;
-    const pv = rows.map((r) => r['plan' + key]), fv = rows.map((r) => r['fc' + key]);
+    const pv = rows.map((r) => r[plan + key]), fv = rows.map((r) => r['fc' + key]);
     const mx = Math.max(...pv, ...fv) * 1.08 || 1;
     const x = (i) => L + (i * iw) / (rows.length - 1), y = (v) => T + ih - (v / mx) * ih;
     const step = (vals) => vals.map((v, i) => (i ? `H${x(i).toFixed(1)}V${y(v).toFixed(1)}` : `M${x(0)} ${y(v).toFixed(1)}`)).join('');
@@ -132,7 +132,7 @@
     const lastNon0 = (vals) => { let i = vals.length - 1; while (i > 0 && !vals[i]) i--; return Math.min(vals.length - 1, i + 1); };
     const fi = lastNon0(fv), pi = lastNon0(pv);
     const hits = rows.map((r, i) => s('rect', { x: x(i) - iw / rows.length / 2, y: T, width: iw / rows.length, height: ih, fill: 'transparent',
-      'data-tip': `${fmonth(r.m)}: ${r['act' + key] != null ? 'actual ' + fmt(r['act' + key]) + ' · ' : ''}forecast ${fmt(r['fc' + key])} · plan ${fmt(r['plan' + key])}` }));
+      'data-tip': `${fmonth(r.m)}: ${r['act' + key] != null ? 'actual ' + fmt(r['act' + key]) + ' · ' : ''}forecast ${fmt(r['fc' + key])} · ${planLabel.toLowerCase()} ${fmt(r[plan + key])}` }));
     return s('svg', { class: 'chart', viewBox: `0 0 ${w} ${hh}`, width: '100%', role: 'img', 'aria-label': 'TSA burn-down: monthly run-rate, plan against forecast' },
       grid, xl,
       s('path', { d: step(fv) + `V${y(0)}H${x(0)}Z`, fill: C.c1, opacity: 0.08 }),
@@ -149,7 +149,7 @@
         s('text', { x: x(ti) + 5, y: T + 6, class: 'ax strong' }, 'Today')] : null,
       (() => { let yf = Math.min(y(fv[fi - 1] || 0) + 4, T + ih - 4), yp = Math.min(y(pv[pi - 1] || 0) + 4, T + ih - 4);
         if (Math.abs(x(fi) - x(pi)) < 60 && Math.abs(yf - yp) < 15) { if (yf >= yp) yp = yf - 15; else yf = yp - 15; }
-        return [s('text', { x: x(fi) + 6, y: yf, class: 'lbl c1' }, 'Forecast'), s('text', { x: x(pi) + 6, y: yp, class: 'lbl plan' }, 'Plan')]; })(),
+        return [s('text', { x: x(fi) + 6, y: yf, class: 'lbl c1' }, 'Forecast'), s('text', { x: x(pi) + 6, y: yp, class: 'lbl plan' }, planLabel)]; })(),
       hits);
   }
 
