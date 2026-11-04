@@ -37,11 +37,20 @@
       if (!host.naa || !window.msal || cfg.signin === 'window') return false;
       try {
         if (!pca) pca = await msal.createNestablePublicClientApplication({ auth: { clientId: cfg.client, authority: 'https://login.microsoftonline.com/' + cfg.tenant } });
-        const r = await pca.acquireTokenSilent({ scopes: SCOPES });
+        let r;
+        try { r = await pca.acquireTokenSilent({ scopes: SCOPES }); }
+        catch (e1) {
+          // Excel on the web gives MSAL no account to start from (no_account_error). Ask Office who is signed in,
+          // then try again by that name, still without a window.
+          let hint = '';
+          try { if (window.Office && Office.auth && Office.auth.getAuthContext) hint = (await Office.auth.getAuthContext()).userPrincipalName || ''; } catch (e) { /* not offered */ }
+          try { r = await pca.ssoSilent(Object.assign({ scopes: SCOPES }, hint ? { loginHint: hint } : {})); state.silentVia = hint ? 'by name' : 'second try'; }
+          catch (e2) { throw Object.assign(e2, { first: String(e1 && (e1.errorCode || e1.message) || e1) }); }
+        }
         tok = { access: r.accessToken, until: (r.expiresOn ? r.expiresOn.getTime() : Date.now() + 3000e3) - 120e3 };
-        state.method = 'silent (Nested App Authentication)';
+        state.method = 'silent (Nested App Authentication' + (state.silentVia ? ', ' + state.silentVia : '') + ')';
         return true;
-      } catch (e) { state.silentError = String(e && (e.errorCode || e.message) || e); return false; }
+      } catch (e) { state.silentError = (e && e.first ? e.first + ', then ' : '') + String(e && (e.errorCode || e.message) || e); return false; }
     }
     async function windowSignIn() {
       const text = await new Promise((ok, no) => {
