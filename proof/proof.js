@@ -82,12 +82,14 @@ const CHECKS = [
     const wide = /Sites\.(Read|ReadWrite|Manage|FullControl)\.All|Files\.(Read|ReadWrite)\.All/.test(scp);
     let root;
     try { root = await graph(`/sites/${host}:/?$select=id,webUrl`); } catch (e) { if (e.status === 403 || e.status === 404) return `blocked as expected (${e.status}): the app can only reach the programme site. ${scp}`; throw e; }
-    const opened = [];
-    for (const [what, path] of [['files', `/sites/${root.id}/drive/root/children?$top=1`], ['lists', `/sites/${root.id}/lists?$top=1`]]) {
-      try { await graph(path); opened.push(what); } catch (e) { if (e.status !== 403 && e.status !== 404) throw e; }
+    const opened = [], seen = [];
+    for (const [what, path] of [['files', `/sites/${root.id}/drive/root/children?$top=3`], ['lists', `/sites/${root.id}/lists?$top=3&$select=displayName`]]) {
+      // A 200 with nothing in it is SharePoint hiding what the app may not see: that counts as closed.
+      try { const r = await graph(path); const v = r.value || []; if (v.length) opened.push(`${what} (${v.map((x) => x.displayName || x.name).join(', ')})`); else seen.push(`${what}: an empty answer`); }
+      catch (e) { if (e.status !== 403 && e.status !== 404) throw e; seen.push(`${what}: refused (${e.status})`); }
     }
-    if (opened.length || wide) throw part(`the root site's ${opened.join(' and ') || 'name'} opened: the app has wider access than Sites.Selected. Check the app registration permissions. ${scp}`);
-    return `the root site's name is visible, but its files and lists are blocked: the app can only read the programme site. ${scp}`;
+    if (opened.length || wide) throw part(`the root site's ${opened.join(' and ') || 'name'} opened${seen.length ? ' (' + seen.join('; ') + ')' : ''}: the app has wider access than Sites.Selected. Check the app registration permissions. ${scp}`);
+    return `the root site's name is visible, but its files and lists are blocked (${seen.join('; ')}): the app can only read the programme site. ${scp}`;
   }],
   ['write', 'Submit: write a file to the site', async () => {
     const name = `Submissions/CUS ${stamp()}.json`;
