@@ -44,7 +44,9 @@
           // then try again by that name, still without a window.
           let hint = '';
           try { if (window.Office && Office.auth && Office.auth.getAuthContext) hint = (await Office.auth.getAuthContext()).userPrincipalName || ''; } catch (e) { /* not offered */ }
-          try { r = await pca.ssoSilent(Object.assign({ scopes: SCOPES }, hint ? { loginHint: hint } : {})); state.silentVia = hint ? 'by name' : 'second try'; }
+          // Capped at 4 s: in a browser this second try can hang until MSAL's own timeout.
+          const capped = (p) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error('no answer in 4 s'), { errorCode: 'timed_out' })), 4000))]);
+          try { r = await capped(pca.ssoSilent(Object.assign({ scopes: SCOPES }, hint ? { loginHint: hint } : {}))); state.silentVia = hint ? 'by name' : 'second try'; }
           catch (e2) { throw Object.assign(e2, { first: String(e1 && (e1.errorCode || e1.message) || e1) }); }
         }
         tok = { access: r.accessToken, until: (r.expiresOn ? r.expiresOn.getTime() : Date.now() + 3000e3) - 120e3 };
@@ -52,6 +54,9 @@
         return true;
       } catch (e) { state.silentError = (e && e.first ? e.first + ', then ' : '') + String(e && (e.errorCode || e.message) || e); return false; }
     }
+    // Excel on the web opens the dialog as a browser window, which the browser only allows straight after a click.
+    // If the click is used up (a slow silent try came first), let Office ask "Allow" first: that click opens it.
+    const needsPrompt = () => { try { return Office.context.diagnostics.platform === 'OfficeOnline' && !!navigator.userActivation && !navigator.userActivation.isActive; } catch (e) { return false; } };
     async function windowSignIn() {
       const text = await new Promise((ok, no) => {
         if (host.kind === 'teams') {
@@ -60,8 +65,8 @@
         }
         if (host.kind === 'office') {
           state.method = 'Office dialog';
-          return Office.context.ui.displayDialogAsync(authUrl(), { height: 60, width: 30, promptBeforeOpen: false }, (res) => {
-            if (res.status !== Office.AsyncResultStatus.Succeeded) return no(new Error(`Office dialog could not open (${res.error.code}: ${res.error.message})`));
+          return Office.context.ui.displayDialogAsync(authUrl(), { height: 60, width: 30, promptBeforeOpen: needsPrompt() }, (res) => {
+            if (res.status !== Office.AsyncResultStatus.Succeeded) return no(new Error(`Office dialog could not open (${res.error.code}: ${res.error.message})${state.silentError ? '. Silent sign-in had failed first: ' + state.silentError : ''}`));
             const d = res.value;
             d.addEventHandler(Office.EventType.DialogMessageReceived, (a) => { d.close(); ok(a.message); });
             d.addEventHandler(Office.EventType.DialogEventReceived, (a) => no(new Error(a.error === 12006 ? 'the sign-in window was closed' : 'Office dialog event ' + a.error)));
