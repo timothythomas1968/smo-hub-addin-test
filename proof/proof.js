@@ -57,8 +57,11 @@ const CHECKS = [
     return `${S.office}. ${sets.join(', ')}`;
   }],
   ['doc', 'Where this workbook is saved', async () => {
-    const u = window.Office && Office.context && Office.context.document && Office.context.document.url;
-    if (!u) throw part('unknown (not in Office, or the workbook is not saved)');
+    const doc = window.Office && Office.context && Office.context.document;
+    let u = doc && doc.url;
+    // Excel on the web may leave document.url empty; the file properties still carry the address.
+    if (!u && doc && doc.getFilePropertiesAsync) u = await new Promise((ok) => { try { doc.getFilePropertiesAsync((r) => ok(r.status === 'succeeded' && r.value && r.value.url || '')); } catch (e) { ok(''); } setTimeout(() => ok(''), 3000); });
+    if (!u) throw part(doc ? 'unknown: Office did not give this workbook\'s address (it may not be saved yet)' : 'unknown (not in Office)');
     return u.includes('sharepoint.com') ? 'SharePoint: ' + u : u;
   }],
   ['signin', 'Sign in with Microsoft 365 (silent first)', async () => {
