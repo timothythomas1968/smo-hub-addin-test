@@ -75,9 +75,19 @@ const CHECKS = [
   ['me', 'Read my own profile (User.Read)', async () => { const me = await graph('/me?$select=displayName,userPrincipalName'); S.me = me.displayName; return `${me.displayName} (${me.userPrincipalName})`; }],
   ['site', 'Open the programme site (Sites.Selected)', async () => { const s = await graph(sitePath()); return `${s.displayName}: ${s.webUrl}`; }],
   ['fence', 'Other sites stay closed', async () => {
-    const host = new URL(cfg.site).hostname;
-    try { await graph(`/sites/${host}:/`); } catch (e) { if (e.status === 403 || e.status === 404) return `blocked as expected (${e.status}): the app can only reach the programme site`; throw e; }
-    throw part('the root site opened: the app has wider access than Sites.Selected. Check the app registration permissions.');
+    // Sites.Selected: the app may see another site's name, but must not read its files or lists.
+    const host = new URL(cfg.site).hostname, c = await getClient();
+    await graph('/me?$select=id');
+    const scp = c.scopes ? `Token permissions: ${c.scopes}.` : '';
+    const wide = /Sites\.(Read|ReadWrite|Manage|FullControl)\.All|Files\.(Read|ReadWrite)\.All/.test(scp);
+    let root;
+    try { root = await graph(`/sites/${host}:/?$select=id,webUrl`); } catch (e) { if (e.status === 403 || e.status === 404) return `blocked as expected (${e.status}): the app can only reach the programme site. ${scp}`; throw e; }
+    const opened = [];
+    for (const [what, path] of [['files', `/sites/${root.id}/drive/root/children?$top=1`], ['lists', `/sites/${root.id}/lists?$top=1`]]) {
+      try { await graph(path); opened.push(what); } catch (e) { if (e.status !== 403 && e.status !== 404) throw e; }
+    }
+    if (opened.length || wide) throw part(`the root site's ${opened.join(' and ') || 'name'} opened: the app has wider access than Sites.Selected. Check the app registration permissions. ${scp}`);
+    return `the root site's name is visible, but its files and lists are blocked: the app can only read the programme site. ${scp}`;
   }],
   ['write', 'Submit: write a file to the site', async () => {
     const name = `Submissions/CUS ${stamp()}.json`;
@@ -114,11 +124,17 @@ const CHECKS = [
     return `added; the list now holds ${items.length} CUS report(s)`;
   }],
   ['site-report', 'Hub: read a returned report file on the site', async () => {
-    const name = `Submissions/${cfg.book}`;
-    const it = await graph(`/sites/${await siteId()}/drive/root:/${enc(cfg.folder + '/' + name)}`).catch((e) => { throw part(`"${name}" not found (${e.message})`); });
+    // The file named in Settings, or else any workstream report in the Submissions folder.
+    let it;
+    try { it = await graph(`/sites/${await siteId()}/drive/root:/${enc(cfg.folder + '/Submissions/' + cfg.book)}`); }
+    catch (e) {
+      const r = await graph(`/sites/${await siteId()}/drive/root:/${enc(cfg.folder + '/Submissions')}:/children?$select=id,name&$top=200`);
+      it = (r.value || []).find((x) => /workstream report/i.test(x.name) && /\.xlsx$/i.test(x.name) && !/labelled/i.test(x.name));
+      if (!it) throw part(`"Submissions/${cfg.book}" not found, and no other workstream report (.xlsx) in Submissions`);
+    }
     const r = await graph(`/sites/${await siteId()}/drive/items/${it.id}/workbook/worksheets('Report')/range(address='C4:I18')?$select=values`);
     const v = r.values || [];
-    return `workstream "${v[0] && v[0][0]}", RAG ${v[9] && v[9][0]}: read through Graph without downloading the file`;
+    return `${it.name}: workstream "${v[0] && v[0][0]}", RAG ${v[9] && v[9][0]}: read through Graph without downloading the file`;
   }],
   ['labelled', 'Graph and a labelled (encrypted) workbook', async () => {
     const name = `Submissions/${cfg.labelled}`;

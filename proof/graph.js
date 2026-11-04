@@ -101,6 +101,8 @@
       return call(`/sites/${await siteId()}/lists/${id}/items`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: { Title: title, Payload: payload } }) });
     }
     return {
+      /** The permissions inside the token we hold (read from the token itself, here; nothing is sent). */
+      get scopes() { try { const b = tok.access.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); const j = JSON.parse(atob(b + '='.repeat((4 - b.length % 4) % 4))); return String(j.scp || (j.roles || []).join(' ')); } catch (e) { return ''; } },
       get host() { return host; }, get method() { return state.method; }, get silentError() { return state.silentError; },
       async start() { host = await detectHost(); return host; },
       signIn, call, siteId, listId, listItems, listAdd,
