@@ -8,7 +8,7 @@ const $ = (sel) => document.querySelector(sel);
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) { if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); }
-  for (const k of kids.flat()) if (k != null) e.append(k.nodeType ? k : String(k));
+  for (const k of kids.flat(Infinity)) if (k != null) e.append(k.nodeType ? k : String(k));
   return e;
 };
 
