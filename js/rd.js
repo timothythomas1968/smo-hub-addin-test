@@ -1,6 +1,6 @@
 // Change the reporting date: one dialog, opened from the title bar, Home or the workstream report.
 // The date lives in 'Consolidated WS Reporting'!B5 (the name RD); every screen reports to its month.
-import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial } from './util.js?v=0.9.1.20261103220325';
+import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial } from './util.js?v=0.9.2.20261105165012';
 
 const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() * 12 + d.getUTCMonth() : 0; };
 

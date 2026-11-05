@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.1.20261103220325';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.2.20261105165012';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],

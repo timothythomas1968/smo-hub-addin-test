@@ -1,20 +1,20 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.1.20261103220325';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.1.20261103220325';
-import { openRDDialog } from './rd.js?v=0.9.1.20261103220325';
-import home from './screens/home.js?v=0.9.1.20261103220325';
-import register from './screens/register.js?v=0.9.1.20261103220325';
-import raid from './screens/raid.js?v=0.9.1.20261103220325';
-import dates from './screens/dates.js?v=0.9.1.20261103220325';
-import interview from './screens/interview.js?v=0.9.1.20261103220325';
-import report from './screens/report.js?v=0.9.1.20261103220325';
-import invoice from './screens/invoice.js?v=0.9.1.20261103220325';
-import pack from './screens/pack.js?v=0.9.1.20261103220325';
-import plan from './screens/plan.js?v=0.9.1.20261103220325';
-import setup from './screens/setup.js?v=0.9.1.20261103220325';
-import { day1, f100 } from './screens/checklist.js?v=0.9.1.20261103220325';
+import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.2.20261105165012';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.2.20261105165012';
+import { openRDDialog } from './rd.js?v=0.9.2.20261105165012';
+import home from './screens/home.js?v=0.9.2.20261105165012';
+import register from './screens/register.js?v=0.9.2.20261105165012';
+import raid from './screens/raid.js?v=0.9.2.20261105165012';
+import dates from './screens/dates.js?v=0.9.2.20261105165012';
+import interview from './screens/interview.js?v=0.9.2.20261105165012';
+import report from './screens/report.js?v=0.9.2.20261105165012';
+import invoice from './screens/invoice.js?v=0.9.2.20261105165012';
+import pack from './screens/pack.js?v=0.9.2.20261105165012';
+import plan from './screens/plan.js?v=0.9.2.20261105165012';
+import setup from './screens/setup.js?v=0.9.2.20261105165012';
+import { day1, f100 } from './screens/checklist.js?v=0.9.2.20261105165012';
 
-export const VERSION = '0.9.1';
+export const VERSION = '0.9.2';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -159,11 +159,13 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.9.1.20261103220325')).json();
+    const schema = await (await fetch('data/schema.json?v=0.9.2.20261105165012')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
-      const res = await fetch('data/demo-data.json?v=0.9.1.20261103220325');
+      // Preview only: ?edition=US shows the US demo (US spelling and dates, in dollars).
+      const us = /^us$/i.test(new URLSearchParams(location.search).get('edition') || '');
+      const res = await fetch(us ? 'data/demo-data-US.json' : 'data/demo-data.json');
       if (!res.ok) throw new Error('TransitionSuite runs inside Excel. Open your TransitionSuite Hub workbook in Excel and choose TransitionSuite on the Home tab.');
       src = new PreviewSource(await res.json());
     }
