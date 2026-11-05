@@ -6,7 +6,13 @@
 <link rel="icon" href="favicon.ico">
 <title>TransitionSuite connection proof</title>
 <link rel="stylesheet" href="proof.css">
-<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+<!-- In a Teams tab this page is not in Office: Office.js would wait for an Office host that never answers,
+     so it is only loaded outside Teams. -->
+<script>
+  // Only the Teams tab's own address says host=teams (an Excel workbook opened inside Teams still loads Office.js).
+  window.__inTeams = /[?&]host=teams/.test(location.search);
+  if (!window.__inTeams) document.write('<script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"><\/script>');
+</script>
 <!-- Engine check. This plain script runs even on the old Internet Explorer engine, which ignores
      type="module". If modern JavaScript is missing it says so instead of showing a blank panel. -->
 <script>
@@ -29,6 +35,10 @@
   });
 </script>
 <script src="vendor/MicrosoftTeams.min.js"></script>
+<script>
+  // Tell Teams the tab has loaded, straight away (graph.js asks again before signing in).
+  if (window.__inTeams && window.microsoftTeams) { try { microsoftTeams.app.initialize().then(function () { microsoftTeams.app.notifySuccess && microsoftTeams.app.notifySuccess(); }, function () {}); } catch (e) {} }
+</script>
 <script src="vendor/msal-browser.min.js"></script>
 <script src="graph.js"></script>
 <script src="xlsxread.js"></script>
