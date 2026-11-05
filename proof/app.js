@@ -15,6 +15,46 @@
   const load = (src) => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('could not load ' + src)); document.head.append(s); });
   const msg = (title, text) => { document.body.textContent = ''; const m = document.createElement('main'); m.className = 'main'; const c = document.createElement('div'); c.className = 'card'; const hh = document.createElement('h2'); hh.textContent = title; const p = document.createElement('p'); p.textContent = text; c.append(hh, p); m.append(c); document.body.append(m); };
 
+  // ---------- what the page is doing, so a long wait never looks like a blank page ----------
+  let now = 'Starting', watch = null;
+  const stage = (t) => {
+    now = t; const el = document.getElementById('stage'); if (el) el.textContent = t + '…';
+    clearTimeout(watch);
+    watch = setTimeout(() => { const w = document.getElementById('stage'); if (w) w.textContent = `Still waiting: ${now}. If a sign-in window opened, finish it there. If nothing happens, close this tab and open it again, and send a screenshot.`; }, 20000);
+  };
+  const waiting = () => {
+    document.body.textContent = '';
+    const m = document.createElement('main'); m.className = 'main';
+    const c = document.createElement('div'); c.className = 'card'; c.style.maxWidth = '640px';
+    const hh = document.createElement('h2'); hh.textContent = 'TransitionSuite';
+    const p = document.createElement('p'); p.id = 'stage'; p.className = 'muted'; p.textContent = now + '…';
+    c.append(hh, p); m.append(c); document.body.append(m);
+  };
+  // No settings yet (a Teams tab starts empty): ask once; they are kept on this device only.
+  const askSettings = () => new Promise((ok) => {
+    clearTimeout(watch);
+    document.body.textContent = '';
+    const m = document.createElement('main'); m.className = 'main';
+    const c = document.createElement('div'); c.className = 'card'; c.style.maxWidth = '640px';
+    const hh = document.createElement('h2'); hh.textContent = 'Connect to the programme site';
+    const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Type these once. They are kept on this device only, and the client ID and tenant are not secret.';
+    c.append(hh, p);
+    const boxes = {};
+    for (const [k, label] of [['tenant', 'Tenant ID'], ['client', 'Application (client) ID'], ['site', 'SharePoint site address']]) {
+      const l = document.createElement('label'); l.textContent = label; l.style.display = 'block'; l.style.marginTop = '10px';
+      const i = document.createElement('input'); i.value = cfg[k] || ''; i.style.width = '100%'; i.style.padding = '6px'; i.style.marginTop = '4px';
+      l.append(i); c.append(l); boxes[k] = i;
+    }
+    const b = document.createElement('button'); b.className = 'btn primary'; b.textContent = 'Connect'; b.style.marginTop = '14px';
+    b.onclick = () => {
+      for (const k in boxes) cfg[k] = boxes[k].value.trim();
+      if (!cfg.tenant || !cfg.client || !cfg.site) { p.textContent = 'Please fill in all three.'; return; }
+      try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) { /* storage blocked */ }
+      waiting(); ok();
+    };
+    c.append(b); m.append(c); document.body.append(m);
+  });
+
   // ---------- the two data sources (same shape as the add-in's PreviewSource / a future GraphSource) ----------
   const PreviewSource = {
     name: 'demo snapshot', sent: [],
@@ -26,9 +66,11 @@
   const GraphSource = {
     name: 'Microsoft Graph', client: null,
     async load() {
-      if (!cfg.tenant || !cfg.client || !cfg.site) throw new Error('Add tenant, client and site to the address (see the proof note).');
+      if (!cfg.tenant || !cfg.client || !cfg.site) await askSettings();
       this.client = window.GraphClient.create(cfg);
-      await this.client.start();
+      stage('Starting'); await this.client.start();
+      stage('Signing in with Microsoft 365'); await this.client.signIn();
+      stage('Reading the published Hub data');
       return q.get('store') === 'files' ? this.client.json('Published/hub-snapshot.json') : this.client.readSnapshot();
     },
     async submit(kind, payload) {
@@ -43,7 +85,9 @@
   async function boot() {
     const source = srcName === 'preview' ? PreviewSource : GraphSource;
     let data;
-    try { data = await source.load(); } catch (e) { msg('Could not open the Hub data', String(e.message || e)); return; }
+    waiting(); stage('Starting');
+    try { data = await source.load(); } catch (e) { clearTimeout(watch); msg('Could not open the Hub data', `${now}: ${String(e.message || e)}`); return; }
+    clearTimeout(watch);
     if (cfg.ws) data.meta.leadWs = cfg.ws;
     window.DEMO = data;
     document.body.classList.add('dir-b');   // direction B is the house style
@@ -68,5 +112,6 @@
       fn(m);
     }])), 'start');
   }
-  boot();
+  // This script loads in the page head: wait for the page itself before drawing anything.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

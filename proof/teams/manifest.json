@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
   "manifestVersion": "1.17",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "id": "3d0b6f0e-2f7a-4c55-9a43-6b0f1d2e8c71",
   "developer": {
     "name": "Whisper Consulting",
@@ -46,6 +46,15 @@
       "name": "Finance",
       "contentUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=finance",
       "websiteUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/app.html?view=finance",
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "checks",
+      "name": "Checks",
+      "contentUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/taskpane.html",
+      "websiteUrl": "https://timothythomas1968.github.io/smo-hub-addin-test/proof/taskpane.html",
       "scopes": [
         "personal"
       ]
