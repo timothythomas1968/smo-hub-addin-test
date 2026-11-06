@@ -1,8 +1,8 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.9.4.20261106172320';
-import { countTests, COUNT_RULES } from '../counts.js?v=0.9.4.20261106172320';
-import { openDateChange, openDecision, pendingFor, impactOf, logForecast } from '../datechange.js?v=0.9.4.20261106172320';
-import { buildForm } from '../form.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.9.5.20261106193911';
+import { countTests, COUNT_RULES } from '../counts.js?v=0.9.5.20261106193911';
+import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.9.5.20261106193911';
+import { buildForm } from '../form.js?v=0.9.5.20261106193911';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);
@@ -12,7 +12,7 @@ const TABS = {
   Overview: ['TSA ID', { h: 'Service name', full: true }, 'Service description', 'Provider service owner', 'Recipient service owner', 'Status',
     'Service delivery RAG', 'Exit readiness RAG', { h: 'Path to green', full: true }, 'Workstream', 'Direction', 'Critical', 'Data checks'],
   Contract: ['Schedule ref', 'Service start', 'Initial term (months)', 'Initial end date', { h: 'Planned exit date', readonly: true }, { h: 'Forecast exit date', readonly: true, note: 'Change it on the Exit tab' },
-    { sec: 'Contract terms' }, 'On-time exit notice (days)', 'Exit notice deadline', 'Extension allowed', 'Extension notice (days)', 'Extension notice deadline',
+    { sec: 'Contract terms' }, 'On-time exit notice (days)', 'Exit notice deadline', 'Qualifies for extension', 'Extension notice (days)', 'Extension notice deadline',
     'Maximum extension (months)', 'Early exit notice (days)', 'Partial exit allowed', 'Provider entity', 'Recipient entity'],
   Exit: [{ sec: 'Exit dates' }, { h: 'Planned exit date', readonly: true, note: 'Part of the agreed plan: it moves only when a date change is approved' }, 'Forecast exit date', 'Actual exit date', { sec: 'Exit plan' }, 'Exit route', 'Exit plan status', 'Exit plan approved on (date)', 'Exit type', 'Next readiness interview', 'Plan items open after exit',
     'Entanglement', 'Exit complexity', 'Move group', 'Staff transfer', 'Exit hypothesis', 'Alternative exit options', 'Dependent services', 'Exit date check'],
@@ -66,6 +66,7 @@ export default {
       h('div.page-head',
         h('div', h('h1', 'TSA register'), h('p.lede', `${all.length} services under the TSA and reverse TSA. Select a service to see and edit its details.`)),
         h('button.btn', { type: 'button', onclick: () => store.show(T, sel ? sel.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
+        h('button.btn', { type: 'button', title: EXTEND_HELP, onclick: () => openExtension(ctx) }, 'Apply an extension'),
         h('button.btn.btn-primary', { type: 'button', onclick: () => { ui.adding = true; ui.sel = null; rerender(); } }, '+ Add a service')),
       h('div.filters',
         h('label.sr', { for: 'reg-q' }, 'Search services'),

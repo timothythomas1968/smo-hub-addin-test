@@ -1,8 +1,8 @@
 // Builds an edit form from the workbook's own column definitions (schema.json, generated from the builder).
 // Inputs (I) and suggested values (D) are editable; calculated columns (C) are shown read-only.
 // Values the workbook works out (scores, statuses, due dates) update as you type: see live.js.
-import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed, dateBox } from './util.js?v=0.9.4.20261106172320';
-import { LIVE } from './live.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed, dateBox } from './util.js?v=0.9.5.20261106193911';
+import { LIVE } from './live.js?v=0.9.5.20261106193911';
 
 export function display(store, col, v) {
   if (v === '' || v == null) return '';
@@ -27,6 +27,10 @@ let uid = 0;
  * rec: a store record (or null for a new record).
  * Returns { el, collect() -> {header: value} for the fields the user changed, dirty() }.
  */
+/** What 1 and 5 mean on the risk scales (Tim, 6 Nov 2026: "not clear whether 5 is highest"). */
+export const SCALE_NOTE = { 'Likelihood (1-5)': '1 = very unlikely, 5 = almost certain', 'Impact (1-5)': '1 = very low impact, 5 = very high impact' };
+export const SCALE_WORDS = { 'Likelihood (1-5)': ['very unlikely', 'unlikely', 'possible', 'likely', 'almost certain'], 'Impact (1-5)': ['very low', 'low', 'medium', 'high', 'very high'] };
+
 export function buildForm(store, table, rec, fields, opts = {}) {
   const inputs = [];
   const calcs = [];
@@ -135,6 +139,7 @@ export function buildForm(store, table, rec, fields, opts = {}) {
       }
       if ((el.tagName !== 'DIV' && el.tagName !== 'SPAN') || el.classList.contains('date-box')) { el.addEventListener('input', markDirty); el.addEventListener('change', markDirty); }
       wrap.appendChild(el);
+      if (isScale) wrap.appendChild(h('span.field-note', SCALE_NOTE[spec.h] || '1 = lowest, 5 = highest'));
       const entry = { h: spec.h, get, set, raw, wrap, sugg: isSugg || (!rec && col.t === 'D') };
       inputs.push(entry); byH[spec.h] = entry;
       if (pend !== undefined) wrap.classList.add('dirty');

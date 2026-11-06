@@ -1,7 +1,7 @@
 // Our invoice: the invoice we send the other party for the services we provide, built by the Our Invoice sheet.
 // Settings (month, currency, number, date, tax, payment details) and the other-charges log are edited here;
 // the invoice itself is shown as a printable page with the client's logo.
-import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox } from '../util.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox } from '../util.js?v=0.9.5.20261106193911';
 
 const SHEET = 'Our Invoice';
 const OC0 = 20, OC1 = 119;
@@ -42,7 +42,10 @@ function build(ctx) {
   const isService = (l) => l.fee !== '' && l.fee != null;
   const taxRate = Number(c('K9')) || 0;
   const taxable = store.src.getSetting('inv-taxable') || {};
-  const taxOf = (l) => (taxRate && isService(l) && taxable[l.ref] !== false ? l.amt * taxRate : 0);
+  // Services are taxed unless switched off; other charges only when switched on (Tim, 6 Nov 2026: a tax switch for each additional charge).
+  const tkey = (l) => (isService(l) ? l.ref : 'oc:' + (l.ref || '') + '|' + (l.desc || ''));
+  const isTaxed = (l) => (isService(l) ? taxable[tkey(l)] !== false : taxable[tkey(l)] === true);
+  const taxOf = (l) => (taxRate && isTaxed(l) ? l.amt * taxRate : 0);
   const svcTot = lines.filter(isService).reduce((a, l) => a + l.amt, 0);
   const othTot = lines.filter((l) => !isService(l)).reduce((a, l) => a + l.amt, 0);
   const taxTot = lines.reduce((a, l) => a + taxOf(l), 0);
@@ -88,6 +91,7 @@ function build(ctx) {
     h('div.panel-head', h('span.panel-id', 'Not printed'), h('h2.panel-title', 'Invoice settings')),
     h('div.panel-body',
       fld('Service month', mSel), h('div.grid2', fld('Invoice currency', ccySel), fld('Tax rate (%)', taxIn)),
+      h('span.small.muted', taxRate ? 'Choose which services and other charges are taxed under "Which lines are taxed".' : 'Enter a tax rate, save, and a list appears to choose which services and other charges are taxed.'),
       h('div.grid2', fld('Invoice number', noIn), fld('Invoice date', dateIn)),
       fld('Payment details', payIn),
       h('div.sec', 'Your letterhead'), fld('Office name on the invoice', officeIn),
@@ -124,13 +128,19 @@ function build(ctx) {
     lines.length ? null : h('p.muted', 'No services or charges for this month and currency.'));
 
   // per-service tax switches
-  const taxBox = taxRate ? h('div.card', h('h2.cap', { style: { marginBottom: '6px' } }, 'Which services are taxed'),
-    lines.filter(isService).map((l) => {
-      const id = 'tx-' + l.ref;
-      const cb = h('input', { type: 'checkbox', id, checked: taxable[l.ref] !== false });
-      cb.addEventListener('change', async () => { const t = store.src.getSetting('inv-taxable') || {}; t[l.ref] = cb.checked; await store.src.setSetting('inv-taxable', t); ctx.rerender(); });
-      return h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', padding: '4px 0' } }, cb, h('label', { for: id }, `${l.ref} · ${l.desc}`));
-    })) : null;
+  const taxRow = (l, i) => {
+    const id = 'tx-' + i;
+    const cb = h('input', { type: 'checkbox', id, checked: isTaxed(l) });
+    cb.addEventListener('change', async () => { const t = store.src.getSetting('inv-taxable') || {}; t[tkey(l)] = cb.checked; await store.src.setSetting('inv-taxable', t); ctx.rerender(); });
+    return h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', padding: '4px 0' } }, cb, h('label', { for: id }, [l.ref, l.desc].filter(Boolean).join(' · ')));
+  };
+  const others = lines.filter((l) => !isService(l));
+  const taxBox = taxRate ? h('div.card', h('h2.cap', { style: { marginBottom: '6px' } }, 'Which lines are taxed'),
+    h('div.small', { style: { fontWeight: 700, color: 'var(--heading)', marginTop: '4px' } }, 'Services'),
+    lines.filter(isService).map(taxRow),
+    h('div.small', { style: { fontWeight: 700, color: 'var(--heading)', marginTop: '8px' } }, 'Other charges'),
+    others.length ? others.map((l, i) => taxRow(l, 'oc' + i)) : h('p.small.muted', { style: { margin: '2px 0' } }, 'No other charges this month. Add them in the other charges log below; tick each one that is taxed.'))
+    : null;
 
   // ---------- other charges log
   const log = [];
@@ -162,7 +172,7 @@ function build(ctx) {
         h('td.nowrap', fmtMonth(x.month)), h('td', x.ref), h('td', x.desc), h('td.num', money(x.amt, us)), h('td', x.ccy || n.RepCcy)))))
       : h('p.small.muted', 'No charges yet.'));
 
-  const print = () => printNode(invoice);
+  const print = () => printNode(invoice, `Invoice ${c('K7') || ''} ${fmtMonth(c('K5')) || ''}`.trim());
 
   return h('div',
     h('div.page-head',

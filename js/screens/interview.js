@@ -1,10 +1,10 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.9.4.20261106172320';
-import { personLabel } from '../form.js?v=0.9.4.20261106172320';
-import { colName } from '../data.js?v=0.9.4.20261106172320';
-import { todaySerial } from './checklist.js?v=0.9.4.20261106172320';
-import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.9.5.20261106193911';
+import { personLabel } from '../form.js?v=0.9.5.20261106193911';
+import { colName } from '../data.js?v=0.9.5.20261106193911';
+import { todaySerial } from './checklist.js?v=0.9.5.20261106193911';
+import { readinessOf } from '../readiness.js?v=0.9.5.20261106193911';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;
@@ -134,7 +134,7 @@ function interviewCard(ctx, sel, waive) {
       const a = ans(i), rag = held[i] ? ragOf(a) : '', nn = svcWaived || w['r' + (i + 1)];
       const tone = nn ? 'n' : rag === 'Red' ? 'r' : rag === 'Amber' ? 'a' : rag === 'Green' ? 'g' : '';
       const bg = tone ? `var(--${tone}-bg)` : '#fff', fg = tone ? `var(--${tone}-fg)` : 'var(--heading)';
-      const sub = nn ? 'Not needed' : held[i] ? `Held ${fmtDate(held[i], true)}${rag ? ' · ' + rag : ''}` : due[i] ? `${due[i] < RD ? 'Was due' : 'Due'} ${fmtDate(due[i], true)}` : 'No date';
+      const sub = nn ? 'Not needed' : held[i] ? `Held ${fmtDate(held[i])}${rag ? ' · ' + rag : ''}` : due[i] ? `${due[i] < RD ? 'Was due' : 'Due'} ${fmtDate(due[i])}` : 'No date';
       return h('button', { type: 'button', role: 'tab', 'aria-selected': String(i === k), onclick: () => { ui.round = i; rerender(); },
         style: { textAlign: 'left', cursor: 'pointer', borderRadius: '8px', padding: '9px 11px', background: bg, color: fg, border: `2px solid ${i === k ? 'var(--navy)' : tone ? bg : 'var(--line)'}`, minWidth: 0 } },
         h('div', { style: { fontWeight: 700, fontSize: '13px' } }, `Interview ${i + 1}`),
@@ -147,7 +147,7 @@ function interviewCard(ctx, sel, waive) {
         h('span.panel-id', `${sel.id} · exit ${fmtDate(sel.r.get('Forecast exit date'))} · ${plural(Math.max(0, Number(sel.r.get('Forecast exit date')) - RD), 'day')} to go`),
         h('h2.panel-title', sel.r.get('Service name')),
         h('span.small.muted', `Provider ${sel.r.get('Provider service owner') || '–'} · Recipient ${sel.r.get('Recipient service owner') || '–'} · ${sel.r.get('Exit route') || 'no exit route'}`)),
-      h('button.btn.btn-sm', { type: 'button', onclick: () => setWaive({ svc: !svcWaived }) }, svcWaived ? 'Interviews needed after all' : 'No interviews needed for this service')),
+      h('button.btn.btn-sm', { type: 'button', onclick: () => setWaive({ svc: !svcWaived }) }, svcWaived ? 'Interviews needed after all' : 'Click here if no interviews are needed for this service')),
     svcWaived ? null : tabs);
 
   if (svcWaived) {
@@ -228,7 +228,7 @@ function interviewCard(ctx, sel, waive) {
       h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } },
         h('button.btn.btn-primary', { type: 'button', onclick: save }, `Save interview ${k + 1}`),
         h('button.btn', { type: 'button', onclick: () => store.showRange(SHEET, `B${b}:I${b + 15}`).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
-        h('button.btn', { type: 'button', style: { marginLeft: 'auto' }, onclick: () => setWaive({ ['r' + (k + 1)]: true }) }, `Interview ${k + 1} not needed`)),
+        h('button.btn', { type: 'button', style: { marginLeft: 'auto' }, onclick: () => setWaive({ ['r' + (k + 1)]: true }) }, `Click here if interview ${k + 1} is not needed`)),
       h('span.small.muted', '"Others present" and "not needed" are kept with the workbook\'s add-in settings for now; the next workbook version gives them their own cells.'));
 
   return h('div', head, body);

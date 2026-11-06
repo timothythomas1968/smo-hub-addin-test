@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.9.4.20261106172320';
-import { buildForm, personLabel } from '../form.js?v=0.9.4.20261106172320';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.9.5.20261106193911';
+import { buildForm, personLabel } from '../form.js?v=0.9.5.20261106193911';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -146,6 +146,8 @@ function questionsStep(ctx, groupNames, groups, relevant) {
     } else if (q.fmt === 'int' || q.fmt === 'money') {
       el = h('input', { type: 'number', step: q.fmt === 'int' ? '1' : 'any', value: blank(cur) ? '' : String(cur), style: inp() });
       el.addEventListener('input', () => { set(el.value === '' ? '' : Number(el.value)); checkTerm(); });
+      // How many extensions: show that many extension questions straight away (evaluation C)
+      if (q.name === 'ExtCount') el.addEventListener('change', () => { ui.vals[q.name] = el.value === '' ? '' : Number(el.value); saveEdits(ctx).then(() => ctx.rerender()); });
     } else {
       el = h('input', { type: 'text', value: blank(cur) ? '' : String(cur), style: inp() });
       el.addEventListener('input', () => set(el.value.trim()));
@@ -201,7 +203,7 @@ function workstreamsStep(ctx) {
   };
   return h('div.row-wrap',
     h('div.card', { style: { flex: '999 1 480px', minWidth: 0 } },
-      h('p.small.muted', { style: { margin: '0 0 8px' } }, 'Tick the workstreams your programme has. People, services, reports and the RAID use this list. Saved as you tick.'),
+      h('p.small.muted', { style: { margin: '0 0 8px' } }, ed('Tick the workstreams your programme has. People, services, reports and the RAID use this list. Saved as you tick.')),
       rows.map((r) => {
         const id = 'ws-' + r.i, on = r.get('Active (Y/N)') === 'Y';
         const cb = h('input', { type: 'checkbox', id, checked: on, style: { width: '18px', height: '18px', accentColor: 'var(--navy)' } });

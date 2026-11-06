@@ -1,8 +1,8 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.9.4.20261106172320';
-import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.9.4.20261106172320';
-import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.9.5.20261106193911';
+import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.9.5.20261106193911';
+import { readinessOf } from '../readiness.js?v=0.9.5.20261106193911';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.5.20261106193911';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled', 'Complete', 'Not required']);
@@ -50,7 +50,7 @@ export default {
     // ---- this month checklist: some items tick themselves from the data; the rest are ticked by hand
     const key = 'month-' + RD;
     const manual = store.src.getSetting(key) || {};
-    const daysSinceRD = Math.floor(Date.now() / 86400000 + 25569) - RD;   // today as an Excel serial, minus RD
+    const daysSinceRD = T - RD;   // the workbook's Today, minus RD
     const waive = store.src.getSetting('ri-waive') || {}, xr = Object.fromEntries(store.records('tblReadiness').map((r) => [r.get('TSA ID'), r]));
     const interviewsDue = live.filter((r) => { const ro = readinessOf(store, r, xr[r.get('TSA ID')], waive, T); return ro.overdue || (ro.next && ro.next <= T + 14); }).length;
     // Start this month's reporting: one email to every workstream lead (evaluation F and J)
@@ -65,31 +65,63 @@ export default {
       window.open(`mailto:?bcc=${encodeURIComponent(to.join(';'))}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`, '_blank');
       manual.start = true; store.src.setSetting(key, manual).then(() => ctx.rerender());
     };
-    const items = [
-      ['rd', `Set the reporting date (now ${fmtDate(RD)})`, ed('Choose Change here, or click the date at the top right. Ticks itself when the date is within the last month'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
-      ['start', "Start this month's reporting", ed('One email to every workstream lead, asking for this month\'s report. Ticks itself when you send it'), null, startReporting, 'Email the leads'],
-      ['raid', suggested ? `Review the RAID: ${plural(suggested, 'suggested item')} waiting` : 'Review the RAID: nothing waiting', ed('Ticks itself when nothing is waiting'), suggested === 0, () => go('raid', { suggested: true })],
-      ['act', overdue ? `Chase ${plural(overdue, 'overdue action')}` : 'No overdue actions', ed('Ticks itself when no actions are overdue'), overdue === 0, () => go('raid', { tab: 'AC' })],
-      ['int', interviewsDue ? `Hold the readiness interviews due (${interviewsDue})` : 'No readiness interviews due', ed('Ticks itself when none are due'), interviewsDue === 0, () => go('interview')],
-      ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', ed('Ticks itself when there are no errors'), dqE === 0, null],
-      ['inv', 'Record the invoices received this month', ed('Tick it yourself'), null, () => go('invoice')],
-      ['rep', 'Collect the workstream reports', ed('Tick it yourself, or see who is still due on the report screen'), null, () => go('report')],
-      ['pack', 'Send the governance pack', ed('Tick it yourself'), null, () => go('pack')]
-    ];
+    // The 15 steps in four phases, the same as the worksheet Home's workflow (evaluation K: the two Homes stay consistent).
+    // Steps tick themselves from the data where they can; the rest are ticked by hand. Steps for parts of the Hub not in use are left out.
+    const use = (k) => n[k] !== 'N';
+    const M0 = (() => { const d = new Date((RD - 25569) * 86400000); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 86400000) + 25569; })();
+    const wsActive = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') !== 'N').map((r) => r.get('Code'));
+    const wsIn = new Set(store.records('tblStatus').filter((r) => (r.get('Scope') || 'Overall') === 'Overall' && Number(r.get('Period')) >= M0 && r.get('RAG')).map((r) => r.get('Workstream')));
+    const repIn = wsActive.filter((c) => wsIn.has(c)).length;
+    const raidWaiting = suggested + fromReports;
+    const has = (t) => store.has ? store.has(t) : true;
+    const crWaiting = has('tblChange') && use('Mod_CR') ? store.records('tblChange').filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status'))).length : null;
+    const tpcOut = has('tblTPC') && use('Use_TPC') ? store.records('tblTPC').filter((r) => r.get('Consent alert') === 'Outstanding' || (r.get('Status') && !/^(Agreed|Not needed|Not required|Complete|Closed|Remove)/i.test(r.get('Status')))).length : null;
+    const drOn = has('tblDataReq') && use('Use_DR'), woOn = has('tblWO') && use('Use_WO');
+    const drLate = (drOn ? store.records('tblDataReq').filter((r) => !/^(Delivered|Cancelled|Canceled|Withdrawn|Closed)/i.test(r.get('Status')) && Number(r.get('Due date')) && Number(r.get('Due date')) < T).length : 0)
+      + (woOn ? store.records('tblWO').filter((r) => !/^(Complete|Cancelled|Canceled|Rejected|Closed)/i.test(r.get('Status')) && Number(r.get('Target completion')) && Number(r.get('Target completion')) < T).length : 0);
+    const planLate = store.records('tblPlan').filter((r) => r.get('Status') === 'Late').length;
+    const sheet = (name) => () => store.showRange(name, 'A1').catch((e) => toast(e.message, true));
+    const phases = [
+      ['Start the month', [
+        ['rd', `Roll the reporting month forward (now ${fmtMonth(RD)})`, ed('Ticks itself when the reporting date is within the last month'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
+        ['cal', 'Check the calendar for the coming weeks', ed('Contract dates, notice deadlines, forums, actions and decisions. Tick it yourself'), null, () => go('dates'), 'Key dates'],
+        ['start', 'Ask the workstream leads for their reports', ed('One email to every workstream lead. Ticks itself when you send it'), null, startReporting, 'Email the leads']]],
+      ['Collect and update', [
+        ['rep', wsActive.length ? `Bring the reports in and check them (${repIn} of ${wsActive.length} in)` : 'Bring the reports in and check them', ed('Ticks itself when every active workstream has reported'), wsActive.length ? repIn >= wsActive.length : null, () => go('report')],
+        ['raid', raidWaiting || overdue ? `Review new risks, issues and overdue actions (${raidWaiting} waiting, ${overdue} overdue)` : 'Review new risks, issues and overdue actions: nothing waiting', ed('Ticks itself when nothing is waiting and no actions are overdue'), raidWaiting === 0 && overdue === 0, () => go('raid', fromReports ? { newOnly: true } : { suggested: true })],
+        ['int', `Update plan progress and readiness interviews${planLate || interviewsDue ? ` (${plural(planLate, 'late item')}, ${plural(interviewsDue, 'interview')} due)` : ''}`, ed('Ticks itself when nothing in the plan is late and no interviews are due'), planLate === 0 && interviewsDue === 0, () => go(interviewsDue && !planLate ? 'interview' : 'plan')],
+        crWaiting == null ? null : ['cr', crWaiting ? `Process date changes and change requests (${crWaiting} waiting)` : 'Process date changes and change requests: none waiting', ed('Ticks itself when no change requests are waiting'), crWaiting === 0, () => go('changes')],
+        tpcOut == null ? null : ['tpc', tpcOut ? `Chase vendor consents (${tpcOut} outstanding)` : 'Vendor consents: none outstanding', ed('Ticks itself when no consents are outstanding'), tpcOut === 0, () => go('thirdparties')],
+        drOn || woOn ? ['drwo', drLate ? `Follow up data requests and work orders (${drLate} overdue)` : 'Follow up data requests and work orders: none overdue', ed('Ticks itself when none are overdue'), drLate === 0, () => go(drOn ? 'datareq' : 'workorders')] : null]],
+      ['Check the money', [
+        ['cost', 'Check the TSA cost tracker is up to date', ed('This month\'s fees, changes and credits. Tick it yourself'), null, sheet('TSA Cost Tracker'), 'Open sheet'],
+        use('Use_INV') ? ['inv', 'Check the invoices received against the TSA fees', ed('Lines outside the threshold are flagged. Tick it yourself'), null, () => go('invoices')] : null,
+        ['ourinv', 'Send our invoice for the reverse services', ed('Tick it yourself'), null, () => go('invoice')]]],
+      ['Report', [
+        ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', ed('Ticks itself when there are no errors'), dqE === 0, sheet('Data Quality'), 'Open sheet'],
+        ['cons', 'Review the consolidated report and save the month', ed(`Add the ${team()} commentary. Tick it yourself`), null, () => go('consolidated')],
+        ['pack', 'Prepare the governance packs', ed('Tick it yourself'), null, () => go('pack')]]]
+    ].map(([p, ss]) => [p, ss.filter(Boolean)]);
+    const items = phases.flatMap(([, ss]) => ss);
     const isDone = (it) => (manual[it[0]] != null ? manual[it[0]] : !!it[3]);
     const doneCount = items.filter(isDone).length;
+    let k = 0;
     const month = h('section.card', { style: { flex: '1 1 340px' } },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
         h('h2.cap', `This month · ${fmtMonth(RD)}`), h('div.bar', h('div', { style: { width: Math.round(doneCount / items.length * 100) + '%' } })),
         h('span.small', { style: { fontWeight: 600, color: 'var(--navy)' } }, `${doneCount} of ${items.length}`)),
-      items.map((it, i) => {
-        const done = isDone(it), id = 'm-' + it[0];
-        const cb = h('input', { type: 'checkbox', id, checked: done, style: { width: '18px', height: '18px', accentColor: 'var(--navy)', flex: '0 0 auto' } });
-        cb.addEventListener('change', async () => { manual[it[0]] = cb.checked; await store.src.setSetting(key, manual); ctx.rerender(); });
-        return h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderTop: '1px solid var(--line-soft)' } },
-          cb, h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', color: done ? 'var(--muted)' : 'var(--ink)' } }, it[1], h('br'), h('span.small.muted', it[2])),
-          it[4] ? h('button.btn.btn-sm', { type: 'button', onclick: it[4] }, it[5] || 'Open') : null);
-      }));
+      phases.map(([pname, ss]) => [
+        h('div.small', { style: { fontWeight: 700, letterSpacing: '0.06em', color: 'var(--muted)', margin: '10px 0 2px', textTransform: 'uppercase', fontSize: '11px' } }, pname),
+        ss.map((it) => {
+          k++;
+          const done = isDone(it), id = 'm-' + it[0];
+          const cb = h('input', { type: 'checkbox', id, checked: done, 'aria-label': `Step ${k}`, style: { width: '18px', height: '18px', accentColor: 'var(--navy)', flex: '0 0 auto' } });
+          cb.addEventListener('change', async () => { manual[it[0]] = cb.checked; await store.src.setSetting(key, manual); ctx.rerender(); });
+          return h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderTop: '1px solid var(--line-soft)' } },
+            h('span', { style: { flex: '0 0 18px', textAlign: 'center', fontWeight: 700, color: 'var(--navy)', fontSize: '13px' } }, String(k)),
+            cb, h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', color: done ? 'var(--muted)' : 'var(--ink)' } }, it[1], h('br'), h('span.small.muted', it[2])),
+            it[4] ? h('button.btn.btn-sm', { type: 'button', onclick: it[4], style: { whiteSpace: 'nowrap', flex: '0 0 auto' } }, it[5] || 'Open') : null);
+        })]));
 
     // ---- workstream status from Consolidated WS Reporting (latest period, with trend against the one before)
     const wsName = Object.fromEntries(store.records('tblWorkstreams').map((r) => [r.get('Code'), r.get('Name')]));

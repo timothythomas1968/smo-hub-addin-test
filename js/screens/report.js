@@ -1,7 +1,7 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox } from '../util.js?v=0.9.4.20261106172320';
-import { personLabel } from '../form.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox } from '../util.js?v=0.9.5.20261106193911';
+import { personLabel, SCALE_WORDS } from '../form.js?v=0.9.5.20261106193911';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -155,7 +155,7 @@ function form(ctx, w, wsRow, s) {
           const opts = lists[label];
           const isDate = label === 'Due date' || label === 'Needed by';
           if (opts) {
-            el = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([String(vals[c] || ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, label === 'Owner' ? personLabel(ctx.store, o) : o)));
+            el = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([String(vals[c] || ''), ...opts].filter(Boolean))].map((o) => h('option', { value: o }, label === 'Owner' ? personLabel(ctx.store, o) : SCALE_WORDS[label] && /^[1-5]$/.test(o) ? `${o} – ${SCALE_WORDS[label][o - 1]}` : o)));
             el.value = String(vals[c] ?? '');
             el.addEventListener('change', () => { vals[c] = /^\d$/.test(el.value) ? Number(el.value) : el.value; paintRating(); });
           } else if (isDate) {

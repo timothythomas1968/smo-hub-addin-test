@@ -155,7 +155,28 @@ export function toast(msg, err) {
 }
 
 /** Print just this element (also how users save a PDF: choose "Microsoft Print to PDF" or "Save as PDF"). */
-export function printNode(node) {
+/** Excel for Mac ignores print() in the panel (proof, 4 Nov 2026), but downloads work. There the page is saved as
+ *  a web page file the user opens in Safari and prints, or saves as PDF. Everything stays on the computer. */
+export const printNeedsFile = () => { try { return Office.context.diagnostics.platform === 'Mac'; } catch (e) { return false; } };
+async function saveAsPage(node, title) {
+  let css = '';
+  try { css = await (await fetch(new URL('../css/app.css', import.meta.url))).text(); } catch (e) { /* print without the styles */ }
+  css = css.replace(/url\(['"]?\.\.\/fonts\//g, "url('");   // fonts are not carried: the page falls back to system fonts
+  const doc = '<!doctype html><html><head><meta charset="utf-8"><title></title><style></style></head><body class="printing"><div id="print-root"></div></body></html>';
+  const d = new DOMParser().parseFromString(doc, 'text/html');
+  d.title = title || 'TransitionSuite';
+  d.querySelector('style').textContent = css + '\n@media screen { #print-root { display: block !important; max-width: 900px; margin: 24px auto; } } body > :not(#print-root) { display: none; }';
+  d.getElementById('print-root').appendChild(d.importNode(node, true));
+  const blob = new Blob(['<!doctype html>\n' + d.documentElement.outerHTML], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = (title || 'TransitionSuite').replace(/[\\/:*?"<>|]+/g, ' ') + '.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('Saved to your Downloads as a web page. Open it, then choose File > Print (or Save as PDF).');
+}
+
+export function printNode(node, title) {
+  if (printNeedsFile()) { saveAsPage(node, title); return; }
   document.getElementById('print-root')?.remove();
   const root = document.createElement('div');
   root.id = 'print-root';
@@ -165,4 +186,58 @@ export function printNode(node) {
   const done = () => { document.body.classList.remove('printing'); root.remove(); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
   try { window.print(); } catch (e) { done(); toast('Printing is not available here. Use the worksheet and print from Excel.', true); }
+}
+
+/**
+ * Dropdowns drawn by the add-in itself. In Excel for Windows (WebView2) a native dropdown list closed as soon as the mouse button
+ * was released (Tim, 6 Nov 2026), so there a click on any <select> opens this list instead. The <select> stays the control:
+ * its value is set and a change event fired, so every screen works unchanged. The keyboard still uses the native control.
+ */
+export function installSelectFix(force) {
+  const win = /Windows/i.test(navigator.userAgent);
+  if (!force && !(win && typeof Office !== 'undefined' && Office.context && Office.context.host)) return;
+  let pop = null, owner = null;
+  const close = () => { if (pop) { pop.remove(); pop = null; } if (owner) { owner.classList.remove('pick-open'); owner = null; } };
+  const open = (sel) => {
+    close();
+    owner = sel; sel.classList.add('pick-open');
+    const r = sel.getBoundingClientRect();
+    pop = h('div.pick-pop', { role: 'listbox', 'aria-label': sel.getAttribute('aria-label') || 'Choose' });
+    [...sel.options].forEach((o) => {
+      const b = h('button.pick-opt', { type: 'button', role: 'option', 'aria-selected': String(o.value === sel.value), disabled: o.disabled || null }, o.textContent || ' ');
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => {
+        const changed = sel.value !== o.value;
+        sel.value = o.value; close(); sel.focus();
+        if (changed) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      });
+      pop.appendChild(b);
+    });
+    document.body.appendChild(pop);
+    const below = window.innerHeight - r.bottom, h0 = Math.min(280, pop.scrollHeight + 2);
+    const up = below < h0 + 8 && r.top > below;
+    Object.assign(pop.style, { left: Math.max(4, Math.min(r.left, window.innerWidth - Math.max(r.width, 180) - 4)) + 'px', minWidth: r.width + 'px', maxHeight: (up ? Math.min(280, r.top - 8) : Math.min(280, below - 8)) + 'px',
+      top: (up ? Math.max(4, r.top - Math.min(h0, r.top - 8)) : r.bottom + 2) + 'px' });
+    const cur = pop.querySelector('[aria-selected="true"]');
+    if (cur) cur.scrollIntoView({ block: 'nearest' });
+  };
+  document.addEventListener('mousedown', (e) => {
+    const sel = e.target && e.target.closest ? e.target.closest('select') : null;
+    if (sel && !sel.disabled && !sel.multiple) { e.preventDefault(); if (owner === sel) close(); else { sel.focus(); open(sel); } return; }
+    if (pop && !pop.contains(e.target)) close();
+  }, true);
+  document.addEventListener('keydown', (e) => { if (pop && e.key === 'Escape') { close(); e.stopPropagation(); } }, true);
+  window.addEventListener('resize', close);
+  document.addEventListener('scroll', (e) => { if (pop && !pop.contains(e.target)) close(); }, true);
+}
+
+/** Save a file to the user's Downloads (works in Excel on Windows, Mac and the web, and in browsers). Nothing leaves the computer. */
+export function saveBlob(blob, filename) {
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = String(filename).replace(/[\\/:*?"<>|]+/g, ' ');
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return true;
+  } catch (e) { toast('Download is not available here', true); return false; }
 }

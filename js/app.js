@@ -1,30 +1,39 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday } from './util.js?v=0.9.4.20261106172320';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.4.20261106172320';
-import { openRDDialog } from './rd.js?v=0.9.4.20261106172320';
-import home from './screens/home.js?v=0.9.4.20261106172320';
-import register from './screens/register.js?v=0.9.4.20261106172320';
-import raid from './screens/raid.js?v=0.9.4.20261106172320';
-import dates from './screens/dates.js?v=0.9.4.20261106172320';
-import interview from './screens/interview.js?v=0.9.4.20261106172320';
-import report from './screens/report.js?v=0.9.4.20261106172320';
-import invoice from './screens/invoice.js?v=0.9.4.20261106172320';
-import pack from './screens/pack.js?v=0.9.4.20261106172320';
-import plan from './screens/plan.js?v=0.9.4.20261106172320';
-import setup from './screens/setup.js?v=0.9.4.20261106172320';
-import { day1, f100 } from './screens/checklist.js?v=0.9.4.20261106172320';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.9.5.20261106193911';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.5.20261106193911';
+import { openRDDialog } from './rd.js?v=0.9.5.20261106193911';
+import home from './screens/home.js?v=0.9.5.20261106193911';
+import register from './screens/register.js?v=0.9.5.20261106193911';
+import raid from './screens/raid.js?v=0.9.5.20261106193911';
+import dates from './screens/dates.js?v=0.9.5.20261106193911';
+import interview from './screens/interview.js?v=0.9.5.20261106193911';
+import report from './screens/report.js?v=0.9.5.20261106193911';
+import invoice from './screens/invoice.js?v=0.9.5.20261106193911';
+import pack from './screens/pack.js?v=0.9.5.20261106193911';
+import plan from './screens/plan.js?v=0.9.5.20261106193911';
+import setup from './screens/setup.js?v=0.9.5.20261106193911';
+import { day1, f100 } from './screens/checklist.js?v=0.9.5.20261106193911';
+import consolidated from './screens/consolidated.js?v=0.9.5.20261106193911';
+import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.9.5.20261106193911';
 
-export const VERSION = '0.9.4';
+export const VERSION = '0.9.5';
 
+// The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
   { group: 'Every month', items: [
     ['home', 'Home', home], ['dates', 'Key dates', dates],
-    ['register', 'TSA register', register], ['plan', 'Exit plan', plan],
-    ['raid', 'RAID and actions', raid], ['report', 'Workstream report', report],
+    ['report', 'Workstream report', report], ['consolidated', 'Consolidated reporting', consolidated],
     ['interview', 'Readiness interviews', interview],
     ['invoice', 'Our invoice', invoice],
     ['pack', 'Governance pack', pack]] },
-  { group: 'Closing and after', items: [
+  { group: 'Registers', items: [
+    ['register', 'TSA register', register], ['people', 'People', people],
+    ['changes', 'TSA changes', changes], ['invoices', 'Invoices log', invoices],
+    ['raid', 'RAID and actions', raid], ['obligations', 'Obligations', obligations],
+    ['thirdparties', 'Third parties', thirdparties], ['datareq', 'Data requests', datareq],
+    ['workorders', 'Work orders', workorders]] },
+  { group: 'Plans', items: [
+    ['plan', 'Exit plan', plan],
     ['day1', 'Day 1 plan', day1],
     ['f100', 'First 100 days', f100]] },
   { group: 'Set-up', items: [['setup', 'Set-up wizard', setup]] }
@@ -51,7 +60,7 @@ function shell() {
   const preview = s.src.kind === 'preview';
   const nav = h('nav.nav', { 'aria-label': 'Hub sections' },
     NAV.map((g) => [h('span.nav-group', g.group.toUpperCase()),
-      g.items.map(([k, label, mod]) => h('button.nav-item', { type: 'button', 'data-k': k, onclick: () => go(k) }, label, mod.placeholder ? h('span.nav-soon', 'SOON') : null))]),
+      g.items.filter(([, , mod]) => !(mod.use && state.store && state.store.names[mod.use] === 'N')).map(([k, label, mod]) => h('button.nav-item', { type: 'button', 'data-k': k, onclick: () => go(k) }, label, mod.placeholder ? h('span.nav-soon', 'SOON') : null))]),
     h('div.nav-foot',
       h('button.btn.btn-sm', { type: 'button', onclick: refresh }, 'Refresh from the workbook'),
       h('span', 'Everything is saved in', h('br'), h('b', s.file)),
@@ -160,7 +169,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.9.4.20261106172320')).json();
+    const schema = await (await fetch('data/schema.json?v=0.9.5.20261106193911')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
@@ -183,6 +192,7 @@ async function start(inExcel) {
     }
     state.store = store;
     if (inExcel) watchWorkbook();
+    installSelectFix(new URLSearchParams(location.search).get('pick') === '1');   // Windows Excel; ?pick=1 tries it in a browser
     try { const k = localStorage.getItem('smohub.screen'); if (SCREENS[k]) state.screen = k; } catch (e) { /* ignore */ }
     shell();
     await render();

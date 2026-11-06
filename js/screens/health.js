@@ -1,9 +1,9 @@
 // Home's one-page health check: nine cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.9.4.20261106172320';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.9.4.20261106172320';
-import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.9.5.20261106193911';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.9.5.20261106193911';
+import { readinessOf } from '../readiness.js?v=0.9.5.20261106193911';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -173,10 +173,11 @@ export function healthCheck(ctx) {
     const need = [['ProgName', 'Programme name'], ['BuyerName', 'Buyer'], ['SellerName', 'Seller'], ['CloseDate', 'Closing date'], ['RepCcy', 'Reporting currency'], ['HubOwner', 'Hub owner'], ['TeamName', 'Name of your team'], ['FeeCap', 'Fee cap']];
     need.forEach(([k, label]) => { if (k in n && (n[k] === '' || n[k] == null)) gaps.push({ when: 'Set-up', what: ed(label) + ' not answered' }); });
     const liveTsa = tsa.filter((r) => !/Exited|Terminated/.test(r.get('Status')));
-    const noFee = liveTsa.filter((r) => !num(r.get('Monthly fee (key input)'))).length;
+    // the workbook's DQ-10 rule: a fee, or a fee basis note, or "No charge" as the charging basis
+    const noFee = liveTsa.filter((r) => !num(r.get('Monthly fee (key input)')) && !String(r.get('Fee basis note') || '').trim() && !/^(No charge|Pass-through)$/.test(r.get('Charging basis'))).length;
     const noOwner = liveTsa.filter((r) => !r.get('Provider service owner') || !r.get('Recipient service owner')).length;
     const noExit = liveTsa.filter((r) => !num(r.get('Forecast exit date'))).length;
-    if (noFee) gaps.push({ when: 'Services', what: `${plural(noFee, 'service')} with no monthly fee` });
+    if (noFee) gaps.push({ when: 'Services', what: `${plural(noFee, 'service')} with no monthly fee and no fee basis note` });
     if (noOwner) gaps.push({ when: 'Services', what: `${plural(noOwner, 'service')} missing a service owner` });
     if (noExit) gaps.push({ when: 'Services', what: `${plural(noExit, 'service')} with no exit date` });
     const ppl = store.records('tblPeople'), noMail = ppl.filter((r) => !r.get('Email')).length;

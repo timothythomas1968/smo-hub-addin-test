@@ -3,7 +3,7 @@
 // in TSA Changes (status Pending) with the impact worked out. The planned exit date only moves when the forum
 // approves it: the workbook's Planned exit date formula takes the latest approved Extend or Early exit request.
 // A forecast exit date stays editable; moving it is logged in TSA Changes as a "Forecast change".
-import { h, toast, fmtDate, fmtMoney, plural, serialToIso, isoToSerial, fromSerial, asOf, realToday, dateBox } from './util.js?v=0.9.4.20261106172320';
+import { h, toast, fmtDate, fmtMoney, plural, serialToIso, isoToSerial, fromSerial, asOf, realToday, dateBox } from './util.js?v=0.9.5.20261106193911';
 
 const num = (v) => Number(v) || 0;
 const monthsBetween = (a, b) => { const x = fromSerial(a), y = fromSerial(b); return (y.getUTCFullYear() - x.getUTCFullYear()) * 12 + (y.getUTCMonth() - x.getUTCMonth()); };
@@ -133,4 +133,73 @@ export async function logForecast(store, rec, from, to) {
     'Raised on': realToday(), 'Exit date before change': from || '', 'Proposed exit date': to,
     'Impact summary': i.lines.join(' '), Status: 'Implemented', Decision: 'Forecast updated in the TSA register', 'Decision date': realToday()
   });
+}
+
+// Contract-wide extensions (evaluation C, Tim 6 Nov 2026). Use it when the parties jointly agree a contractual
+// extension to the initial term, or to a term already extended. Only after management or Legal confirm it.
+// Each service gets an approved Extend change request (one request, a line per service), so the Planned exit
+// date formula moves every one of them, and Key dates, readiness interviews and the exit plan follow.
+export const EXTEND_HELP = 'Use this when the parties jointly agree a contractual extension to the initial term, or to a term already extended. It moves the planned exit date of every service you pick by the same number of months.';
+
+export function openExtension(ctx) {
+  const { store } = ctx;
+  const n = store.names, sym = n.CcySym || '', T = asOf(n);
+  const open = store.records('tblTSA').filter((r) => !['Exited', 'Terminated'].includes(r.get('Status')));
+  const months = h('input', { type: 'number', min: '1', max: '36', step: '1', value: String(Number(n.ExtMaxMonths) || 6), style: { width: '90px' }, 'aria-label': 'Months' });
+  const forums = (store.options({ h: 'Approval forum', t: 'I', dv: { name: 'L_Forum' } }) || []);
+  const forum = h('select', { 'aria-label': 'Agreed at' }, forums.map((f) => h('option', { value: f }, f)));
+  const def = forums.find((f) => /separation committee|steering/i.test(f)); if (def) forum.value = def;
+  const chosen = new Set(open.filter((r) => r.get('Qualifies for extension') !== 'N').map((r) => r.i));
+  const confirm = h('input', { type: 'checkbox', id: 'ext-ok' });
+  const list = h('div', { style: { maxHeight: '38vh', overflowY: 'auto', border: '1px solid var(--line)', borderRadius: '8px' } });
+  const total = h('div.small', { style: { fontWeight: 600 } });
+  const draw = () => {
+    const m = Math.max(0, Math.round(Number(months.value) || 0));
+    let fees = 0;
+    list.replaceChildren(...open.map((r) => {
+      const from = Number(r.get('Planned exit date')) || Number(r.get('Initial end date')) || 0;
+      const d = fromSerial(from), to = from ? Math.round(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m, d.getUTCDate()) / 864e5 + 25569) : 0;
+      const fee = m * (Number(r.get('Monthly fee (reporting currency)')) || 0);
+      const on = chosen.has(r.i), qual = r.get('Qualifies for extension') !== 'N';
+      if (on) fees += fee;
+      const notice = Number(r.get('On-time exit notice (days)'));
+      const cb = h('input', { type: 'checkbox', checked: on, 'aria-label': r.get('TSA ID') });
+      cb.addEventListener('change', () => { cb.checked ? chosen.add(r.i) : chosen.delete(r.i); draw(); });
+      return h('label', { style: { display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '6px 10px', borderBottom: '1px solid var(--line-soft)', background: on ? 'var(--row-pick)' : '#fff', cursor: 'pointer' } }, cb,
+        h('span', { style: { flex: '1 1 auto', fontSize: '12.5px' } }, h('b', r.get('TSA ID')), ' ', r.get('Service name'), qual ? null : h('span.small', { style: { color: 'var(--a-fg)' } }, ' · not extendable under the contract'),
+          h('div.small.muted', from ? `${fmtDate(from)} → ${fmtDate(to)} · ${fmtMoney(fee, sym)} more${notice ? ` · exit notice by ${fmtDate(to - notice)}` : ''}` : 'No planned exit date')));
+    }));
+    total.textContent = `${plural(chosen.size, 'service')} · about ${fmtMoney(fees, sym)} more in fees`;
+  };
+  months.addEventListener('input', draw);
+  const go = h('button.btn.btn-primary', { type: 'button' }, 'Apply the extension');
+  go.addEventListener('click', async () => {
+    const m = Math.round(Number(months.value) || 0);
+    if (!m) { toast('Type the number of months', true); return; }
+    if (!chosen.size) { toast('Pick at least one service', true); return; }
+    if (!confirm.checked) { toast('Tick the box to confirm the extension has been agreed', true); return; }
+    go.disabled = true;
+    try {
+      await store.need(['tblChange']);
+      const title = `Contract-wide extension: ${m} months`;
+      for (const r of open.filter((x) => chosen.has(x.i))) {
+        const from = Number(r.get('Planned exit date')) || Number(r.get('Initial end date')) || 0;
+        const d = fromSerial(from), to = Math.round(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + m, d.getUTCDate()) / 864e5 + 25569);
+        await store.add('tblChange', { 'Request type': 'Extend', 'TSA ID': r.get('TSA ID'), Title: title, 'Raised on': T, 'Exit date before change': from, 'Proposed exit date': to,
+          'Approval forum': forum.value, Status: 'Approved', Decision: `Agreed by the parties (${forum.value}); applied to ${plural(chosen.size, 'service')}`, 'Decision date': T });
+      }
+      back.remove();
+      toast(`Extension applied: ${plural(chosen.size, 'service')} moved by ${m} months and logged in TSA Changes`);
+      ctx.rerender();
+    } catch (e) { go.disabled = false; toast('Could not apply it: ' + (e.message || e), true); }
+  });
+  const back = modal('Apply an extension',
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+      h('p.small.muted', { style: { margin: 0 } }, EXTEND_HELP),
+      h('div.banner.warn', h('b', 'Only apply this after management or Legal confirm the extension has been agreed. '), 'Every service you pick gets an approved change request in TSA Changes, and its planned exit date moves.'),
+      h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' } }, h('span.small', { style: { fontWeight: 600 } }, 'Extend by'), months, h('span.small', 'months'), h('span.small', { style: { fontWeight: 600, marginLeft: '12px' } }, 'Agreed at'), forum),
+      h('div.small', 'Services (all open services that qualify are picked):'), list, total,
+      h('label', { style: { display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px' } }, confirm, 'Management or Legal have confirmed the extension is agreed')),
+    [h('button.btn', { type: 'button', onclick: () => back.remove() }, 'Cancel'), go]);
+  draw();
 }

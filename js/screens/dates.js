@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf } from '../util.js?v=0.9.4.20261106172320';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.9.5.20261106193911';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -136,11 +136,11 @@ function typeTable(all, from, to, rerender) {
   const allOn = Object.keys(TYPES).every((k) => !ui.off.has(k));
   return h('section.card', { style: { padding: '10px 14px' } },
     h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' } }, h('h2.cap', { style: { flex: '1 1 auto' } }, 'Show on the calendar'),
-      h('button.link-btn', { type: 'button', onclick: () => { if (allOn) Object.keys(TYPES).forEach((k) => ui.off.add(k)); else ui.off.clear(); rerender(); } }, allOn ? 'Untick all' : 'Tick all')),
+      h('button.link-btn', { type: 'button', onclick: () => { if (allOn) Object.keys(TYPES).forEach((k) => ui.off.add(k)); else ui.off.clear(); rerender(); } }, allOn ? ed('Untick all') : ed('Tick all'))),
     h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '2px 18px' } },
       Object.entries(TYPES).map(([k, [label, col]]) => {
         const id = 'kd-' + k;
-        const cb = h('input', { type: 'checkbox', id, checked: !ui.off.has(k), style: { width: '16px', height: '16px', accentColor: col } });
+        const cb = h('input.cb-plain', { type: 'checkbox', id, checked: !ui.off.has(k) });
         cb.addEventListener('change', () => { cb.checked ? ui.off.delete(k) : ui.off.add(k); rerender(); });
         return h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', borderBottom: '1px solid var(--line-soft)' } }, cb,
           h('span', { style: { width: '10px', height: '10px', borderRadius: '3px', background: col, flex: '0 0 10px' } }),

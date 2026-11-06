@@ -5,9 +5,9 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.9.4.20261106172320';
+import { ed, isUS, setTeam } from './util.js?v=0.9.5.20261106193911';
 
-const SCALAR_NAMES = ['Today', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
+const SCALAR_NAMES = ['Today', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.

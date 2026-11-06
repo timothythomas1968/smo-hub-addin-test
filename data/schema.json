@@ -849,7 +849,7 @@
    },
    {
     "k": "ExtOK",
-    "h": "Extension allowed",
+    "h": "Qualifies for extension",
     "t": "D",
     "f": "text",
     "dv": {
@@ -858,7 +858,7 @@
       "N"
      ]
     },
-    "n": "",
+    "n": "Y if the contract lets this service be extended (Tim, 6 Nov 2026: captured at set-up and on import). N for services the contract says cannot be extended.",
     "sec": "Contract terms"
    },
    {
@@ -2148,7 +2148,7 @@
       "5"
      ]
     },
-    "n": "",
+    "n": "1 = very unlikely, 5 = almost certain.",
     "sec": "Assessment"
    },
    {
@@ -2165,7 +2165,7 @@
       "5"
      ]
     },
-    "n": "",
+    "n": "1 = very low impact, 5 = very high impact.",
     "sec": "Assessment"
    },
    {
@@ -3127,6 +3127,15 @@
     "f": "text",
     "dv": null,
     "n": "",
+    "sec": "Amounts"
+   },
+   {
+    "k": "Accept",
+    "h": "Variance accepted (reason)",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "To accept a variance outside the threshold, type the reason, e.g. \"Accepted: agreed credit\". It clears the Check (evaluation G).",
     "sec": "Amounts"
    },
    {
