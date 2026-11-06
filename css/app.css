@@ -234,3 +234,39 @@ button.top-date:hover { border-color: #fff; }
 .hint-wide { display: flex; align-items: center; gap: 10px; background: var(--info-bg, #E8F2FF); color: var(--info-fg, #00315E); font-size: 12.5px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
 .hint-wide b { font-weight: 600; }
 .hint-wide button { margin-left: auto; }
+
+/* ---------- direction B: navy header band (Home first; other screens follow in 0.10) ---------- */
+.band { background: var(--navy); color: #fff; margin: -24px -28px 0; padding: 26px 28px 22px; display: flex; flex-direction: column; gap: 18px; }
+.band h1 { color: #fff; font-size: 28px; }
+.band .lede { color: #C9D6E6; }
+.band-kicker { font-size: 11px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; color: #9DBBE0; margin-bottom: 6px; }
+.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.btn-ghost:hover { background: rgba(255,255,255,.1); }
+.btn-onband { background: #fff; color: var(--navy); border-color: #fff; }
+.btn-onband:hover { background: var(--selected); }
+.band .tile { box-shadow: none; border: 0; border-radius: 10px; }
+.band .tile-value { font-size: 28px; }
+@media (max-width: 760px) { .band { margin: -18px -14px 0; padding: 20px 14px 18px; } .band h1 { font-size: 22px; } }
+
+/* ---------- Home health check ---------- */
+.health { display: flex; flex-direction: column; gap: 10px; }
+.health-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.hc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hc { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; border-top: 4px solid var(--g-bar); }
+.hc.amber { border-top-color: var(--a-bar); } .hc.red { border-top-color: var(--r-bar); }
+.hc-head { display: flex; align-items: center; gap: 8px; }
+.hc-head h3 { margin: 0; flex: 1 1 auto; font-size: 14px; color: var(--navy); }
+.hc-flag { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; border-radius: 999px; padding: 3px 8px; background: var(--g-bg); color: var(--g-fg); white-space: nowrap; }
+.hc-flag.amber { background: var(--a-bg); color: var(--a-fg); } .hc-flag.red { background: var(--r-bg); color: var(--r-fg); }
+.hc-body { display: flex; align-items: center; gap: 12px; justify-content: space-between; min-width: 0; }
+.hc-fig { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hc-fig b { font-size: 30px; line-height: 1.1; color: var(--ink); }
+.hc-fig span { font-size: 12px; color: var(--muted); }
+.hc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+.hc-list li { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+.hc-when { flex: 0 0 64px; font-weight: 700; color: var(--navy); font-size: 11.5px; }
+.hc-when.late { color: var(--r-fg); }
+.hc-what { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.hc-what svg { vertical-align: middle; }
+.hc-empty { margin: 0; font-size: 12.5px; color: var(--g-fg); }
+.hc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }

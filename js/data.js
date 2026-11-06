@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.9.2.20261105165012';
+import { ed, isUS, setTeam } from './util.js?v=0.9.3.20261106165044';
 
 const SCALAR_NAMES = ['ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];

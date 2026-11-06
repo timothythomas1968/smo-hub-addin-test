@@ -1,11 +1,12 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed } from '../util.js?v=0.9.2.20261105165012';
+import { h, fmtDate, fmtMonth, plural, ed } from '../util.js?v=0.9.3.20261106165044';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.3.20261106165044';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled', 'Complete', 'Not required']);
 
 export default {
-  tables: ['tblTSA', 'tblStatus', 'tblWorkstreams', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblAssumpDep', 'tblActions', 'tblOBL', 'tblPlan', 'tblDay1', 'tblFirst100'],
+  tables: [...new Set(['tblTSA', 'tblStatus', 'tblWorkstreams', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblAssumpDep', 'tblActions', 'tblOBL', 'tblPlan', 'tblDay1', 'tblFirst100', ...HEALTH_TABLES])],
   render(ctx) {
     const { store, go } = ctx;
     const n = store.names;
@@ -174,12 +175,14 @@ export default {
     const hello = greeting() + (n.HubOwner ? `, ${String(n.HubOwner).split(' ')[0]}` : '');
 
     return h('div.page',
+      h('div.band',
+        h('div.page-head',
+          h('div', h('div.band-kicker', `${n.ProgName || 'TransitionSuite'} · ${fmtMonth(RD)}`), h('h1', hello), h('p.lede', intro)),
+          h('button.btn.btn-ghost', { type: 'button', onclick: () => go('raid', { add: true }) }, 'Add risk or issue'),
+          h('button.btn.btn-onband', { type: 'button', onclick: () => go('pack') }, 'Produce governance pack')),
+        tiles),
       ctx.preview ? h('div.banner', h('b', 'Browser preview.'), 'You are looking at the demo workbook outside Excel. Edits are kept until you reload and calculated values do not update. In Excel, every change goes straight into the workbook.') : null,
-      h('div.page-head',
-        h('div', h('h1', hello), h('p.lede', intro)),
-        h('button.btn', { type: 'button', onclick: () => go('raid', { add: true }) }, 'Add risk or issue'),
-        h('button.btn.btn-primary', { type: 'button', onclick: () => go('pack') }, 'Produce governance pack')),
-      tiles,
+      healthCheck(ctx),
       phaseCards,
       h('div.row-wrap', month, wsList, h('div', { style: { flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '18px', minWidth: 0 } }, comingUp, milesCard)));
   }
