@@ -1,8 +1,8 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob } from '../util.js?v=0.10.0.20261106213331';
-import { packDeck } from '../packdeck.js?v=0.10.0.20261106213331';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.10.0.20261106213331';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob } from '../util.js?v=0.10.1.20261106220328';
+import { packDeck } from '../packdeck.js?v=0.10.1.20261106220328';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.10.1.20261106220328';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -219,7 +219,7 @@ function buildPack(store, f, on, commentary, go) {
     parts.push(cap('Regulatory approvals', 'Regulatory register'));
     parts.push(table(['Entity', 'Filing or approval', 'Regulator', 'Due', 'Status'], reg.map((r) => [r.get('Entity'), r.get('Filing or approval'), r.get('Regulator'), fmtDate(r.get('Due date')), chip(r.get('Status'), String(r.get('Status')).startsWith('Approved') ? 'Green' : r.get('Status') === 'Not started' ? 'n' : 'blue')]), 'No filings recorded.'));
   }
-  if (on('costs')) parts.push(...costSection(store, tsa, cap, (d) => { if (curSec) curSec.fees = d; }));
+  if (on('costs')) parts.push(...costSection(store, tsa, cap, (d) => { if (curSec) curSec.fees = d; }, drill));
   if (on('d1')) {
     const d1 = store.records('tblDay1').filter((r) => r.get('Status') !== 'Not required');
     const f1 = store.records('tblFirst100').filter((r) => r.get('Status') !== 'Not required');
@@ -245,7 +245,7 @@ function cellOut(c) {
 }
 
 // Fees by year and by quarter, estimated from the register: monthly fee x months running, with extension mark-ups.
-function costSection(store, tsa, cap, rec) {
+function costSection(store, tsa, cap, rec, drill = (t) => t) {
   const n = store.names, RD = Number(n.RD) || 0, sym = n.CcySym || '';
   const months = {};
   const monthKey = (d) => d.getUTCFullYear() * 12 + d.getUTCMonth();
@@ -273,7 +273,7 @@ function costSection(store, tsa, cap, rec) {
   const fm = (v) => fmtMoney(v, sym);
   const yt = h('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' } },
     h('thead', h('tr', ['Year', 'Forward fees (we pay)', 'Reverse fees (we receive)'].map((x, i) => h('th', { style: { textAlign: i ? 'right' : 'left', color: 'var(--muted)', fontSize: '11px', padding: '4px 6px', borderBottom: '1px solid var(--line)' } }, x)))),
-    h('tbody', Object.entries(years).map(([y, v]) => h('tr', [y, fm(v.f), fm(v.r)].map((c, i) => h('td', { style: { textAlign: i ? 'right' : 'left', padding: '6px', borderBottom: '1px solid var(--line-soft)' } }, c))))));
+    h('tbody', Object.entries(years).map(([y, v]) => h('tr', [drill(y, 'finance', { year: Number(y) }), fm(v.f), fm(v.r)].map((c, i) => h('td', { style: { textAlign: i ? 'right' : 'left', padding: '6px', borderBottom: '1px solid var(--line-soft)' } }, c))))));
   // bar chart
   const qs = Object.entries(quarters);
   const max = Math.max(...qs.map(([, v]) => v.v)) || 1;
@@ -296,7 +296,8 @@ function costSection(store, tsa, cap, rec) {
   });
   const capNode = cap('TSA fees', 'TSA register: monthly fees x months running, with extension mark-ups');
   if (rec) rec({ sym, years: Object.entries(years).map(([y, v]) => [y, v.f, v.r]), quarters: qs.map(([q, v]) => [q, v.past ? v.v : 0, v.past ? 0 : v.v]) });
-  return [capNode, yt,
+  const more = h('div.small', { style: { marginTop: '6px' } }, drill('Open the full financial analysis (Finance) ›', 'finance', {}));
+  return [capNode, yt, more,
     h('div', { style: { marginTop: '12px' } }, h('div.small', { style: { fontWeight: 600, marginBottom: '4px' } }, 'Forward fees by quarter: dark = to date, light = forecast'), svg)];
 }
 

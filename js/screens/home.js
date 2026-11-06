@@ -1,8 +1,8 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.10.0.20261106213331';
-import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.10.0.20261106213331';
-import { readinessOf } from '../readiness.js?v=0.10.0.20261106213331';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.10.0.20261106213331';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.10.1.20261106220328';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.10.1.20261106220328';
+import { readinessOf } from '../readiness.js?v=0.10.1.20261106220328';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.10.1.20261106220328';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -95,9 +95,8 @@ export default {
     const use = (k) => n[k] !== 'N';
     const M0 = (() => { const d = new Date((RD - 25569) * 86400000); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 86400000) + 25569; })();
     const wsActive = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get('Code'));
-    const M1 = (() => { const d = new Date((M0 - 25569) * 86400000); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) / 86400000) + 25569; })();
-    const wsIn = new Set(store.records('tblStatus').filter((r) => (r.get('Scope') || 'Overall') === 'Overall' && Number(r.get('Period')) >= M0 && Number(r.get('Period')) < M1 && r.get('RAG')).map((r) => r.get('Workstream')));
-    const repIn = wsActive.filter((c) => wsIn.has(c)).length;
+    const rin = reportsIn(store);
+    const repIn = wsActive.filter((c) => rin.has(c)).length;   // a report is in when its section has a summary (counts.js)
     const raidWaiting = suggested + fromReports;
     const has = (t) => store.has ? store.has(t) : true;
     const crWaiting = has('tblChange') && use('Mod_CR') ? store.records('tblChange').filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status'))).length : null;

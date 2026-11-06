@@ -1,10 +1,10 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.10.0.20261106213331';
-import { personLabel } from '../form.js?v=0.10.0.20261106213331';
-import { colName } from '../data.js?v=0.10.0.20261106213331';
-import { todaySerial } from './checklist.js?v=0.10.0.20261106213331';
-import { readinessOf } from '../readiness.js?v=0.10.0.20261106213331';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.10.1.20261106220328';
+import { personLabel } from '../form.js?v=0.10.1.20261106220328';
+import { colName } from '../data.js?v=0.10.1.20261106220328';
+import { todaySerial } from './checklist.js?v=0.10.1.20261106220328';
+import { readinessOf } from '../readiness.js?v=0.10.1.20261106220328';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;
@@ -42,7 +42,8 @@ export default {
     };
     const list = svc.filter(filters[ui.filter][1]);
     if (ctx.arg && ctx.arg.id && !ctx.arg.used) { ctx.arg.used = true; ui.sel = ctx.arg.id; ui.filter = 'all'; }
-    let sel = svc.find((s) => s.id === ui.sel) || list[0] || svc[0];
+    // the detail always belongs to the list on the left: a filter that leaves the selected service out selects its first service (Tim, 0.9.5)
+    let sel = list.find((s) => s.id === ui.sel) || list[0] || null;
     if (sel && sel.id !== ui.sel) { ui.sel = sel.id; ui.round = null; }
     const go = (p) => { Object.assign(ui, p); ctx.rerender(); };
 
@@ -52,7 +53,7 @@ export default {
 
     const main = h('section.card', { style: { flex: '999 1 560px', minWidth: 0, padding: '0' } }, h('div.loading', h('div.spinner'), 'Reading the interview record…'));
     if (sel) loadAndFill(ctx, main, sel, waive);
-    else main.replaceChildren(h('div.panel-empty', 'No running services.'));
+    else main.replaceChildren(h('div.panel-empty', svc.length ? `No services under "${filters[ui.filter][0]}". Pick another filter on the left.` : 'No running services.'));
 
     return h('div.page',
       h('div.page-head',

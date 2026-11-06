@@ -54,7 +54,7 @@ export const LIVE = {
     on: { 'Actual finish': (val, set) => { if (!blank(val)) set('% complete', 1); } }
   },
   tblPeople: {
-    calc: {
+    sugg: {   // a suggestion since 0.10: the user can type over it (Tim, 0.9.5)
       Quadrant: (v) => {
         const inf = v('Influence'), int = v('Interest');
         if (blank(inf) || blank(int)) return '';

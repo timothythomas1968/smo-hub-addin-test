@@ -1,9 +1,10 @@
 // Home's one-page health check: nine cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.0.20261106213331';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.0.20261106213331';
-import { readinessOf } from '../readiness.js?v=0.10.0.20261106213331';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.1.20261106220328';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.1.20261106220328';
+import { readinessOf } from '../readiness.js?v=0.10.1.20261106220328';
+import { reportsIn } from '../counts.js?v=0.10.1.20261106220328';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -125,8 +126,8 @@ export function healthCheck(ctx) {
   // 5. Workstream reports outstanding for this month
   const wsRows = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y');
   if (wsRows.length) {
-    const got = new Set(store.records('tblStatus').filter((r) => monthStart(num(r.get('Period'))) === M0 && (r.get('Scope') || 'Overall') === 'Overall' && r.get('RAG')).map((r) => r.get('Workstream')));
-    const missing = wsRows.filter((r) => !got.has(r.get('Code')));
+    const rin = reportsIn(store);   // a report is in when its section has a summary (counts.js)
+    const missing = wsRows.filter((r) => !rin.has(r.get('Code')));
     const done = wsRows.length - missing.length;
     cards.push(card({
       title: 'Workstream reports', big: `${done} of ${wsRows.length}`, bigSub: `in for ${fmtMonth(RD)}`,

@@ -82,3 +82,26 @@ export function meter(v, limit, { width = 220, height = 10, tone = COL.blue, lab
   if (limit) el(s, 'rect', { x: Math.min(width - 2, width * limit / max), y: 0, width: 2, height, fill: COL.ink });
   return s;
 }
+
+/** Stacked columns: groups [{label, parts: [{v, c, label}]}], with a total above each column and a key below. */
+export function stackColumns(groups, { width = 640, height = 220, fmt = String, label = '', mark = null } = {}) {
+  const s = svg(width, height, label);
+  const max = Math.max(1, ...groups.map((g) => g.parts.reduce((a, p) => a + (p.v || 0), 0)));
+  const top = 18, base = height - 22, gw = width / Math.max(1, groups.length), bw = Math.min(34, gw * 0.62);
+  el(s, 'line', { x1: 0, x2: width, y1: base + 0.5, y2: base + 0.5, stroke: COL.n });
+  groups.forEach((g, gi) => {
+    const x = gi * gw + (gw - bw) / 2;
+    let y = base, tot = 0;
+    if (mark != null && gi === mark) el(s, 'rect', { x: gi * gw + 1, y: 2, width: gw - 2, height: base - 2, fill: '#E6EEF7' });
+    g.parts.forEach((p) => {
+      const hh = (base - top) * (p.v || 0) / max;
+      if (!hh) return;
+      y -= hh; tot += p.v;
+      const r = el(s, 'rect', { x, y, width: bw, height: hh, fill: p.c });
+      el(r, 'title', {}, `${g.label} ${p.label}: ${fmt(p.v)}`);
+    });
+    if (tot) el(s, 'text', { x: x + bw / 2, y: y - 4, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 600, fill: COL.ink }, fmt(tot));
+    el(s, 'text', { x: gi * gw + gw / 2, y: height - 6, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: COL.navy }, g.label);
+  });
+  return s;
+}

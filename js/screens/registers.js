@@ -1,9 +1,9 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.10.0.20261106213331';
-import { buildForm, personLabel } from '../form.js?v=0.10.0.20261106213331';
-import { LIVE } from '../live.js?v=0.10.0.20261106213331';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.10.1.20261106220328';
+import { buildForm, personLabel } from '../form.js?v=0.10.1.20261106220328';
+import { LIVE } from '../live.js?v=0.10.1.20261106220328';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
@@ -91,7 +91,34 @@ function editPanel(ctx, cfg, ui, rec) {
     h('div.panel-foot',
       h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save'),
       h('button.btn', { type: 'button', onclick: () => store.show(cfg.t, rec.i).catch((e) => toast(e.message, true)) }, 'Show row'),
+      cfg.remove ? h('button.btn', { type: 'button', style: { marginLeft: 'auto', color: 'var(--r-fg)' }, onclick: () => removeRecord(ctx, cfg, ui, rec) }, cfg.remove) : null,
       h('span.small.muted', { style: { flex: '1 1 100%' } }, ed('Grey italic values are suggested by the Hub: type over them to set your own. Bold values are calculated.'))));
+}
+
+// People (Tim, 0.9.5): take someone off the register when they leave the programme or the company. Their name stays on the items they
+// own until those are given to someone else, so the warning lists them first.
+const OWNED = [['tblTSA', ['Provider service owner', 'Recipient service owner'], 'service'], ['tblRisks', ['Owner'], 'risk'], ['tblIssues', ['Owner'], 'issue'],
+  ['tblActions', ['Owner'], 'action'], ['tblDecisions', ['Owner'], 'decision']];
+function removeRecord(ctx, cfg, ui, rec) {
+  const { store } = ctx;
+  const who = String(rec.get(cfg.name) || '');
+  const closed = /^(Exited|Terminated|Closed|Remove|Made|Withdrawn|Cancelled|Canceled|Complete)$/;
+  const owned = OWNED.map(([t, cols, word]) => {
+    const n = store.has(t) ? store.records(t).filter((r) => cols.some((c) => r.get(c) === who) && !closed.test(String(r.get('Status') || r.get('Status (adopt or remove)') || ''))).length : 0;
+    return n ? `${n} open ${word}${n === 1 ? '' : 's'}` : null;
+  }).filter(Boolean);
+  const back = h('div.modal-back', { onclick: (e) => { if (e.target === back) back.remove(); } });
+  const go = async () => {
+    try { await store.clearRow(cfg.t, rec.i); back.remove(); ui.sel = null; ui.selId = null; toast(`${who || 'The person'} is off the register`); ctx.rerender(); }
+    catch (e) { toast('Could not remove: ' + (e.message || e), true); }
+  };
+  back.appendChild(h('div.modal', { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Remove a person' },
+    h('h2', `Remove ${who || 'this person'}?`),
+    h('p', 'Their row on the People sheet is cleared, so they drop out of every dropdown. Nothing else is deleted.'),
+    owned.length ? h('div.banner.warn', `${who} still owns ${owned.join(', ')}. Their name stays on those until you give them to someone else.`) : null,
+    h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end' } }, h('button.btn', { type: 'button', onclick: () => back.remove() }, 'Cancel'),
+      h('button.btn.btn-primary', { type: 'button', onclick: go }, 'Remove'))));
+  document.body.appendChild(back);
 }
 
 function addPanel(ctx, cfg, ui) {
@@ -121,7 +148,8 @@ const num = (v) => Number(v) || 0;
 const open = (r, c, done) => !done.includes(String(r.get(c)));
 
 export const people = registerScreen({
-  t: 'tblPeople', title: 'People', one: 'a person', id: 'Name', name: 'Name', status: 'Organisation', wide: true,
+  t: 'tblPeople', title: 'People', one: 'a person', id: 'Name', name: 'Name', status: 'Organisation', wide: true, remove: 'Remove from the register',
+  also: ['tblTSA', 'tblRisks', 'tblIssues', 'tblActions', 'tblDecisions'],
   lede: 'Everyone on the programme: owners, leads, chairs and contacts. Search by name, workstream or role. Email and the rest are in the panel.',
   placeholder: 'Search by name, role, workstream or organisation', search: ['Name', 'Role', 'Workstream or function', 'Organisation', 'Email'],
   cols: [['Name', 'Name'], ['Role'], ['Workstream or function'], ['Organisation']]

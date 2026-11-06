@@ -2,7 +2,7 @@
 // closed, how many close soon, and how many are past their exit date. Home, the TSA register, the governance
 // pack (and later the executive summary, Teams and Finance) all use these, so the numbers always agree.
 // Counts run from today (asOf), not the reporting date. The workbook holds the same rules (Today, TSA Status).
-import { fmtDate } from './util.js?v=0.10.0.20261106213331';
+import { fmtDate } from './util.js?v=0.10.1.20261106220328';
 
 export const CLOSED = new Set(['Exited', 'Terminated']);
 export const isOpen = (r) => !CLOSED.has(r.get('Status'));
@@ -34,3 +34,13 @@ export function serviceCounts(records, T) {
 
 /** "as at 5 Oct 2026" wording for footnotes. */
 export const asAtText = (T) => `Counts as at ${fmtDate(T)}.`;
+
+/** Workstream reports in for the reporting month: a report is in when its section on the Workstream Reports sheet has a summary
+ *  (the same rule as the Workstream report screen and Home on the sheet). Consolidated WS Reporting always has a RAG for every
+ *  workstream, suggested from the registers when no report has come in, so it cannot be used to count reports. */
+export function reportsIn(store) {
+  const n = store.names, codes = (n.WRS_WS || []).map(String), sums = n.WRS_Sum || [];
+  const inSet = new Set(codes.filter((c, i) => c && String(sums[i] ?? '').trim()));
+  const active = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get('Code'));
+  return { active, in: active.filter((c) => inSet.has(c)), waiting: active.filter((c) => !inSet.has(c)), has: (c) => inSet.has(c) };
+}

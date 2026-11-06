@@ -103,10 +103,17 @@
    {
     "k": "Quad",
     "h": "Quadrant",
-    "t": "C",
+    "t": "D",
     "f": "text",
-    "dv": null,
-    "n": "",
+    "dv": {
+     "list": [
+      "Manage closely",
+      "Keep satisfied",
+      "Keep informed",
+      "Monitor"
+     ]
+    },
+    "n": "Suggested from influence and interest. Type over it (or pick from the list) if your judgement differs.",
     "sec": "Stakeholder analysis"
    },
    {
