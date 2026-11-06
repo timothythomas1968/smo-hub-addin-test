@@ -1,20 +1,20 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed } from './util.js?v=0.9.3.20261106165044';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.3.20261106165044';
-import { openRDDialog } from './rd.js?v=0.9.3.20261106165044';
-import home from './screens/home.js?v=0.9.3.20261106165044';
-import register from './screens/register.js?v=0.9.3.20261106165044';
-import raid from './screens/raid.js?v=0.9.3.20261106165044';
-import dates from './screens/dates.js?v=0.9.3.20261106165044';
-import interview from './screens/interview.js?v=0.9.3.20261106165044';
-import report from './screens/report.js?v=0.9.3.20261106165044';
-import invoice from './screens/invoice.js?v=0.9.3.20261106165044';
-import pack from './screens/pack.js?v=0.9.3.20261106165044';
-import plan from './screens/plan.js?v=0.9.3.20261106165044';
-import setup from './screens/setup.js?v=0.9.3.20261106165044';
-import { day1, f100 } from './screens/checklist.js?v=0.9.3.20261106165044';
+import { h, toast, fmtDate, setEdition, ed, realToday } from './util.js?v=0.9.4.20261106172320';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.4.20261106172320';
+import { openRDDialog } from './rd.js?v=0.9.4.20261106172320';
+import home from './screens/home.js?v=0.9.4.20261106172320';
+import register from './screens/register.js?v=0.9.4.20261106172320';
+import raid from './screens/raid.js?v=0.9.4.20261106172320';
+import dates from './screens/dates.js?v=0.9.4.20261106172320';
+import interview from './screens/interview.js?v=0.9.4.20261106172320';
+import report from './screens/report.js?v=0.9.4.20261106172320';
+import invoice from './screens/invoice.js?v=0.9.4.20261106172320';
+import pack from './screens/pack.js?v=0.9.4.20261106172320';
+import plan from './screens/plan.js?v=0.9.4.20261106172320';
+import setup from './screens/setup.js?v=0.9.4.20261106172320';
+import { day1, f100 } from './screens/checklist.js?v=0.9.4.20261106172320';
 
-export const VERSION = '0.9.3';
+export const VERSION = '0.9.4';
 
 const NAV = [
   { group: 'Every month', items: [
@@ -64,6 +64,7 @@ function shell() {
         h('div.brand-text', h('span.brand-name', h('b', 'Transition'), h('span.brand-suite', 'Suite'), h('span.brand-by', 'by Whisper Consulting')), h('span.brand-sub', `${n.ProgName || ed('Separation programme')} · ${side}`))),
       h('div.top-right',
         h('span.top-label', 'Reporting to'), h('button.top-date', { type: 'button', title: 'Change the reporting date', onclick: changeRD }, fmtDate(n.RD) || 'not set'),
+        Number(n.Today) > 0 && Math.floor(Number(n.Today)) !== realToday() ? h('span.top-label', { title: 'This workbook fixes today at this date, so the demo tells the same story whatever the real date is. Overdue and due-soon alerts measure against it.' }, `Today: ${fmtDate(n.Today)} (demo)`) : null,
         preview ? h('span.pill-top.pill-preview', 'BROWSER PREVIEW') : null)),
     widthHint(),
     h('div.body', nav, h('div.scrim', { onclick: closeNav }), h('main.main', { id: 'main' })));
@@ -159,7 +160,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.9.3.20261106165044')).json();
+    const schema = await (await fetch('data/schema.json?v=0.9.4.20261106172320')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {

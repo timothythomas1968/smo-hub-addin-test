@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast } from '../util.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf } from '../util.js?v=0.9.4.20261106172320';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -62,7 +62,7 @@ export default {
   tables: ['tblTSA', 'tblForums', 'tblOBL', 'tblDecisions', 'tblIssues', 'tblActions', 'tblDataReq', 'tblWO', 'tblREG', 'tblPlan'],
   render(ctx) {
     const { store, go } = ctx;
-    const RD = Number(store.names.RD) || 0;
+    const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date
     const US = store.names.Edition === 'US';
     const rd = fromSerial(RD) || new Date();
     if (!ui.month) ui.month = new Date(Date.UTC(rd.getUTCFullYear(), rd.getUTCMonth(), 1));
@@ -85,12 +85,12 @@ export default {
     const shiftMonth = (n) => { ui.month = new Date(Date.UTC(y, m + n, 1)); rerender(); };
     const dow = US ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const grid = h('section.card', { style: { flex: '999 1 560px', minWidth: 0, padding: '14px' } },
+    const grid = h('section.card', { style: { minWidth: 0, padding: '14px' } },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' } },
         h('button.btn.btn-sm', { type: 'button', 'aria-label': 'Previous month', onclick: () => shiftMonth(-1) }, '‹'),
         h('h2', { style: { margin: 0, fontSize: '18px', color: 'var(--navy)', minWidth: '150px', textAlign: 'center' } }, `${MONTHS[m]} ${y}`),
         h('button.btn.btn-sm', { type: 'button', 'aria-label': 'Next month', onclick: () => shiftMonth(1) }, '›'),
-        h('button.btn.btn-sm', { type: 'button', style: { marginLeft: '8px' }, onclick: () => { ui.month = new Date(Date.UTC(rd.getUTCFullYear(), rd.getUTCMonth(), 1)); ui.day = RD; rerender(); } }, 'Reporting month')),
+        h('button.btn.btn-sm', { type: 'button', style: { marginLeft: '8px' }, onclick: () => { ui.month = new Date(Date.UTC(rd.getUTCFullYear(), rd.getUTCMonth(), 1)); ui.day = RD; rerender(); } }, 'Today')),
       h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '4px' } },
         dow.map((d) => h('div', { style: { fontSize: '11px', fontWeight: 700, color: 'var(--muted)', textAlign: 'center', padding: '4px 0' } }, d.toUpperCase())),
         cells.map((d) => {
@@ -98,11 +98,11 @@ export default {
           const ev = byDay[d] || [];
           const isSel = d === ui.day;
           return h('button', { type: 'button', 'aria-label': `${fmtDate(d)}: ${ev.length} items`, onclick: () => { ui.day = d; rerender(); },
-            style: { minHeight: '84px', textAlign: 'left', verticalAlign: 'top', border: `1px solid ${isSel ? 'var(--blue)' : 'var(--line-soft)'}`, boxShadow: isSel ? 'inset 0 0 0 1px var(--blue)' : 'none',
+            style: { minHeight: '108px', textAlign: 'left', verticalAlign: 'top', border: `1px solid ${isSel ? 'var(--blue)' : 'var(--line-soft)'}`, boxShadow: isSel ? 'inset 0 0 0 1px var(--blue)' : 'none',
               borderRadius: '6px', background: d === RD ? 'var(--selected)' : '#fff', padding: '4px 5px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, overflow: 'hidden' } },
-            h('span', { style: { fontSize: '12px', fontWeight: d === today || d === RD ? 700 : 500, color: d === RD ? 'var(--navy)' : 'var(--heading)' } }, String(fromSerial(d).getUTCDate()), d === RD ? ' · RD' : ''),
-            ev.slice(0, 3).map((e) => h('span', { style: { fontSize: '10.5px', lineHeight: '1.25', color: '#fff', background: TYPES[e.type][1], borderRadius: '3px', padding: '1px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, e.title)),
-            ev.length > 3 ? h('span', { style: { fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600 } }, `+${ev.length - 3} more`) : null);
+            h('span', { style: { fontSize: '12px', fontWeight: d === today || d === RD ? 700 : 500, color: d === RD ? 'var(--navy)' : 'var(--heading)' } }, String(fromSerial(d).getUTCDate()), d === RD ? ' · today' : ''),
+            ev.slice(0, 4).map((e) => h('span', { style: { fontSize: '10.5px', lineHeight: '1.25', color: '#fff', background: TYPES[e.type][1], borderRadius: '3px', padding: '1px 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, e.title)),
+            ev.length > 4 ? h('span', { style: { fontSize: '10.5px', color: 'var(--muted)', fontWeight: 600 } }, `+${ev.length - 4} more`) : null);
         })));
 
     const dayEv = (byDay[ui.day] || []);
@@ -112,27 +112,42 @@ export default {
       h('div', { style: { display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: '1 1 auto' } },
         e.open ? h('button.link-btn', { type: 'button', style: { fontSize: '13px', textAlign: 'left', color: 'var(--ink)' }, onclick: () => go(e.open.k, e.open.arg) }, e.title) : h('span', { style: { fontSize: '13px', fontWeight: 600 } }, e.title),
         h('span.small.muted', [withDate ? fmtDate(e.d) : null, TYPES[e.type][0], e.sub].filter(Boolean).join(' · '))));
-    const side = h('aside.panel', { style: { padding: '0' } },
-      h('div.panel-head', h('span.panel-id', 'Selected day'), h('h2.panel-title', fmtDate(ui.day))),
-      h('div.panel-body',
-        dayEv.length ? dayEv.map((e) => evRow(e, false)) : h('p.small.muted', { style: { margin: 0 } }, 'Nothing on this day.'),
-        h('div.sec', 'Next after this day'),
-        upcoming.map((e) => evRow(e, true))),
-      h('div.panel-foot', { style: { flexDirection: 'column', alignItems: 'stretch' } },
+    // The selected day sits under the full-width calendar (evaluation H; 0.10 item 3)
+    const side = h('section.card', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+      h('div.row-wrap', { style: { alignItems: 'flex-start' } },
+        h('div', { style: { flex: '1 1 320px', minWidth: 0 } }, h('h2.cap', `Selected day · ${fmtDate(ui.day)}`),
+          dayEv.length ? dayEv.map((e) => evRow(e, false)) : h('p.small.muted', { style: { margin: '6px 0 0' } }, 'Nothing on this day.')),
+        h('div', { style: { flex: '1 1 320px', minWidth: 0 } }, h('h2.cap', 'Next after this day'), upcoming.map((e) => evRow(e, true)))),
+      h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '6px', borderTop: '1px solid var(--line-soft)', paddingTop: '10px' } },
         h('span.small.muted', 'Dates come from the registers. Change them there (or on the matching screen) and the calendar follows.'),
         ui.exp ? exportBox(store, shown, RD, rerender) : h('button.link-btn', { type: 'button', style: { alignSelf: 'flex-start' }, onclick: () => { ui.exp = true; rerender(); } }, 'Copy these dates to Outlook…')));
 
     return h('div.page',
       h('div.page-head', h('div', h('h1', 'Key dates'),
         h('p.lede', 'Exits, notice deadlines, readiness interviews, forums, obligations, RAID and action due dates, data requests, work orders, regulatory filings and plan milestones.'))),
-      h('div.filters', Object.entries(TYPES).map(([k, [label, col]]) => {
-        const on = !ui.off.has(k);
-        return h('button.fchip', { type: 'button', 'aria-pressed': String(on), onclick: () => { on ? ui.off.add(k) : ui.off.delete(k); rerender(); },
-          style: on ? { background: col, borderColor: col, color: '#fff' } : null }, label, h('span.n', String(all.filter((e) => e.type === k).length)));
-      })),
-      h('div.row-wrap', grid, side));
+      typeTable(all, first, first + days - 1, rerender),
+      grid, side);
   }
 };
+
+// The event types as a table with tick boxes (Tim, 2 Nov 2026): colour, name, this month and in total.
+function typeTable(all, from, to, rerender) {
+  const cnt = (k, inMonth) => all.filter((e) => e.type === k && (!inMonth || (e.d >= from && e.d <= to))).length;
+  const allOn = Object.keys(TYPES).every((k) => !ui.off.has(k));
+  return h('section.card', { style: { padding: '10px 14px' } },
+    h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' } }, h('h2.cap', { style: { flex: '1 1 auto' } }, 'Show on the calendar'),
+      h('button.link-btn', { type: 'button', onclick: () => { if (allOn) Object.keys(TYPES).forEach((k) => ui.off.add(k)); else ui.off.clear(); rerender(); } }, allOn ? 'Untick all' : 'Tick all')),
+    h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '2px 18px' } },
+      Object.entries(TYPES).map(([k, [label, col]]) => {
+        const id = 'kd-' + k;
+        const cb = h('input', { type: 'checkbox', id, checked: !ui.off.has(k), style: { width: '16px', height: '16px', accentColor: col } });
+        cb.addEventListener('change', () => { cb.checked ? ui.off.delete(k) : ui.off.add(k); rerender(); });
+        return h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0', borderBottom: '1px solid var(--line-soft)' } }, cb,
+          h('span', { style: { width: '10px', height: '10px', borderRadius: '3px', background: col, flex: '0 0 10px' } }),
+          h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', cursor: 'pointer' } }, label),
+          h('span.small.muted', { title: 'This month · in total' }, `${cnt(k, true)} · ${cnt(k, false)}`));
+      })));
+}
 
 function exportBox(store, shown, RD, rerender) {
   const sel = h('select', { 'aria-label': 'Period', style: { border: '1px solid var(--line-strong)', borderRadius: '6px', padding: '5px 8px', background: '#fff' } },
@@ -142,12 +157,10 @@ function exportBox(store, shown, RD, rerender) {
   const until = () => { const d = fromSerial(RD); return toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + ui.months, d.getUTCDate()))); };
   return h('div', { style: { background: 'var(--input)', border: '1px solid var(--line)', borderRadius: '6px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' } },
     h('b', { style: { fontSize: '13px' } }, 'Copy dates to Outlook'),
-    h('span.small', 'Keep them in a calendar of their own, so they can be removed in one go:'),
     h('ol.small', { style: { margin: '0', paddingLeft: '18px' } },
       h('li', 'Download the file below (only the types switched on above).'),
-      h('li', 'In Outlook: Add calendar → Create blank calendar, and name it TransitionSuite.'),
-      h('li', 'Add calendar → Upload from file: choose the file and the TransitionSuite calendar.')),
-    h('span.small.muted', 'Classic Outlook: open the file and choose to open it as a new calendar. To remove the dates later, delete the TransitionSuite calendar.'),
+      h('li', 'Open the downloaded .ics file. Outlook asks which calendar to add the dates to.')),
+    h('span.small.muted', 'Tip: add them to a calendar of their own (for example one called TransitionSuite), so they can be removed in one go.'),
     h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' } }, sel,
       h('button.btn.btn-sm.btn-primary', { type: 'button', onclick: () => { const u = until(); exportIcs(shown.filter((e) => e.type !== 'forum' && e.d >= RD && e.d <= u), ui.off.has('forum') ? [] : store.records('tblForums'), RD, u); } }, 'Download (.ics)'),
       h('button.link-btn', { type: 'button', onclick: () => { ui.exp = false; rerender(); } }, 'Close')));

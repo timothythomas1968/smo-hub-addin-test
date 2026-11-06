@@ -1,6 +1,8 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed } from '../util.js?v=0.9.3.20261106165044';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.9.4.20261106172320';
+import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.9.4.20261106172320';
+import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.4.20261106172320';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled', 'Complete', 'Not required']);
@@ -11,13 +13,14 @@ export default {
     const { store, go } = ctx;
     const n = store.names;
     const RD = Number(n.RD) || 0, close = Number(n.CloseDate) || 0;
+    const T = asOf(n);   // live alerts run from today; the month's reporting runs from RD
     const tsa = store.records('tblTSA');
     const live = tsa.filter((r) => !EXITED.has(r.get('Status')));
     const exited = tsa.length - live.length;
     const ragOf = (r) => [r.get('Service delivery RAG'), r.get('Exit readiness RAG')];
     const reds = live.filter((r) => ragOf(r).includes('Red')).length;
     const ambers = live.filter((r) => !ragOf(r).includes('Red') && ragOf(r).includes('Amber')).length;
-    const future = live.map((r) => Number(r.get('Forecast exit date')) || 0).filter((d) => d >= RD).sort((a, b) => a - b);
+    const future = live.map((r) => Number(r.get('Forecast exit date')) || 0).filter((d) => d >= T).sort((a, b) => a - b);
     const nextExit = future[0];
     const nextCount = future.filter((d) => d === nextExit).length;
 
@@ -29,23 +32,42 @@ export default {
     const suggested = ['tblRisks', 'tblAssumpDep'].reduce((a, t) => a + store.records(t).filter((r) => r.get('Status (adopt or remove)') === 'Suggested').length, 0);
     const dqE = Number(n.DQ_Errors) || 0, dqW = Number(n.DQ_Warnings) || 0;
 
-    const tile = (label, value, sub, tone, onclick) => h(onclick ? 'button.tile' : 'div.tile', { type: onclick ? 'button' : null, class: tone, onclick },
+    const cnt = serviceCounts(tsa, T);
+    const fromReports = store.records('tblRisks').filter((r) => r.get('Status (adopt or remove)') === 'New').length
+      + ['tblIssues', 'tblDecisions'].reduce((k, t) => k + store.records(t).filter((r) => r.get('Status') === 'New').length, 0);
+    const tile = (label, value, sub, tone, onclick, rule) => h(onclick ? 'button.tile' : 'div.tile', { type: onclick ? 'button' : null, class: tone, onclick, title: rule || null },
       h('span.tile-label', label), h('span.tile-value', value), h('span.tile-sub', sub, onclick ? ' ›' : ''));
     const tiles = h('div.tiles',
-      tile('Services', String(live.length), `running · ${exited} exited`, null, () => go('register')),
+      tile('Open services', String(cnt.open), `${cnt.closed} closed`, null, () => go('register', { filter: 'open' }), COUNT_RULES.open + ' ' + COUNT_RULES.closed),
+      tile('Closing in 90 days', String(cnt.soon), cnt.overdue ? `${cnt.overdue} exit overdue` : 'none overdue', cnt.overdue ? 'amber' : null, () => go('register', { filter: cnt.overdue ? 'overdue' : 'soon' }), COUNT_RULES.soon + ' ' + COUNT_RULES.overdue),
       tile('Red or amber', String(reds + ambers), `${reds} red · ${ambers} amber`, reds ? 'red' : ambers ? 'amber' : 'green', () => go('register', { filter: 'ra' })),
       tile('Next exits', nextExit ? fmtDate(nextExit, true) : '–', nextExit ? plural(nextCount, 'service') : 'none planned', null, () => go('register', { filter: 'next' })),
+      fromReports ? tile('New from reports', String(fromReports), 'risks, issues and decisions to accept', 'amber', () => go('raid', { newOnly: true })) : null,
       tile('Decisions needed', String(decisions.length), nextDec ? `next by ${fmtDate(nextDec, true)}` : 'none open', null, () => go('raid', { tab: 'DEC' })),
       tile('Actions overdue', String(overdue), `${openActions} open`, overdue ? 'red' : null, () => go('raid', { tab: 'AC' })),
-      tile('Data quality', String(dqE), `errors · ${dqW} warnings`, dqE ? 'amber' : 'green', null));
+      tile('Data quality', String(dqE), `errors · ${dqW} warnings`, dqE ? 'amber' : 'green', () => store.showRange('Data Quality', 'A1').catch((e) => toast(e.message, true)), 'Open the Data Quality sheet: each check, with the row it is about'));
 
     // ---- this month checklist: some items tick themselves from the data; the rest are ticked by hand
     const key = 'month-' + RD;
     const manual = store.src.getSetting(key) || {};
     const daysSinceRD = Math.floor(Date.now() / 86400000 + 25569) - RD;   // today as an Excel serial, minus RD
-    const interviewsDue = live.filter((r) => { const d = Number(r.get('Next readiness interview')); return d && d <= RD + 14; }).length;
+    const waive = store.src.getSetting('ri-waive') || {}, xr = Object.fromEntries(store.records('tblReadiness').map((r) => [r.get('TSA ID'), r]));
+    const interviewsDue = live.filter((r) => { const ro = readinessOf(store, r, xr[r.get('TSA ID')], waive, T); return ro.overdue || (ro.next && ro.next <= T + 14); }).length;
+    // Start this month's reporting: one email to every workstream lead (evaluation F and J)
+    const startReporting = () => {
+      const side = n.Perspective === 'Seller' ? 'Seller lead' : 'Buyer lead';
+      const mail = Object.fromEntries(store.records('tblPeople').map((r) => [r.get('Name'), r.get('Email')]));
+      const leads = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get(side)).filter(Boolean);
+      const to = [...new Set(leads.map((l) => mail[l]).filter(Boolean))];
+      if (!to.length) { toast('No email addresses for the workstream leads yet: add them on the People sheet or in the set-up wizard', true); return; }
+      const subj = `Workstream reports for ${fmtMonth(RD)}`;
+      const body = `Hello all,\n\nPlease send your ${fmtMonth(RD)} workstream report by the usual date: open the Hub workbook, then TransitionSuite > Workstream report and pick your workstream${n.Use_WR === 'N' ? '' : ', or fill in your report file and send it back'}.\n\nThank you.`;
+      window.open(`mailto:?bcc=${encodeURIComponent(to.join(';'))}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`, '_blank');
+      manual.start = true; store.src.setSetting(key, manual).then(() => ctx.rerender());
+    };
     const items = [
       ['rd', `Set the reporting date (now ${fmtDate(RD)})`, ed('Choose Change here, or click the date at the top right. Ticks itself when the date is within the last month'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
+      ['start', "Start this month's reporting", ed('One email to every workstream lead, asking for this month\'s report. Ticks itself when you send it'), null, startReporting, 'Email the leads'],
       ['raid', suggested ? `Review the RAID: ${plural(suggested, 'suggested item')} waiting` : 'Review the RAID: nothing waiting', ed('Ticks itself when nothing is waiting'), suggested === 0, () => go('raid', { suggested: true })],
       ['act', overdue ? `Chase ${plural(overdue, 'overdue action')}` : 'No overdue actions', ed('Ticks itself when no actions are overdue'), overdue === 0, () => go('raid', { tab: 'AC' })],
       ['int', interviewsDue ? `Hold the readiness interviews due (${interviewsDue})` : 'No readiness interviews due', ed('Ticks itself when none are due'), interviewsDue === 0, () => go('interview')],
@@ -93,13 +115,13 @@ export default {
 
     // ---- coming up in the next 30 days
     const soonDates = [];
-    const add = (d, title, sub, k, arg) => { d = Number(d); if (d && d >= RD && d <= RD + 30) soonDates.push({ d, title, sub, k, arg }); };
+    const add = (d, title, sub, k, arg) => { d = Number(d); if (d && d >= T && d <= T + 30) soonDates.push({ d, title, sub, k, arg }); };
     live.forEach((r) => {
       const id = r.get('TSA ID'), nm = r.get('Service name');
       add(r.get('Exit notice deadline'), `Exit notice due: ${id}`, nm, 'register', { id });
       add(r.get('Extension notice deadline'), `Extension notice deadline: ${id}`, nm, 'register', { id });
       add(r.get('Forecast exit date'), `Exit: ${id}`, nm, 'register', { id });
-      add(r.get('Next readiness interview'), `Readiness interview: ${id}`, nm, 'interview', { id });
+      add(readinessOf(store, r, xr[id], waive, T).next, `Readiness interview: ${id}`, nm, 'interview', { id });
     });
     store.records('tblOBL').filter((r) => r.get('Status (adopt or remove)') === 'Open').forEach((r) => add(r.get('Next due date'), r.get('Description'), `${r.get('Agreement')} ${r.get('Clause')}`.trim(), 'dates'));
     decisions.forEach((r) => add(r.get('Needed by'), `Decision needed: ${r.get('Decision ID')}`, r.get('Decision needed'), 'raid', { tab: 'DEC', id: r.get('Decision ID') }));
@@ -121,42 +143,43 @@ export default {
 
     // ---- milestones in the next 30 days, from the plan
     const plan = store.records('tblPlan').filter((r) => ['Milestone', 'Gate'].includes(r.get('Type')) && r.get('Status') !== 'Complete');
-    const miles = plan.map((r) => ({ r, d: Number(r.get('Planned finish')) || 0 })).filter((x) => x.d && x.d <= RD + 30).sort((a, b) => a.d - b.d);
+    const miles = plan.map((r) => ({ r, d: Number(r.get('Planned finish')) || 0 })).filter((x) => x.d && x.d <= T + 30).sort((a, b) => a.d - b.d);
     const milesCard = h('div.card',
       h('div', { style: { display: 'flex', alignItems: 'center', marginBottom: '6px' } }, h('h2.cap', { style: { flex: '1 1 auto' } }, 'Milestones in the next 30 days'),
         h('button.link-btn', { type: 'button', onclick: () => go('plan') }, 'Exit plan')),
       miles.length ? miles.slice(0, 8).map(({ r, d }) => {
-        const late = d < RD;
+        const late = d < T;
         return h('div.date-row', { style: { alignItems: 'center' } },
           h('span', { style: { width: '50px', fontWeight: 700, color: 'var(--navy)', fontSize: '13px', flex: '0 0 50px' } }, fmtDate(d, true)),
           h('span', { style: { flex: '1 1 auto', fontSize: '13px', minWidth: 0 } }, r.get('Activity'), h('br'), h('span.small.muted', `${r.get('TSA ID')} · ${r.get('Owner') || 'no owner'}`)),
           h('span.chip', { class: late ? 'Red' : 'blue' }, late ? 'Late' : r.get('Status')));
       }) : [h('p.small.muted', { style: { margin: '0 0 4px' } }, 'None due. The next ones:'),
-        plan.map((r) => ({ r, d: Number(r.get('Planned finish')) || 0 })).filter((x) => x.d > RD + 30).sort((a, b) => a.d - b.d).slice(0, 3).map(({ r, d }) =>
+        plan.map((r) => ({ r, d: Number(r.get('Planned finish')) || 0 })).filter((x) => x.d > T + 30).sort((a, b) => a.d - b.d).slice(0, 3).map(({ r, d }) =>
           h('div.date-row', { style: { alignItems: 'center' } },
             h('span', { style: { width: '50px', fontWeight: 700, color: 'var(--navy)', fontSize: '13px', flex: '0 0 50px' } }, fmtDate(d, true)),
             h('span', { style: { flex: '1 1 auto', fontSize: '13px', minWidth: 0 } }, r.get('Activity'), h('br'), h('span.small.muted', `${r.get('TSA ID')} · ${r.get('Owner') || 'no owner'}`))))],
-      miles.length > 8 ? h('p.small.muted', { style: { margin: '6px 0 0' } }, `${miles.length - 8} more in the exit plan, including ${miles.filter((x) => x.d < RD).length} late`) : null);
+      miles.length > 8 ? h('p.small.muted', { style: { margin: '6px 0 0' } }, `${miles.length - 8} more in the exit plan, including ${miles.filter((x) => x.d < T).length} late`) : null);
 
     // ---- Day 1 and first 100 days
     const phaseCards = [];
     const d1 = store.records('tblDay1').filter((r) => r.get('Status') !== 'Not required');
-    if (n.Use_D1 !== 'N' && d1.length) {
+    const d1Done = d1.length && d1.every((r) => r.get('Status') === 'Complete');
+    if (n.Use_D1 !== 'N' && d1.length && !d1Done) {   // hidden once the Day 1 plan is complete
       const mand = d1.filter((r) => r.get('Mandatory or discretionary') === 'Mandatory');
       const mDone = mand.filter((r) => r.get('Status') === 'Complete').length;
       const noGo = d1.filter((r) => r.get('Go / no-go') === 'No-go' || r.get('Go / no-go') === 'No go').length;
-      const before = RD < close;
+      const before = T < close;
       phaseCards.push(h('section.card', { style: { display: 'flex', flexWrap: 'wrap', gap: '18px', alignItems: 'center' } },
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px' } }, h('h2.cap', 'Day 1 plan'),
-          h('span.small.muted', before ? `Closing ${fmtDate(close)} · ${close - RD} days to go` : `Closed ${fmtDate(close)}`)),
+          h('span.small.muted', before ? `Closing ${fmtDate(close)} · ${close - T} days to go` : `Closed ${fmtDate(close)}`)),
         h('span.chip', { class: noGo ? 'Red' : 'Green', style: { fontSize: '14px', padding: '5px 12px' } }, noGo ? 'NO-GO' : before ? 'GO' : 'DONE'),
         h('div.stat', h('b', `${mDone} of ${mand.length}`), h('span', 'mandatory tasks complete')),
         h('div.stat', h('b', String(noGo)), h('span', 'no-go items')),
         h('button.btn', { type: 'button', style: { marginLeft: 'auto' }, onclick: () => go('day1') }, 'Open Day 1 plan')));
     }
     const f1 = store.records('tblFirst100').filter((r) => r.get('Status') !== 'Not required');
-    if (n.Use_F100 !== 'N' && f1.length) {
-      const day = RD - close;
+    if (n.Use_F100 !== 'N' && f1.length && !f1.every((r) => r.get('Status') === 'Complete')) {   // hidden once complete
+      const day = T - close;
       const fDone = f1.filter((r) => r.get('Status') === 'Complete').length;
       const late = f1.filter((r) => Number(r.get('Days late')) > 0 && r.get('Status') !== 'Complete').length;
       const inProg = f1.filter((r) => r.get('Status') === 'In progress').length;
@@ -172,7 +195,10 @@ export default {
 
     const intro = `${fmtMonth(RD)} reporting. ` + (nextExit ? `${plural(nextCount, 'service')} ${nextCount === 1 ? 'exits' : 'exit'} on ${fmtDate(nextExit)}.` : 'No exits planned.')
       + (reds ? ` ${plural(reds, 'service')} ${reds === 1 ? 'is' : 'are'} red.` : '');
-    const hello = greeting() + (n.HubOwner ? `, ${String(n.HubOwner).split(' ')[0]}` : '');
+    // One name: the person on the People sheet with the team's lead role, else the Hub owner answer (evaluation F).
+    const leadP = store.records('tblPeople').find((r) => String(r.get('Role')).toLowerCase() === `${team()} lead`.toLowerCase());
+    const owner = (leadP && leadP.get('Name')) || n.HubOwner;
+    const hello = greeting() + (owner ? `, ${String(owner).split(' ')[0]}` : '');
 
     return h('div.page',
       h('div.band',

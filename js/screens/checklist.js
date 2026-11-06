@@ -1,7 +1,7 @@
 // Shared screen for the Day 1 checklist and the first 100 days plan: a long task list with
 // filters, a status you can change in the row, an edit panel, add and delete.
-import { h, fmtDate, toast, plural } from '../util.js?v=0.9.3.20261106165044';
-import { buildForm } from '../form.js?v=0.9.3.20261106165044';
+import { h, fmtDate, toast, plural, asOf } from '../util.js?v=0.9.4.20261106172320';
+import { buildForm } from '../form.js?v=0.9.4.20261106172320';
 
 export function checklist(cfg) {
   // cfg: { t, title, lede, id, dueLabel, extraTile(store, recs), lateTest(r, RD), statusTags }
@@ -11,7 +11,7 @@ export function checklist(cfg) {
     tables: [cfg.t, 'tblWorkstreams'],
     render(ctx) {
       const { store } = ctx;
-      const RD = Number(store.names.RD) || 0;
+      const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date
       const recs = store.records(cfg.t);
       const wsName = Object.fromEntries(store.records('tblWorkstreams').map((r) => [r.get('Code'), r.get('Name')]));
       const stOf = (r) => r.get('Status') || 'Not started';
@@ -157,7 +157,7 @@ export function todaySerial() {
 export const day1 = checklist({
   t: 'tblDay1', title: 'Day 1 plan', id: 'D1 ID', dueLabel: 'Due',
   lede: (store) => {
-    const RD = Number(store.names.RD), close = Number(store.names.CloseDate);
+    const RD = asOf(store.names), close = Number(store.names.CloseDate);
     return RD < close ? `Everything that must be in place for closing on ${fmtDate(close)}: ${plural(close - RD, 'day')} to go.` : `The Day 1 checklist for closing on ${fmtDate(close)}.`;
   },
   lateTest: (r, RD) => !['Complete', 'Not required'].includes(r.get('Status')) && Number(r.get('Due date')) > 0 && Number(r.get('Due date')) < RD,
@@ -170,7 +170,7 @@ export const day1 = checklist({
 export const f100 = checklist({
   t: 'tblFirst100', title: 'First 100 days', id: 'ID', dueLabel: 'Due',
   lede: (store) => {
-    const RD = Number(store.names.RD), close = Number(store.names.CloseDate), day = RD - close;
+    const RD = asOf(store.names), close = Number(store.names.CloseDate), day = RD - close;
     return 'What must be true in the first 100 days so the business is safe, secure and separate. '
       + (day < 0 ? 'Starts at closing.' : day <= 100 ? `Day ${day} of 100.` : `The 100 days ended on ${fmtDate(close + 100)}.`);
   },

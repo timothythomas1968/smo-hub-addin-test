@@ -270,3 +270,22 @@ button.top-date:hover { border-color: #fff; }
 .hc-what svg { vertical-align: middle; }
 .hc-empty { margin: 0; font-size: 12.5px; color: var(--g-fg); }
 .hc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+
+/* Risks, issues and decisions raised in workstream reports: status New, amber, distinct from the blue of Suggested */
+.item.is-new { box-shadow: inset 4px 0 0 var(--a-bar); }
+.tag-new { font-size: 10px; font-weight: 700; letter-spacing: .6px; color: var(--a-fg); background: var(--a-bg); border-radius: 999px; padding: 3px 8px; }
+.chip.New { background: var(--a-bg); color: var(--a-fg); }
+
+/* Date box in the workbook's edition (util.js dateBox): a text box plus a calendar button */
+.date-box { display: flex; align-items: center; gap: 4px; position: relative; width: 100%; min-width: 0; }
+.date-box > input[type=text] { flex: 1 1 auto; min-width: 0; }
+.date-box > input.bad { border-color: var(--r-bar) !important; background: var(--r-bg) !important; }
+.date-pick { flex: 0 0 auto; width: 30px; min-height: 32px; border: 1px solid var(--line-strong); background: #fff; color: var(--navy); border-radius: 6px; cursor: pointer; font-size: 12px; }
+.date-pick:hover { background: var(--selected); }
+.date-box > input[type=date] { position: absolute; right: 0; bottom: 0; width: 30px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+
+/* Drawer: an edit panel over the page (the exit plan's activity details) */
+.drawer-back { position: fixed; inset: 0; z-index: 30; background: rgba(11, 30, 52, .25); display: flex; justify-content: flex-end; }
+.panel.drawer { flex: 0 0 auto; position: relative; width: min(460px, 100%); max-width: none; height: 100%; border-radius: 0; overflow-y: auto; box-shadow: -8px 0 24px rgba(0,0,0,.18); display: flex; flex-direction: column; }
+.panel.drawer .panel-body { flex: 1 1 auto; overflow-y: auto; }
+.drawer-x { position: absolute; right: 12px; top: 12px; border: 0; background: transparent; font-size: 16px; color: var(--muted); cursor: pointer; }

@@ -50,6 +50,13 @@ export function setTeam(names) {
   else if (full) { const m = /\(([^)]+)\)/.exec(full); TEAM = m ? m[1].trim() : full; }
   else TEAM = names && 'TeamName' in names && names.TeamName !== undefined && names.TeamName !== null ? ed('programme office') : 'SMO';
 }
+/** Today, as an Excel serial: the workbook's Today name (pinned in the DEMO), else the computer's date.
+ *  Live alerts (overdue, due soon, closing soon) measure against this; reports measure against RD. */
+export function asOf(names) {
+  const t = Number(names && names.Today);
+  return t > 0 ? Math.floor(t) : Math.floor(Date.now() / 864e5 + 25569);
+}
+export const realToday = () => Math.floor(Date.now() / 864e5 + 25569);
 export const team = () => TEAM;
 /** "the SMO", "the programme office": an abbreviation keeps its capitals; a phrase is lower case after "the". */
 export const theTeam = () => (/^[A-Z]{2,5}$/.test(TEAM) ? 'the ' + TEAM : 'the ' + TEAM.charAt(0).toLowerCase() + TEAM.slice(1));
@@ -86,6 +93,56 @@ export function fmtMoney(n, sym) {
   return (v < 0 ? '−' : '') + (sym || '') + Math.abs(Math.round(v)).toLocaleString(US ? 'en-US' : 'en-GB');
 }
 export function fmtNum(n) { return n === '' || n == null ? '' : Number(n).toLocaleString(US ? 'en-US' : 'en-GB'); }
+/** A labelled field. The control sits beside its label, not inside it: a <select> inside a <label> closes as soon as
+ *  it opens in Edge's engine (WebView2), so the user has to hold the mouse button down (Tim's evaluation, 5 Nov 2026). */
+let fid = 0;
+export function fieldBox(label, el, attrs) {
+  const ctl = el && el.matches && el.matches('input,select,textarea') ? el : el && el.querySelector ? el.querySelector('input,select,textarea') : null;
+  if (ctl && !ctl.id) ctl.id = 'fb' + (++fid);
+  return h('div.field', attrs || null, h('label.field-label', { for: ctl ? ctl.id : null }, label), el);
+}
+/** Read a typed date in either edition's style: 1 Mar 2026, Mar 1, 2026, 1/3/2026 (UK) or 3/1/2026 (US), 2026-03-01. */
+export function parseDate(text) {
+  const t = String(text || '').trim().replace(/\s+/g, ' ');
+  if (!t) return '';
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+  if (m) return mk(+m[1], +m[2], +m[3]);
+  const mon = (x) => MONTHS.findIndex((k) => k.toLowerCase() === String(x).slice(0, 3).toLowerCase()) + 1;
+  const yr = (y) => (y.length === 2 ? 2000 + +y : +y);
+  m = /^(\d{1,2})(?:st|nd|rd|th)? ([A-Za-z]{3,9})\.?,? (\d{2}|\d{4})$/.exec(t);
+  if (m && mon(m[2])) return mk(yr(m[3]), mon(m[2]), +m[1]);
+  m = /^([A-Za-z]{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?,? (\d{2}|\d{4})$/.exec(t);
+  if (m && mon(m[1])) return mk(yr(m[3]), mon(m[1]), +m[2]);
+  m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/.exec(t);
+  if (m) return US ? mk(yr(m[3]), +m[1], +m[2]) : mk(yr(m[3]), +m[2], +m[1]);
+  return null;
+  function mk(y, mo, d) { const dt = new Date(Date.UTC(y, mo - 1, d)); return dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d ? toSerial(dt) : null; }
+}
+
+/** A date box in the workbook's edition (1 Mar 2026 or Mar 1, 2026), not the computer's locale (evaluation E5).
+ *  Typed, or picked from the calendar button. Its .value is ISO (yyyy-mm-dd) like <input type=date>, so callers
+ *  read it the same way; 'input' and 'change' events bubble from the text box. */
+export function dateBox(serial, attrs = {}) {
+  const { style, ...rest } = attrs;
+  const txt = h('input', { type: 'text', inputmode: 'text', autocomplete: 'off', placeholder: US ? 'e.g. Mar 1, 2026' : 'e.g. 1 Mar 2026', value: serial ? fmtDate(serial) : '', style: style || null, ...rest });
+  const pick = h('input', { type: 'date', tabindex: '-1', 'aria-hidden': 'true', value: serialToIso(serial) });
+  const btn = h('button.date-pick', { type: 'button', title: 'Pick from a calendar', 'aria-label': 'Pick from a calendar' }, '▾');
+  const box = h('span.date-box', txt, btn, pick);
+  let cur = serial ? Number(serial) : '';
+  const show = () => { txt.value = cur ? fmtDate(cur) : ''; txt.classList.remove('bad'); txt.title = ''; };
+  txt.addEventListener('input', () => {
+    const v = parseDate(txt.value);
+    if (v === null) { txt.classList.add('bad'); txt.title = US ? 'Type a date like Mar 1, 2026' : 'Type a date like 1 Mar 2026'; return; }
+    txt.classList.remove('bad'); txt.title = ''; cur = v;
+  });
+  txt.addEventListener('blur', () => { if (parseDate(txt.value) !== null) show(); });
+  btn.addEventListener('click', () => { pick.value = serialToIso(cur); try { pick.showPicker(); } catch (e) { pick.focus(); pick.click(); } });
+  pick.addEventListener('change', () => { cur = isoToSerial(pick.value); show(); txt.dispatchEvent(new Event('input', { bubbles: true })); txt.dispatchEvent(new Event('change', { bubbles: true })); });
+  Object.defineProperty(box, 'value', { get: () => serialToIso(cur), set: (v) => { cur = isoToSerial(v); show(); } });
+  box.focus = () => txt.focus();
+  return box;
+}
+
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
 
 let toastTimer;

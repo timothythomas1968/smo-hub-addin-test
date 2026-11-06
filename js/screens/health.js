@@ -1,8 +1,9 @@
 // Home's one-page health check: nine cards, each a number, a small chart and the few items that need attention.
-// Everything is worked out live from the workbook, as at the reporting date (RD). Cards for parts of the Hub
+// Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team } from '../util.js?v=0.9.3.20261106165044';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.9.4.20261106172320';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.9.4.20261106172320';
+import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -20,7 +21,7 @@ export function mshort(v, sym) {
 
 export function healthCheck(ctx) {
   const { store, go } = ctx;
-  const n = store.names, RD = num(n.RD), sym = n.CcySym || '';
+  const n = store.names, RD = num(n.RD), T = asOf(n), sym = n.CcySym || '';   // alerts run from today (T), reporting from RD
   const use = (k) => n[k] !== 'N';
   const M0 = monthStart(RD);
   const cards = [];
@@ -40,17 +41,17 @@ export function healthCheck(ctx) {
     const reg = regOn ? store.records('tblREG') : [];
     const regDone = reg.filter((r) => /^Approved|Not required|Withdrawn|Not needed/i.test(r.get('Status')));
     const regOpen = reg.filter((r) => !regDone.includes(r));
-    const regLate = regOpen.filter((r) => num(r.get('Due date')) && num(r.get('Due date')) < RD);
+    const regLate = regOpen.filter((r) => num(r.get('Due date')) && num(r.get('Due date')) < T);
     const tpc = tpcOn ? store.records('tblTPC') : [];
     const tpcOpen = tpc.filter((r) => r.get('Consent alert') === 'Outstanding' || !/^(Agreed|Not needed|Not required|Complete|Closed)/i.test(r.get('Status')));
-    const tpcDue = tpcOpen.filter((r) => num(r.get('Response due')) && num(r.get('Response due')) <= RD + 30);
+    const tpcDue = tpcOpen.filter((r) => num(r.get('Response due')) && num(r.get('Response due')) <= T + 30);
     const items = [
       ...regLate.map((r) => ({ when: when(r.get('Due date')), late: true, what: `${r.get('Filing or approval')} (${r.get('Regulator') || r.get('Jurisdiction')})` })),
       ...regOpen.filter((r) => !regLate.includes(r)).sort((a, b) => num(a.get('Due date')) - num(b.get('Due date'))).map((r) => ({ when: when(r.get('Due date')), what: `${r.get('Filing or approval')} (${r.get('Regulator') || r.get('Jurisdiction')})` })),
-      ...tpcDue.map((r) => ({ when: when(r.get('Response due')), late: num(r.get('Response due')) < RD, what: `Consent: ${r.get('Vendor')} · ${r.get('Status')}` }))];
+      ...tpcDue.map((r) => ({ when: when(r.get('Response due')), late: num(r.get('Response due')) < T, what: `Consent: ${r.get('Vendor')} · ${r.get('Status')}` }))];
     cards.push(card({
       title: 'Approvals and consents', big: String(regOpen.length + tpcOpen.length), bigSub: `${plural(regOpen.length, 'approval')} and ${plural(tpcOpen.length, 'consent')} outstanding`,
-      tone: regLate.length || tpcDue.some((r) => num(r.get('Response due')) < RD) ? 'red' : regOpen.length || tpcOpen.length ? 'amber' : 'ok',
+      tone: regLate.length || tpcDue.some((r) => num(r.get('Response due')) < T) ? 'red' : regOpen.length || tpcOpen.length ? 'amber' : 'ok',
       chart: donut([{ v: regDone.length + (tpc.length - tpcOpen.length), c: COL.g, label: 'Done' }, { v: regOpen.length + tpcOpen.length - regLate.length, c: COL.a, label: 'Outstanding' }, { v: regLate.length, c: COL.r, label: 'Overdue' }],
         { size: 84, centre: `${regDone.length + tpc.length - tpcOpen.length}/${reg.length + tpc.length}`, caption: 'done', label: 'Approvals and consents done' }),
       items, more: items.length - 4, open: () => go('dates'), openLabel: 'Key dates'
@@ -60,7 +61,7 @@ export function healthCheck(ctx) {
   // 2. Spend this year and next: TSA fees from the register (calendar years), and one-off costs
   const tsa = store.records('tblTSA');
   if (tsa.length) {
-    const y0 = yearOf(RD);
+    const y0 = yearOf(T);
     const feeIn = (year, dir) => tsa.filter((r) => r.get('Direction') === dir).reduce((sum, r) => {
       const fee = num(r.get('Monthly fee (reporting currency)')), s = monthStart(num(r.get('Service start')) || num(n.CloseDate));
       const end = monthStart(num(r.get('Actual exit date')) || num(r.get('Forecast exit date')));
@@ -89,13 +90,13 @@ export function healthCheck(ctx) {
 
   // 3. Obligations due in 60 days and actions due in 5
   const oblOn = store.has('tblOBL') && use('Use_OBL');
-  const obl = oblOn ? store.records('tblOBL').filter((r) => r.get('Status (adopt or remove)') === 'Open' && num(r.get('Next due date')) && num(r.get('Next due date')) <= RD + 60) : [];
-  const acts = store.records('tblActions').filter((r) => r.get('Status') === 'Open' && num(r.get('Due date')) && num(r.get('Due date')) <= RD + 5);
-  const actLate = acts.filter((r) => num(r.get('Due date')) < RD);
+  const obl = oblOn ? store.records('tblOBL').filter((r) => r.get('Status (adopt or remove)') === 'Open' && num(r.get('Next due date')) && num(r.get('Next due date')) <= T + 60) : [];
+  const acts = store.records('tblActions').filter((r) => r.get('Status') === 'Open' && num(r.get('Due date')) && num(r.get('Due date')) <= T + 5);
+  const actLate = acts.filter((r) => num(r.get('Due date')) < T);
   {
     const items = [...actLate.map((r) => ({ when: when(r.get('Due date')), late: true, what: `${r.get('AC ID')} ${r.get('Action')}` })),
       ...acts.filter((r) => !actLate.includes(r)).map((r) => ({ when: when(r.get('Due date')), what: `${r.get('AC ID')} ${r.get('Action')}` })),
-      ...obl.sort((a, b) => num(a.get('Next due date')) - num(b.get('Next due date'))).map((r) => ({ when: when(r.get('Next due date')), late: num(r.get('Next due date')) < RD, what: r.get('Description') }))];
+      ...obl.sort((a, b) => num(a.get('Next due date')) - num(b.get('Next due date'))).map((r) => ({ when: when(r.get('Next due date')), late: num(r.get('Next due date')) < T, what: r.get('Description') }))];
     cards.push(card({
       title: 'Due soon', big: String(acts.length + obl.length), bigSub: `${plural(acts.length, 'action')} due in 5 days${oblOn ? `, ${plural(obl.length, 'obligation')} in 60` : ''}`,
       tone: actLate.length ? 'red' : acts.length || obl.length ? 'amber' : 'ok',
@@ -139,11 +140,11 @@ export function healthCheck(ctx) {
   // 6. Data requests and work orders overdue or due
   const drOn = store.has('tblDataReq') && use('Use_DR'), woOn = store.has('tblWO') && use('Use_WO');
   if (drOn || woOn) {
-    const dr = drOn ? store.records('tblDataReq').filter((r) => !/^(Delivered|Cancelled|Canceled|Withdrawn|Closed)/i.test(r.get('Status')) && num(r.get('Due date')) && num(r.get('Due date')) <= RD + 30) : [];
-    const wo = woOn ? store.records('tblWO').filter((r) => !/^(Complete|Cancelled|Canceled|Rejected|Closed)/i.test(r.get('Status')) && num(r.get('Target completion')) && num(r.get('Target completion')) <= RD + 30) : [];
-    const late = [...dr.filter((r) => num(r.get('Due date')) < RD), ...wo.filter((r) => num(r.get('Target completion')) < RD)];
-    const items = [...dr.map((r) => ({ when: when(r.get('Due date')), late: num(r.get('Due date')) < RD, what: `${r.get('DR ID')} ${r.get('Data set requested')}` })),
-      ...wo.map((r) => ({ when: when(r.get('Target completion')), late: num(r.get('Target completion')) < RD, what: `${r.get('WO ID')} ${r.get('Title')}` }))].sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0));
+    const dr = drOn ? store.records('tblDataReq').filter((r) => !/^(Delivered|Cancelled|Canceled|Withdrawn|Closed)/i.test(r.get('Status')) && num(r.get('Due date')) && num(r.get('Due date')) <= T + 30) : [];
+    const wo = woOn ? store.records('tblWO').filter((r) => !/^(Complete|Cancelled|Canceled|Rejected|Closed)/i.test(r.get('Status')) && num(r.get('Target completion')) && num(r.get('Target completion')) <= T + 30) : [];
+    const late = [...dr.filter((r) => num(r.get('Due date')) < T), ...wo.filter((r) => num(r.get('Target completion')) < T)];
+    const items = [...dr.map((r) => ({ when: when(r.get('Due date')), late: num(r.get('Due date')) < T, what: `${r.get('DR ID')} ${r.get('Data set requested')}` })),
+      ...wo.map((r) => ({ when: when(r.get('Target completion')), late: num(r.get('Target completion')) < T, what: `${r.get('WO ID')} ${r.get('Title')}` }))].sort((a, b) => (b.late ? 1 : 0) - (a.late ? 1 : 0));
     cards.push(card({
       title: 'Data requests and work orders', big: String(dr.length + wo.length), bigSub: `due in 30 days or overdue (${late.length} overdue)`,
       tone: late.length ? 'red' : dr.length + wo.length ? 'amber' : 'ok',
@@ -155,9 +156,9 @@ export function healthCheck(ctx) {
   // 7. New change requests
   if (store.has('tblChange') && use('Mod_CR')) {
     const cr = store.records('tblChange');
-    const waiting = cr.filter((r) => /^(New|Submitted|Under review|Raised|Draft)/i.test(r.get('Status')));
-    const fresh = waiting.filter((r) => num(r.get('Raised on')) >= RD - 30 || /^New/i.test(r.get('Status')));
-    const items = waiting.sort((a, b) => num(b.get('Raised on')) - num(a.get('Raised on'))).map((r) => ({ when: r.get('Status'), late: num(r.get('Decision due')) && num(r.get('Decision due')) < RD, what: `${r.get('CR ID')} ${r.get('Title') || r.get('Request type')}${num(r.get('Decision due')) ? ` · decide by ${fmtDate(num(r.get('Decision due')), true)}` : ''}` }));
+    const waiting = cr.filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status')));
+    const fresh = waiting.filter((r) => num(r.get('Raised on')) >= T - 30 || /^New/i.test(r.get('Status')));
+    const items = waiting.sort((a, b) => num(b.get('Raised on')) - num(a.get('Raised on'))).map((r) => ({ when: r.get('Status'), late: num(r.get('Decision due')) && num(r.get('Decision due')) < T, what: `${r.get('CR ID')} ${r.get('Title') || r.get('Request type')}${num(r.get('Decision due')) ? ` · decide by ${fmtDate(num(r.get('Decision due')), true)}` : ''}` }));
     cards.push(card({
       title: 'Change requests', big: String(waiting.length), bigSub: `awaiting a decision (${fresh.length} new this month)`,
       tone: items.some((i) => i.late) ? 'red' : waiting.length ? 'amber' : 'ok',
@@ -205,13 +206,14 @@ export function healthCheck(ctx) {
         off.push({ when: 'SLA', late: true, what: `Service levels entered up to ${fmtMonth(latest)}${behind.length > most ? ` (${behind.length - most} further behind)` : ''}: ${fmtMonth(RD)} not entered yet` });
       }
     }
-    const rdy = store.records('tblReadiness').reduce((a, r) => a + num(r.get('Interviews overdue')), 0);
+    const waive = store.src.getSetting('ri-waive') || {}, xr = Object.fromEntries(store.records('tblReadiness').map((r) => [r.get('TSA ID'), r]));
+    const rdy = tsa.filter((r) => !/Exited|Terminated/.test(r.get('Status'))).reduce((a, r) => a + readinessOf(store, r, xr[r.get('TSA ID')], waive, T).overdue, 0);
     if (rdy) off.push({ when: 'Readiness', late: true, what: `${plural(rdy, 'readiness interview')} overdue` });
     if (store.has('tblInvoices') && use('Use_INV')) {
       const exp = store.records('tblInvoices').filter((r) => r.get('Status') === 'Expected' && num(r.get('Service month')) && monthStart(num(r.get('Service month'))) < addMonths(M0, -1) + 0).length;
       if (exp) off.push({ when: 'Invoices', what: `${plural(exp, 'invoice')} for earlier months still not received` });
     }
-    if (monthStart(Math.floor(Date.now() / 864e5 + 25569)) > addMonths(M0, 1)) off.push({ when: 'Date', what: `The reporting date (${fmtDate(RD)}) is more than a month behind today` });
+    if (monthStart(T) > addMonths(M0, 1)) off.push({ when: 'Date', what: `The reporting date (${fmtDate(RD)}) is more than a month behind today` });
     cards.push(card({
       title: 'In step with the reporting date', big: String(off.length), bigSub: off.length ? `${off.length === 1 ? 'part' : 'parts'} of the Hub behind ${fmtMonth(RD)}` : `everything is up to ${fmtMonth(RD)}`,
       tone: off.some((o) => o.late) ? 'amber' : 'ok',
@@ -219,7 +221,7 @@ export function healthCheck(ctx) {
     }));
   }
 
-  return h('section.health', h('div.health-head', h('h2.cap', `Health check · as at ${fmtDate(RD)}`),
+  return h('section.health', h('div.health-head', h('h2.cap', `Health check · today ${fmtDate(T)} · reporting ${fmtMonth(RD)}`),
     h('span.small.muted', `${cards.filter((c) => c.classList.contains('red')).length} to act on now · ${cards.filter((c) => c.classList.contains('amber')).length} to watch · ${team()} view`)),
   h('div.hc-grid', cards));
 }

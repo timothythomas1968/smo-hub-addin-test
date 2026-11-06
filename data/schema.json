@@ -2203,6 +2203,7 @@
     "dv": {
      "list": [
       "Suggested",
+      "New",
       "Open",
       "In progress",
       "Closed",
@@ -2351,6 +2352,7 @@
     "dv": {
      "list": [
       "Suggested",
+      "New",
       "Open",
       "In progress",
       "Closed",
@@ -2550,6 +2552,7 @@
     "f": "text",
     "dv": {
      "list": [
+      "New",
       "Open",
       "Made",
       "Withdrawn"
@@ -2680,6 +2683,7 @@
     "dv": {
      "list": [
       "Suggested",
+      "New",
       "Open",
       "In progress",
       "Closed",
@@ -5524,6 +5528,7 @@
     "dv": {
      "list": [
       "Suggested",
+      "New",
       "Open",
       "In progress",
       "Closed",

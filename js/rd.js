@@ -1,6 +1,6 @@
 // Change the reporting date: one dialog, opened from the title bar, Home or the workstream report.
 // The date lives in 'Consolidated WS Reporting'!B5 (the name RD); every screen reports to its month.
-import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial } from './util.js?v=0.9.3.20261106165044';
+import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox } from './util.js?v=0.9.4.20261106172320';
 
 const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() * 12 + d.getUTCMonth() : 0; };
 
@@ -8,7 +8,7 @@ const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() 
 export function openRDDialog(store, after) {
   document.querySelector('.modal-back')?.remove();
   const RD = Number(store.names.RD) || 0;
-  const input = h('input', { type: 'date', value: serialToIso(RD), 'aria-label': 'Reporting date' });
+  const input = dateBox(RD, { 'aria-label': 'Reporting date' });
   const warn = h('div.banner.warn', { style: { display: 'none' } });
   const setBtn = h('button.btn.btn-primary', { type: 'button' }, 'Set the date');
   const close = () => back.remove();

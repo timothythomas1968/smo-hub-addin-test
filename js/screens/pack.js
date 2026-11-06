@@ -1,10 +1,11 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam } from '../util.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox } from '../util.js?v=0.9.4.20261106172320';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.9.4.20261106172320';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
-  ['status', 'Workstream status', ''], ['exits', 'Exits in the next 90 days', ''], ['raid', 'Top risks and issues', ''], ['decisions', 'Decisions needed', ''],
+  ['status', 'Workstream status', ''], ['exits', 'Closing in the next 90 days', ''], ['raid', 'Top risks and issues', ''], ['decisions', 'Decisions needed', ''],
   ['changes', 'TSA changes and extensions', ''], ['data', 'Data requests', ''], ['sla', 'Service levels', ''],
   ['reg', 'Regulatory approvals', 'internal'], ['costs', 'TSA fees', 'internal'], ['d1', 'Day 1 and first 100 days', 'auto']
 ];
@@ -54,7 +55,7 @@ export default {
     const side = h('aside.panel', { 'aria-label': 'Pack contents' },
       h('div.panel-head', h('span.panel-id', f.joint ? 'Shared with the other party' : 'Internal'), h('h2.panel-title', 'Contents')),
       h('div.panel-body',
-        h('label.field', h('span.field-label', `${team()} commentary for this pack`), commIn),
+        fieldBox(`${team()} commentary for this pack`, commIn),
         h('div.sec', 'Sections'),
         SECTIONS.map(([k, label, kind]) => {
           const locked = kind === 'auto' || (kind === 'internal' && f.joint);
@@ -87,7 +88,9 @@ function buildPack(store, f, on, commentary) {
   const per = Math.max(0, ...st.map((r) => Number(r.get('Period')) || 0));
   const cur = st.filter((r) => Number(r.get('Period')) === per);
   const prog = cur.find((r) => r.get('Workstream') === ed('Programme'));
-  const exits90 = live.filter((r) => { const d = Number(r.get('Forecast exit date')); return d >= RD && d <= RD + 90; }).sort((a, b) => a.get('Forecast exit date') - b.get('Forecast exit date'));
+  const NOW = asOf(n), CT = countTests(NOW), cnt = serviceCounts(tsa, NOW);   // the same counts as Home and the TSA register
+  const byExit = (a, b) => a.get('Forecast exit date') - b.get('Forecast exit date');
+  const exits90 = tsa.filter(CT.soon).sort(byExit), exitsLate = tsa.filter(CT.overdue).sort(byExit);
   const decisions = store.records('tblDecisions').filter((r) => r.get('Status') === 'Open' && ok(r));
   const office = store.src.getSetting('office-name') || 'Separation Management Office';
   const logo = store.src.getSetting('logo');
@@ -103,8 +106,8 @@ function buildPack(store, f, on, commentary) {
 
   const tiles = [
     ['Overall', prog ? prog.get('RAG') : '–', prog ? { Red: 'var(--r-fg)', Amber: 'var(--a-fg)', Green: 'var(--g-fg)' }[prog.get('RAG')] : null],
-    ['Services exited', `${tsa.length - live.length} of ${tsa.length}`],
-    ['Exits in 90 days', String(exits90.length)],
+    ['Services closed', `${cnt.closed} of ${cnt.total}`],
+    ['Closing in 90 days', String(cnt.soon) + (cnt.overdue ? ` (+${cnt.overdue} overdue)` : '')],
     shared ? ['Decisions needed', String(decisions.length)] : ['Forward fees to date', fmtMoney(n.FEE_FwdActTot, sym)]
   ];
   const parts = [];
@@ -125,11 +128,16 @@ function buildPack(store, f, on, commentary) {
       cur.map((r) => h('div', { style: { display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '6px 0', borderBottom: '1px solid var(--line-soft)' } },
         h('span', { style: { width: '62px', flex: '0 0 62px' } }, chip(r.get('RAG') || '–')),
         h('div', { style: { minWidth: 0 } }, h('div', { style: { fontWeight: 600, fontSize: '12.5px' } }, wsName[r.get('Workstream')] || r.get('Workstream')),
-          h('div.small', { style: { color: 'var(--heading)' } }, shared ? r.get('Shared summary') : r.get('Summary')))))));
+          h('div.small', { style: { color: 'var(--heading)' } }, shared ? r.get('Shared summary') : r.get('Summary')),
+          // Amber and red workstreams show their path to green (Tim's evaluation, H)
+          ['Amber', 'Red'].includes(r.get('RAG')) && r.get('Path to green') && !shared ? h('div.small', { style: { marginTop: '3px', color: 'var(--a-fg)' } }, h('b', 'Path to green: '), r.get('Path to green')) : null)))));
   }
   if (on('exits')) {
-    parts.push(cap('Exits in the next 90 days', 'TSA register and Exit Readiness'));
-    parts.push(table(['TSA ID', 'Service', 'Exit', 'Readiness', 'Delivery'], exits90.map((r) => [r.get('TSA ID'), r.get('Service name') + (r.get('Direction') === 'Reverse' ? ' (reverse)' : ''), fmtDate(r.get('Forecast exit date')), chip(r.get('Exit readiness RAG') || '–'), chip(r.get('Service delivery RAG') || '–')]), 'No exits in the next 90 days.'));
+    parts.push(cap('Closing in the next 90 days', 'TSA register and Exit Readiness'));
+    const exRow = (r) => [r.get('TSA ID'), r.get('Service name') + (r.get('Direction') === 'Reverse' ? ' (reverse)' : ''), fmtDate(r.get('Forecast exit date')), chip(r.get('Exit readiness RAG') || '–'), chip(r.get('Service delivery RAG') || '–')];
+    parts.push(table(['TSA ID', 'Service', 'Exit', 'Readiness', 'Delivery'], exits90.map(exRow), 'No exits in the next 90 days.'));
+    if (exitsLate.length) { parts.push(h('div.small', { style: { margin: '10px 0 4px', fontWeight: 700, color: 'var(--r-fg)' } }, 'Exit overdue: forecast exit date passed, no actual exit entered')); parts.push(table(['TSA ID', 'Service', 'Exit', 'Readiness', 'Delivery'], exitsLate.map(exRow), '')); }
+    parts.push(h('p.small.muted', { style: { margin: '6px 0 0' } }, `${COUNT_RULES.soon} Counted on ${fmtDate(NOW)}.`));
   }
   if (on('raid')) {
     const open = (s) => ['Open', 'In progress'].includes(s);
@@ -139,13 +147,22 @@ function buildPack(store, f, on, commentary) {
     parts.push(table(['ID', 'Item', 'Owner', 'Rating'], [...risks.map((r) => [r.get('Risk ID'), r.get('Risk'), r.get('Owner'), chip(r.get('Rating'))]), ...iss.map((r) => [r.get('Issue ID'), r.get('Issue'), r.get('Owner'), chip(r.get('Priority'))])], shared ? 'No shareable risks or issues.' : 'No red or amber risks or open issues.'));
   }
   if (on('decisions')) {
-    parts.push(cap('Decisions needed', 'Decisions log'));
-    parts.push(table(['ID', 'Decision needed', 'Needed by', 'Owner'], decisions.map((r) => [r.get('Decision ID'), r.get('Decision needed'), fmtDate(r.get('Needed by')), r.get('Owner')]), 'No decisions waiting.'));
+    // Only this forum's decisions, when the log names a forum for any of them (Tim's evaluation, H)
+    const forumsUsed = new Set(decisions.map((r) => r.get('Decided by')).filter(Boolean));
+    const ours = forumsUsed.has(f.name) ? decisions.filter((r) => r.get('Decided by') === f.name) : decisions;
+    parts.push(cap('Decisions needed', forumsUsed.has(f.name) ? `Decisions log: for ${f.name}` : 'Decisions log'));
+    parts.push(table(['ID', 'Decision needed', 'Needed by', 'Owner'], ours.map((r) => [r.get('Decision ID'), r.get('Decision needed'), fmtDate(r.get('Needed by')), r.get('Owner')]), 'No decisions waiting.'));
   }
   if (on('changes')) {
-    const cr = store.records('tblChange').filter((r) => !['Implemented', 'Rejected', 'Withdrawn'].includes(r.get('Status')));
-    parts.push(cap('TSA changes and extensions', 'TSA Changes, open requests'));
-    parts.push(table(['CR', 'Change', 'Fee impact ', 'Decision due', 'Status'], cr.map((r) => [r.get('CR ID'), r.get('Title'), fmtMoney(r.get('Fee impact (calculated, reporting currency)'), sym) || '–', fmtDate(r.get('Decision due')), r.get('Status')]), 'No open change requests.'));
+    const all = store.records('tblChange').filter((r) => r.get('Request type') !== 'Forecast change');
+    const open = all.filter((r) => /^(Draft|Submitted|Pending|Under review)$/.test(r.get('Status')));
+    const forumNames = new Set(all.map((r) => r.get('Approval forum')).filter(Boolean));
+    const mine = forumNames.has(f.name) ? open.filter((r) => r.get('Approval forum') === f.name) : open;   // this forum's own requests, when it has any
+    const approved = all.filter((r) => r.get('Status') === 'Approved');
+    const crRow = (r) => [r.get('CR ID'), [r.get('Title'), r.get('Impact summary') ? h('div.small.muted', r.get('Impact summary')) : null], fmtMoney(r.get('Fee impact (calculated, reporting currency)'), sym) || '–', fmtDate(r.get('Decision due')), r.get('Status')];
+    parts.push(cap('TSA changes and extensions', forumNames.has(f.name) ? `TSA Changes: outstanding for ${f.name}` : 'TSA Changes, open requests'));
+    parts.push(table(['CR', 'Change', 'Fee impact ', 'Decision due', 'Status'], mine.map(crRow), 'No change requests waiting for a decision.'));
+    if (approved.length) { parts.push(h('div.small', { style: { margin: '10px 0 4px', fontWeight: 700 } }, 'Approved, not yet implemented')); parts.push(table(['CR', 'Change', 'Fee impact ', 'Decision due', 'Status'], approved.map(crRow), '')); }
   }
   if (on('data')) {
     const dr = store.records('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status')));

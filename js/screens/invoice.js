@@ -1,7 +1,7 @@
 // Our invoice: the invoice we send the other party for the services we provide, built by the Our Invoice sheet.
 // Settings (month, currency, number, date, tax, payment details) and the other-charges log are edited here;
 // the invoice itself is shown as a printable page with the client's logo.
-import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial } from '../util.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox } from '../util.js?v=0.9.4.20261106172320';
 
 const SHEET = 'Our Invoice';
 const OC0 = 20, OC1 = 119;
@@ -60,7 +60,7 @@ function build(ctx) {
   const ccySel = h('select', { style: inp() }, [...new Set([String(c('K6') || ''), ...(store.options({ h: 'c', t: 'I', dv: { name: 'CcyCode' } }) || [n.RepCcy])].filter(Boolean))].map((x) => h('option', { value: x }, x)));
   ccySel.value = String(c('K6') || n.RepCcy);
   const noIn = h('input', { type: 'text', value: String(c('K7') || ''), style: inp() });
-  const dateIn = h('input', { type: 'date', value: serialToIso(c('K8')), style: inp() });
+  const dateIn = dateBox(c('K8'), { style: inp() });
   const taxIn = h('input', { type: 'number', step: '0.5', min: '0', value: String(Math.round(taxRate * 1000) / 10), style: inp() });
   const payIn = h('textarea', { rows: 3, style: inp() }); payIn.value = String(c('K10') || '');
   const officeIn = h('input', { type: 'text', value: office, style: inp() });
@@ -176,5 +176,5 @@ function build(ctx) {
       settings));
 }
 
-function fld(label, el) { return h('label.field', h('span.field-label', label), el); }
+function fld(label, el) { return fieldBox(label, el); }
 function inp() { return { border: '1px solid var(--line-strong)', background: 'var(--input)', borderRadius: '6px', padding: '7px 9px', fontSize: '13px', width: '100%', minWidth: 0 }; }

@@ -1,7 +1,7 @@
 // RAID and actions: risks, issues, decisions, assumptions and dependencies, and the action log, in one list.
-import { h, fmtDate, toast, toSerial, ed } from '../util.js?v=0.9.3.20261106165044';
-import { buildForm } from '../form.js?v=0.9.3.20261106165044';
-import { LIVE } from '../live.js?v=0.9.3.20261106165044';
+import { h, fmtDate, toast, toSerial, ed, asOf } from '../util.js?v=0.9.4.20261106172320';
+import { buildForm } from '../form.js?v=0.9.4.20261106172320';
+import { LIVE } from '../live.js?v=0.9.4.20261106172320';
 
 const TYPES = {
   RSK: { t: 'tblRisks', one: 'Risk', many: 'Risks', id: 'Risk ID', title: 'Risk', st: 'Status (adopt or remove)', raised: 'Date raised' },
@@ -11,16 +11,16 @@ const TYPES = {
   AC: { t: 'tblActions', one: 'Action', many: 'Actions', id: 'AC ID', title: 'Action', st: 'Status' }
 };
 const DONE = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled']);
-const ui = { tab: 'ALL', showClosed: false, sel: null, adding: null, ws: null, suggestedOnly: false };
+const ui = { tab: 'ALL', showClosed: false, sel: null, adding: null, ws: null, suggestedOnly: false, newOnly: false };
 
 export default {
   tables: Object.values(TYPES).map((x) => x.t).concat(['tblWorkstreams']),
   render(ctx) {
     const { store, arg } = ctx;
-    const RD = Number(store.names.RD) || 0;
+    const RD = asOf(store.names);   // due and overdue run from today
     if (arg && !arg.used) {
       arg.used = true;
-      ui.ws = arg.ws || null; ui.suggestedOnly = !!arg.suggested; ui.showClosed = false;
+      ui.ws = arg.ws || null; ui.suggestedOnly = !!arg.suggested; ui.newOnly = !!arg.newOnly; ui.showClosed = false;
       ui.tab = arg.tab || 'ALL';
       if (arg.id) ui.selId = arg.tab + ':' + arg.id;
       if (arg.add) { ui.adding = 'RSK'; ui.sel = null; }
@@ -33,16 +33,17 @@ export default {
       for (const r of store.records(cfg.t)) items.push({ k, cfg, r, key: k + ':' + r.i, idKey: k + ':' + r.get(cfg.id), st: r.get(cfg.st) || '' });   // keyed by row: an ID is only known after the workbook recalculates
     }
     const wsOk = (x) => !ui.ws || x.r.get('Workstream') === ui.ws || (ui.ws === ed('Programme') && !x.r.get('Workstream'));
-    const vis = (x) => (ui.showClosed || !DONE.has(x.st)) && wsOk(x) && (!ui.suggestedOnly || x.st === 'Suggested');
+    const vis = (x) => (ui.showClosed || !DONE.has(x.st)) && wsOk(x) && (!ui.suggestedOnly || x.st === 'Suggested') && (!ui.newOnly || x.st === 'New');
     const inTab = (x, t) => t === 'ALL' || x.k === t;
     const list = items.filter((x) => inTab(x, ui.tab) && vis(x))
-      .sort((a, b) => (a.st === 'Suggested') - (b.st === 'Suggested') || rank(b) - rank(a));
+      .sort((a, b) => (b.st === 'New') - (a.st === 'New') || (a.st === 'Suggested') - (b.st === 'Suggested') || rank(b) - rank(a));   // New from reports first, starter-library suggestions last
     const hidden = items.filter((x) => inTab(x, ui.tab) && wsOk(x) && DONE.has(x.st)).length;
     if (ui.selId) { const f = items.find((x) => x.idKey === ui.selId); if (f) ui.sel = f.key; ui.selId = null; }
     let sel = ui.adding ? null : items.find((x) => x.key === ui.sel) || null;
     if (!sel && !ui.adding && list.length) { sel = list[0]; ui.sel = sel.key; }
 
     const open = (k) => items.filter((x) => x.k === k && !DONE.has(x.st) && x.st !== 'Suggested');
+    const fresh = items.filter((x) => x.st === 'New').length;
     const tile = (label, value, tone, onclick) => h('button.tile', { type: 'button', class: tone, onclick }, h('span.tile-label', label), h('span.tile-value', String(value)));
     const redRisks = open('RSK').filter((x) => x.r.get('Rating') === 'Red').length;
     const due30 = open('AC').filter((x) => { const d = Number(x.r.get('Due date')); return d && d <= RD + 30; }).length;
@@ -59,8 +60,10 @@ export default {
         tile('Open issues', open('ISS').length, null, () => go({ tab: 'ISS', suggestedOnly: false })),
         tile('Decisions needed', open('DEC').length, null, () => go({ tab: 'DEC', suggestedOnly: false })),
         tile('Actions due in 30 days', due30, null, () => go({ tab: 'AC', suggestedOnly: false })),
-        tile('Waiting for review', waiting, waiting ? 'info' : null, () => go({ tab: 'ALL', suggestedOnly: true }))),
-      (ui.ws || ui.suggestedOnly) ? h('div.filters',
+        fresh ? tile('New from reports', fresh, 'amber', () => go({ tab: 'ALL', newOnly: true, suggestedOnly: false })) : null,
+        tile('Waiting for review', waiting, waiting ? 'info' : null, () => go({ tab: 'ALL', suggestedOnly: true, newOnly: false }))),
+      (ui.ws || ui.suggestedOnly || ui.newOnly) ? h('div.filters',
+        ui.newOnly ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ newOnly: false }) }, 'New from reports only  ✕') : null,
         ui.ws ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ ws: null }) }, `Workstream: ${wsName[ui.ws] || ui.ws}  ✕`) : null,
         ui.suggestedOnly ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ suggestedOnly: false }) }, 'Suggested only  ✕') : null) : null,
       h('div.tabs', { role: 'tablist', 'aria-label': 'Type' },
@@ -101,6 +104,7 @@ function meta(x, wsName) {
     if (r.get('Due date')) parts.push((x.st === 'Closed' ? 'closed ' + fmtDate(r.get('Closed on')) : 'due ' + fmtDate(r.get('Due date'))));
   } else {
     if (x.st === 'Suggested') parts.push('From the starter library');
+    if (x.st === 'New') parts.push('Raised in a workstream report');
     parts.push(where, r.get('Owner'));
     if (x.k === 'RSK' && r.get('Score')) parts.push(`${r.get('Likelihood (1-5)')} × ${r.get('Impact (1-5)')}`);
     if (x.k === 'ISS' && r.get('Due date')) parts.push('due ' + fmtDate(r.get('Due date')));
@@ -115,10 +119,10 @@ function row(x, sel, ctx, wsName) {
   const isSel = sel && sel.key === x.key;
   const setStatus = (v) => async (e) => {
     e.stopPropagation();
-    try { await store.save(x.cfg.t, x.r.i, { [x.cfg.st]: v }); toast(v === 'Open' ? 'Adopted: now open' : 'Removed: hidden from the list, kept in the workbook'); ctx.rerender(); }
+    try { await store.save(x.cfg.t, x.r.i, { [x.cfg.st]: v }); toast(v === 'Open' ? (x.st === 'New' ? 'Accepted: now open' : 'Adopted: now open') : 'Removed: hidden from the list, kept in the workbook'); ctx.rerender(); }
     catch (err) { toast('Could not save: ' + (err.message || err), true); }
   };
-  return h('div.item', { class: [isSel ? 'sel' : '', x.st === 'Suggested' ? 'suggested' : '', DONE.has(x.st) ? 'faded' : ''].join(' ') },
+  return h('div.item', { class: [isSel ? 'sel' : '', x.st === 'Suggested' ? 'suggested' : '', x.st === 'New' ? 'is-new' : '', DONE.has(x.st) ? 'faded' : ''].join(' ') },
     h('button.item-main', { type: 'button', onclick: () => { ui.sel = x.key; ui.adding = null; ctx.rerender(); } },
       h('span.item-id', x.r.get(x.cfg.id)),
       h('span.item-text', h('span.item-title', x.r.get(x.cfg.title)), h('span.item-meta', meta(x, wsName))),
@@ -126,18 +130,23 @@ function row(x, sel, ctx, wsName) {
     h('div.item-side',
       x.st === 'Suggested'
         ? [h('span.tag-sugg', 'SUGGESTED'), h('button.btn.btn-sm.btn-primary', { type: 'button', onclick: setStatus('Open') }, 'Adopt'), h('button.btn.btn-sm', { type: 'button', onclick: setStatus('Remove') }, 'Remove')]
-        : h('span.item-status', x.st)));
+        : x.st === 'New'
+          ? [h('span.tag-new', 'NEW'), h('button.btn.btn-sm.btn-primary', { type: 'button', title: 'Accept it into the register: the status becomes Open', onclick: setStatus('Open') }, 'Accept')]
+          : h('span.item-status', x.st)));
 }
 
-function fieldsFor(store, cfg) {
+// "Status (adopt or remove)" is only for starter-library rows; everything a user adds or adopts just says "Status".
+function fieldsFor(store, cfg, rec) {
   const def = store.schema[cfg.t];
-  return def.cols.filter((c) => c.h !== cfg.id && c.k !== 'ID').map((c) => (c.h === cfg.title ? { h: c.h, full: true, area: true, rows: 2 } : c.h));
+  const long = rec && rec.get(cfg.st) === 'Suggested';
+  return def.cols.filter((c) => c.h !== cfg.id && c.k !== 'ID').map((c) => (c.h === cfg.title ? { h: c.h, full: true, area: true, rows: 2 }
+    : c.h === 'Status (adopt or remove)' && !long ? { h: c.h, label: 'Status' } : c.h));
 }
 
 function editPanel(ctx, x) {
   const { store } = ctx;
   if (!x) return h('aside.panel', h('div.panel-empty', 'Select an item to see it here.'));
-  const form = buildForm(store, x.cfg.t, x.r, fieldsFor(store, x.cfg));
+  const form = buildForm(store, x.cfg.t, x.r, fieldsFor(store, x.cfg, x.r));
   const save = async () => {
     const ch = form.collect();
     if (!Object.keys(ch).length) { toast('Nothing changed'); return; }

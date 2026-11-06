@@ -1,8 +1,8 @@
 // Builds an edit form from the workbook's own column definitions (schema.json, generated from the builder).
 // Inputs (I) and suggested values (D) are editable; calculated columns (C) are shown read-only.
 // Values the workbook works out (scores, statuses, due dates) update as you type: see live.js.
-import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed } from './util.js?v=0.9.3.20261106165044';
-import { LIVE } from './live.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed, dateBox } from './util.js?v=0.9.4.20261106172320';
+import { LIVE } from './live.js?v=0.9.4.20261106172320';
 
 export function display(store, col, v) {
   if (v === '' || v == null) return '';
@@ -112,7 +112,7 @@ export function buildForm(store, table, rec, fields, opts = {}) {
           el.value = s;
         };
       } else if (col.f === 'date' || (col.dv && col.dv.date)) {
-        el = h('input', { id, type: 'date', value: serialToIso(shown) });
+        el = dateBox(shown, { id });
         get = () => isoToSerial(el.value); set = (v) => { el.value = serialToIso(v); };
       } else if (col.f === 'long' || spec.area) {
         el = h('textarea', { id, rows: spec.rows || 3 });
@@ -133,7 +133,7 @@ export function buildForm(store, table, rec, fields, opts = {}) {
         el = h('input', { id, type: 'text', value: shown === '' ? '' : String(shown) });
         get = () => el.value.trim(); set = (v) => { el.value = v == null ? '' : String(v); };
       }
-      if (el.tagName !== 'DIV' && el.tagName !== 'SPAN') { el.addEventListener('input', markDirty); el.addEventListener('change', markDirty); }
+      if ((el.tagName !== 'DIV' && el.tagName !== 'SPAN') || el.classList.contains('date-box')) { el.addEventListener('input', markDirty); el.addEventListener('change', markDirty); }
       wrap.appendChild(el);
       const entry = { h: spec.h, get, set, raw, wrap, sugg: isSugg || (!rec && col.t === 'D') };
       inputs.push(entry); byH[spec.h] = entry;

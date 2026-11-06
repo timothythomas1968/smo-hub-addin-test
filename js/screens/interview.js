@@ -1,9 +1,10 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam } from '../util.js?v=0.9.3.20261106165044';
-import { personLabel } from '../form.js?v=0.9.3.20261106165044';
-import { colName } from '../data.js?v=0.9.3.20261106165044';
-import { todaySerial } from './checklist.js?v=0.9.3.20261106165044';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.9.4.20261106172320';
+import { personLabel } from '../form.js?v=0.9.4.20261106172320';
+import { colName } from '../data.js?v=0.9.4.20261106172320';
+import { todaySerial } from './checklist.js?v=0.9.4.20261106172320';
+import { readinessOf } from '../readiness.js?v=0.9.4.20261106172320';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;
@@ -23,15 +24,15 @@ export default {
   tables: ['tblTSA', 'tblReadiness'],
   render(ctx) {
     const { store } = ctx;
-    const RD = Number(store.names.RD) || 0;
+    const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date
     const waive = store.src.getSetting('ri-waive') || {};
     const tsa = store.records('tblTSA');
     const xr = Object.fromEntries(store.records('tblReadiness').map((r) => [r.get('TSA ID'), r]));
     const svc = tsa.filter((r) => !EXITED.has(r.get('Status'))).map((r) => {
       const id = r.get('TSA ID'), x = xr[id];
       const latest = x ? AREA_COLS.map((a) => x.get(a)) : [];
-      const next = x ? Number(x.get('Next interview')) || 0 : 0;
-      return { r, id, x, next, rag: ragOf(latest), overdue: x ? Number(x.get('Interviews overdue')) > 0 : false, waived: !!(waive[id] || {}).svc };
+      const ro = readinessOf(store, r, x, waive, RD);   // waived rounds drop out of the overdue count and the next date
+      return { r, id, x, next: ro.next, rag: ragOf(latest), overdue: ro.overdue > 0, waived: !!(waive[id] || {}).svc };
     }).sort((a, b) => (a.waived - b.waived) || ((a.next || 1e9) - (b.next || 1e9)));
     const filters = {
       due: ['Due in 30 days', (s) => !s.waived && (s.overdue || (s.next && s.next <= RD + 30))],
@@ -98,7 +99,7 @@ function interviewCard(ctx, sel, waive) {
   const { store } = ctx;
   const B = ui.block;                       // 16 rows x 8 cols (B..I)
   const b = B0 + sel.r.i * BH;
-  const RD = Number(store.names.RD) || 0;
+  const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date
   const due = [3, 4, 5, 6].map((c) => Number(B[2][c]) || 0);
   const held = [3, 4, 5, 6].map((c) => Number(B[3][c]) || 0);
   const ans = (k) => [...Array(9).keys()].map((a) => String(B[4 + a][3 + k] || ''));
@@ -154,7 +155,7 @@ function interviewCard(ctx, sel, waive) {
   }
 
   const people = store.options({ h: 'Owner', t: 'I', dv: { name: 'L_People' } }) || [];
-  const heldIn = h('input', { type: 'date', value: serialToIso(E.held), style: inputStyle() });
+  const heldIn = dateBox(E.held, { style: inputStyle() });
   heldIn.addEventListener('input', () => { E.held = isoToSerial(heldIn.value); E.dirty = true; });
   const whoSel = h('select', { style: inputStyle() }, h('option', { value: '' }, ''), [...new Set([E.who, ...people].filter(Boolean))].map((p) => h('option', { value: p }, personLabel(store, p))));
   whoSel.value = E.who;
@@ -233,5 +234,5 @@ function interviewCard(ctx, sel, waive) {
   return h('div', head, body);
 }
 
-function field(label, el) { return h('label.field', h('span.field-label', label), el); }
+function field(label, el) { return fieldBox(label, el); }
 function inputStyle() { return { border: '1px solid var(--line-strong)', background: 'var(--input)', borderRadius: '6px', padding: '7px 9px', fontSize: '13px', width: '100%', minWidth: 0 }; }

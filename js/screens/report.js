@@ -1,7 +1,7 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam } from '../util.js?v=0.9.3.20261106165044';
-import { personLabel } from '../form.js?v=0.9.3.20261106165044';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox } from '../util.js?v=0.9.4.20261106172320';
+import { personLabel } from '../form.js?v=0.9.4.20261106172320';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -15,7 +15,7 @@ const OPTS = { 'Likelihood (1-5)': ['1', '2', '3', '4', '5'], 'Impact (1-5)': ['
 const ui = { ws: null, sec: null, secKey: null, edit: null, rdSeen: null };
 
 export default {
-  tables: ['tblWorkstreams', 'tblTSA', 'tblRisks', 'tblIssues', 'tblPlan', 'tblStatus'],
+  tables: ['tblWorkstreams', 'tblTSA', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblPlan', 'tblStatus'],
   render(ctx) {
     const { store, go } = ctx;
     const n = store.names;
@@ -45,7 +45,7 @@ export default {
     return h('div.page',
       h('div.page-head',
         h('div', h('h1', `Workstream report · ${fmtMonth(RD)}`),
-          h('p.lede', 'Each lead\'s monthly status. It flows into Consolidated WS Reporting, Home and the governance pack; risks, issues and decisions listed here appear on the RAID logs.')),
+          h('p.lede', 'Each lead\'s monthly status. It flows into Consolidated WS Reporting, Home and the governance pack; new risks, issues and decisions raised here go straight into RAID, marked New.')),
         h('div.card', { style: { padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
           h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, `Reporting date (set by ${theTeam()})`),
           [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')])),
@@ -109,8 +109,9 @@ function form(ctx, w, wsRow, s) {
     ui.edit = {
       rag: String(cell(5, 1) || ''), trend: String(cell(5, 4) || ''),
       texts: TEXTS.map(([o]) => String(cell(o, 1) || '')),
-      tables: Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, [...Array(t.n).keys()].map((j) => [...Array(8).keys()].map((c) => cell(t.off + j, c)))])),
-      rows: Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, Math.max(1, [...Array(t.n).keys()].filter((j) => cell(t.off + j, 0) !== '').length)]))
+      // New risks, issues and decisions go straight into the main registers (status New), so these start empty.
+      tables: Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, [...Array(t.n).keys()].map(() => Array(8).fill(''))])),
+      rows: Object.fromEntries(Object.keys(TABLES).map((k) => [k, 1]))
     };
   }
   const E = ui.edit;
@@ -147,8 +148,9 @@ function form(ctx, w, wsRow, s) {
       };
       paintRating();
       return h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px', padding: '10px', border: '1px solid var(--line)', borderRadius: '8px', background: '#fff' } },
-        ratingEl ? h('label.field', { style: { gridColumn: '1 / -1' } }, ratingEl) : null,
+        ratingEl ? h('div.field', { style: { gridColumn: '1 / -1' } }, ratingEl) : null,
         t.cols.map((label, c) => {
+          if (label === 'Status') return null;   // set to New when it goes into the register
           let el;
           const opts = lists[label];
           const isDate = label === 'Due date' || label === 'Needed by';
@@ -157,42 +159,63 @@ function form(ctx, w, wsRow, s) {
             el.value = String(vals[c] ?? '');
             el.addEventListener('change', () => { vals[c] = /^\d$/.test(el.value) ? Number(el.value) : el.value; paintRating(); });
           } else if (isDate) {
-            el = h('input', { type: 'date', value: serialToIso(vals[c]), style: inputStyle() });
+            el = dateBox(vals[c], { style: inputStyle() });
             el.addEventListener('input', () => { vals[c] = isoToSerial(el.value); });
           } else {
             el = h('input', { type: 'text', value: String(vals[c] ?? ''), style: inputStyle() });
             el.addEventListener('input', () => { vals[c] = el.value; });
           }
-          return h('label.field', { style: c === 0 || c === 1 || c === 6 ? { gridColumn: 'span 2' } : null }, h('span.field-label', label), el);
+          return fieldBox(label, el, { style: c === 0 || c === 1 || c === 6 ? { gridColumn: 'span 2' } : null });
         }));
     });
+    const REG = { risk: ['tblRisks', 'Status (adopt or remove)', 'RSK'], iss: ['tblIssues', 'Status', 'ISS'], dec: ['tblDecisions', 'Status', 'DEC'] }[key];
+    const waitingNew = store.records(REG[0]).filter((r) => r.get('Workstream') === w.code && r.get(REG[1]) === 'New').length;
     return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
-      h('div.sec', t.label), rows,
+      h('div.sec', t.label.replace(' (new or updated)', ': raise a new one')),
+      waitingNew ? h('div.small', h('span.tag-new', 'NEW'), ` ${waitingNew} raised from ${w.code} reports and waiting for ${theTeam()} to accept them. `, h('button.link-btn', { type: 'button', onclick: () => ctx.go('raid', { ws: w.code, tab: REG[2], newOnly: true }) }, 'Open in RAID ›')) : null,
+      rows,
       E.rows[key] < t.n ? h('button.link-btn', { type: 'button', style: { alignSelf: 'flex-start' }, onclick: () => { E.rows[key]++; ctx.rerender(); } }, `+ Add another (room for ${t.n})`) : null);
   };
 
+  // Risks, issues and decisions typed here go straight into the main registers, status New (Tim, 2 Nov 2026; evaluation D).
+  const toRegister = async () => {
+    const today = asOf(store.names), out = { risk: 0, iss: 0, dec: 0 };
+    const val = (vals, k, label) => vals[TABLES[k].cols.indexOf(label)];
+    for (const [k, t] of Object.entries(TABLES)) {
+      for (const vals of E.tables[k].slice(0, E.rows[k])) {
+        if (!String(vals[0] ?? '').trim()) continue;
+        let rec;
+        if (k === 'risk') rec = ['tblRisks', { Risk: vals[0], Description: val(vals, k, 'Description'), 'TSA ID': val(vals, k, 'TSA ID'), 'Likelihood (1-5)': val(vals, k, 'Likelihood (1-5)'), 'Impact (1-5)': val(vals, k, 'Impact (1-5)'), Owner: val(vals, k, 'Owner'), 'Mitigation / response': val(vals, k, 'Mitigation / response'), 'Status (adopt or remove)': 'New', Workstream: w.code, 'Date raised': today }];
+        if (k === 'iss') rec = ['tblIssues', { Issue: vals[0], Description: val(vals, k, 'Description'), 'TSA ID': val(vals, k, 'TSA ID'), Priority: val(vals, k, 'Priority'), 'Due date': val(vals, k, 'Due date'), Owner: val(vals, k, 'Owner'), 'Other party must act': val(vals, k, 'Other party must act'), Status: 'New', Workstream: w.code, 'Date raised': today }];
+        if (k === 'dec') rec = ['tblDecisions', { 'Decision needed': [vals[0], val(vals, k, 'Context')].filter(Boolean).join(': '), 'TSA ID': val(vals, k, 'TSA ID'), 'Needed by': val(vals, k, 'Needed by'), 'Decided by': val(vals, k, 'Decided by'), Owner: val(vals, k, 'Owner'), Decision: val(vals, k, 'Decision'), Status: 'New', Workstream: w.code }];
+        await store.add(rec[0], rec[1]); out[k]++;
+      }
+    }
+    return out;
+  };
   const save = async () => {
     const cells = [{ addr: `C${s + 5}`, value: E.rag }, { addr: `F${s + 5}`, value: E.trend }];
     TEXTS.forEach(([o], i) => cells.push({ addr: `C${s + o}`, value: E.texts[i] }));
-    Object.entries(TABLES).forEach(([k, t]) => E.tables[k].forEach((vals, j) => vals.forEach((v, c) => {
-      if (j < E.rows[k] || v !== '') cells.push({ addr: `${'BCDEFGHI'[c]}${s + t.off + j}`, value: v ?? '' });
-    })));
     // only write what changed, so untouched suggestions stay as suggestions
     const orig = (addr) => { const m = /^([A-I])(\d+)$/.exec(addr); return S[Number(m[2]) - s]['BCDEFGHI'.indexOf(m[1])]; };
     const changed = cells.filter((c) => String(c.value ?? '') !== String(orig(c.addr) ?? ''));
-    if (!changed.length) { toast('Nothing changed'); return; }
+    const anyNew = Object.keys(TABLES).some((k) => E.tables[k].slice(0, E.rows[k]).some((v) => String(v[0] ?? '').trim()));
+    if (!changed.length && !anyNew) { toast('Nothing changed'); return; }
     try {
-      await store.writeCells(SHEET, changed);
-      ui.sec = null; ui.summ = null;
-      toast(`${w.name}: report saved (${changed.length} cell${changed.length === 1 ? '' : 's'})`);
+      if (changed.length) await store.writeCells(SHEET, changed);
+      const added = anyNew ? await toRegister() : { risk: 0, iss: 0, dec: 0 };
+      const nAdded = added.risk + added.iss + added.dec;
+      ui.sec = null; ui.summ = null; ui.edit = null;
+      toast(`${w.name}: report saved` + (nAdded ? `; ${[added.risk && `${added.risk} risk${added.risk > 1 ? 's' : ''}`, added.iss && `${added.iss} issue${added.iss > 1 ? 's' : ''}`, added.dec && `${added.dec} decision${added.dec > 1 ? 's' : ''}`].filter(Boolean).join(', ')} added to RAID as New` : ''));
       ctx.rerender();
     } catch (e) { toast('Could not save: ' + (e.message || e), true); }
   };
 
-  const url = (() => { try { return Office.context.document.url || ''; } catch (e) { return ''; } })();
+  // Only a web address (SharePoint or OneDrive) works as a link in an email; a path on someone's computer does not.
+  const url = (() => { try { const u = Office.context.document.url || ''; return /^https:\/\//i.test(u) ? encodeURI(decodeURI(u)) : ''; } catch (e) { return ''; } })();
   const RD = Number(store.names.RD) || 0;
   const mail = `mailto:?subject=${encodeURIComponent(`${w.name}: workstream report for ${fmtMonth(RD)}`)}&body=${encodeURIComponent(
-    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${fmtMonth(RD)} in TransitionSuite: open the Hub workbook, then TransitionSuite > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : ''}\nThank you.`)}`;
+    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${fmtMonth(RD)} in TransitionSuite: open the Hub workbook, then TransitionSuite > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : '\nIf you use the report file instead, fill in the attached report file and send it back.\n'}\nThank you.`)}`;
 
   return h('div',
     h('div', { style: { padding: '16px 18px 12px', borderBottom: '1px solid var(--line-soft)', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' } },
@@ -203,7 +226,7 @@ function form(ctx, w, wsRow, s) {
         h('div.field', h('span.field-label', 'Overall RAG'), seg(['Green', 'Amber', 'Red'], E.rag, (v) => { E.rag = v; }, true)),
         h('div.field', h('span.field-label', 'Trend'), seg(['Improving', 'Stable', 'Worsening'], E.trend, (v) => { E.trend = v; }, false))),
       h('span.small.muted', 'The RAG starts as the Hub\'s suggestion from the registers (red if any service is red, amber if any is amber or plan items are late). Change it if you disagree.'),
-      TEXTS.map(([o, label, rows], i) => h('label.field', h('span.field-label', label), ta(i, rows))),
+      TEXTS.map(([o, label, rows], i) => fieldBox(label, ta(i, rows))),
       tableBlock('risk'), tableBlock('iss'), tableBlock('dec'),
       h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '6px' } },
         h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save report'),
