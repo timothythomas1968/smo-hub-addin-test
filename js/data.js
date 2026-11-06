@@ -5,9 +5,12 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.9.5.20261106193911';
+import { ed, isUS, setTeam } from './util.js?v=0.10.0.20261106213331';
 
-const SCALAR_NAMES = ['Today', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
+const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
+  // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
+  'QDone', 'QReq',   // set-up progress, the same cells Start Here shows
+  'WF_Mark', 'WF_ToDo', 'WF_cal', 'WF_start', 'WF_cost', 'WF_inv', 'WF_ourinv', 'WF_cons', 'WF_pack', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
@@ -166,7 +169,7 @@ export class PreviewSource {
     const cells = this.snap.cells[sheet] = this.snap.cells[sheet] || {};
     list.forEach((c) => { cells[c.addr] = c.value; });
     // Named cells the screens write directly (in Excel the name follows the cell by itself).
-    const named = { 'Consolidated WS Reporting!B5': 'RD' };
+    const named = { 'Consolidated WS Reporting!B5': 'RD', 'Home!L1': 'RD' };
     list.forEach((c) => { const n = named[sheet + '!' + c.addr]; if (n) this.snap.names[n] = c.value; });
   }
   async showRange() { throw new Error('Preview only: open the add-in in Excel to jump to the worksheet.'); }

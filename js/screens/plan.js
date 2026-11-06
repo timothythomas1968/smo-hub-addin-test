@@ -1,6 +1,6 @@
 // Exit plan: the Plan & Gantt register drawn as a Gantt chart, grouped by service, with an edit panel.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.9.5.20261106193911';
-import { buildForm } from '../form.js?v=0.9.5.20261106193911';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.10.0.20261106213331';
+import { buildForm } from '../form.js?v=0.10.0.20261106213331';
 
 const T = 'tblPlan';
 const ui = { ws: '', q: '', open: null, sel: null, lateOnly: false, critOnly: false, horizon: 12, exited: false };

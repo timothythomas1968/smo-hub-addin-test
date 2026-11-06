@@ -1,8 +1,8 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.9.5.20261106193911';
-import { countTests, COUNT_RULES } from '../counts.js?v=0.9.5.20261106193911';
-import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.9.5.20261106193911';
-import { buildForm } from '../form.js?v=0.9.5.20261106193911';
+import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.10.0.20261106213331';
+import { countTests, COUNT_RULES } from '../counts.js?v=0.10.0.20261106213331';
+import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.10.0.20261106213331';
+import { buildForm } from '../form.js?v=0.10.0.20261106213331';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);

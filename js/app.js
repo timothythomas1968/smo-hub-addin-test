@@ -1,22 +1,22 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.9.5.20261106193911';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.9.5.20261106193911';
-import { openRDDialog } from './rd.js?v=0.9.5.20261106193911';
-import home from './screens/home.js?v=0.9.5.20261106193911';
-import register from './screens/register.js?v=0.9.5.20261106193911';
-import raid from './screens/raid.js?v=0.9.5.20261106193911';
-import dates from './screens/dates.js?v=0.9.5.20261106193911';
-import interview from './screens/interview.js?v=0.9.5.20261106193911';
-import report from './screens/report.js?v=0.9.5.20261106193911';
-import invoice from './screens/invoice.js?v=0.9.5.20261106193911';
-import pack from './screens/pack.js?v=0.9.5.20261106193911';
-import plan from './screens/plan.js?v=0.9.5.20261106193911';
-import setup from './screens/setup.js?v=0.9.5.20261106193911';
-import { day1, f100 } from './screens/checklist.js?v=0.9.5.20261106193911';
-import consolidated from './screens/consolidated.js?v=0.9.5.20261106193911';
-import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.9.5.20261106193911';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.10.0.20261106213331';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.10.0.20261106213331';
+import { openRDDialog } from './rd.js?v=0.10.0.20261106213331';
+import home from './screens/home.js?v=0.10.0.20261106213331';
+import register from './screens/register.js?v=0.10.0.20261106213331';
+import raid from './screens/raid.js?v=0.10.0.20261106213331';
+import dates from './screens/dates.js?v=0.10.0.20261106213331';
+import interview from './screens/interview.js?v=0.10.0.20261106213331';
+import report from './screens/report.js?v=0.10.0.20261106213331';
+import invoice from './screens/invoice.js?v=0.10.0.20261106213331';
+import pack from './screens/pack.js?v=0.10.0.20261106213331';
+import plan from './screens/plan.js?v=0.10.0.20261106213331';
+import setup from './screens/setup.js?v=0.10.0.20261106213331';
+import { day1, f100 } from './screens/checklist.js?v=0.10.0.20261106213331';
+import consolidated from './screens/consolidated.js?v=0.10.0.20261106213331';
+import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.10.0.20261106213331';
 
-export const VERSION = '0.9.5';
+export const VERSION = '0.10.0';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -169,7 +169,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.9.5.20261106193911')).json();
+    const schema = await (await fetch('data/schema.json?v=0.10.0.20261106213331')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
@@ -194,6 +194,8 @@ async function start(inExcel) {
     if (inExcel) watchWorkbook();
     installSelectFix(new URLSearchParams(location.search).get('pick') === '1');   // Windows Excel; ?pick=1 tries it in a browser
     try { const k = localStorage.getItem('smohub.screen'); if (SCREENS[k]) state.screen = k; } catch (e) { /* ignore */ }
+    // Until the required set-up questions are answered, the panel opens on the set-up wizard (Tim, 6 Nov 2026)
+    if (Number(store.names.QReq) && (Number(store.names.QDone) || 0) < Number(store.names.QReq)) state.screen = 'setup';
     shell();
     await render();
   } catch (e) {

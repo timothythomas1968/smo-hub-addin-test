@@ -1,6 +1,7 @@
 // Change the reporting date: one dialog, opened from the title bar, Home or the workstream report.
-// The date lives in 'Consolidated WS Reporting'!B5 (the name RD); every screen reports to its month.
-import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox } from './util.js?v=0.9.5.20261106193911';
+// The date lives in the name RD: typed in Home's title band since workbook v0.11 (before that, 'Consolidated WS Reporting'!B5).
+// It is written by name, so both work; every screen reports to its month.
+import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox } from './util.js?v=0.10.0.20261106213331';
 
 const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() * 12 + d.getUTCMonth() : 0; };
 
@@ -27,7 +28,7 @@ export function openRDDialog(store, after) {
     if (!v) { toast('Pick a date', true); return; }
     setBtn.disabled = true;
     try {
-      await store.writeCells('Consolidated WS Reporting', [{ addr: 'B5', value: v }]);
+      await store.writeNames([['RD', v]]);
       await store.refresh();
       close();
       toast(`Reporting date set to ${fmtDate(v)}. Every screen now reports to ${fmtMonth(v)}.`);

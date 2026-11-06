@@ -1,8 +1,8 @@
 // The governance pack as editable PowerPoint slides (Tim, 6 Nov 2026: every pack has a PowerPoint button beside Print).
 // Built from the same figures as the pack on screen (pack.js records them as it draws), in direction B, as in the sample
 // deck Tim approved (design/samples/Governance pack slides (sample).pptx): navy band, big numbers, white space.
-import { Deck, W, H } from './pptx.js?v=0.9.5.20261106193911';
-import { team } from './util.js?v=0.9.5.20261106193911';
+import { Deck, W, H } from './pptx.js?v=0.10.0.20261106213331';
+import { team } from './util.js?v=0.10.0.20261106213331';
 
 const NAVY = '003A70', INK = '212529', MUTED = '5A6573', ONNAVY = '8FB3DA', LINE = 'D5DCE5';
 const RAG = { Green: ['E3F4E8', '1B5E36'], Amber: ['FFF1D6', '7A4A00'], Red: ['FDE3E1', '8E1B1B'] };

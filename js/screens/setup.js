@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.9.5.20261106193911';
-import { buildForm, personLabel } from '../form.js?v=0.9.5.20261106193911';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.10.0.20261106213331';
+import { buildForm, personLabel } from '../form.js?v=0.10.0.20261106213331';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -67,7 +67,7 @@ function build(ctx) {
     h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } },
       h('b', { style: { color: 'var(--navy)' } }, `Set-up ${pct}% complete`),
       h('div.bar', { style: { flex: '1 1 200px' } }, h('div', { style: { width: pct + '%' } })),
-      h('span.small.muted', reqMissing.length ? `${plural(reqMissing.length, 'required answer')} still to give` : 'All required answers given')),
+      h('span.small.muted', (store.names.QReq ? `${Number(store.names.QDone) || 0} of ${Number(store.names.QReq) || 0} answered · ` : '') + (reqMissing.length ? `${plural(reqMissing.length, 'required answer')} still to give` : 'All required answers given'))),
     h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '8px' } },
       STEPS.map(([, label], i) => h('button', { type: 'button', onclick: () => go(i), 'aria-current': i === ui.step ? 'step' : null,
         style: { textAlign: 'left', cursor: 'pointer', borderRadius: '8px', padding: '8px 10px', border: `2px solid ${i === ui.step ? 'var(--navy)' : 'var(--line)'}`, background: i === ui.step ? 'var(--selected)' : '#fff' } },
@@ -82,7 +82,7 @@ function build(ctx) {
   else body = reviewStep(ctx, reqMissing, unnamed, marked, go);
 
   return h('div',
-    h('div.page-head', h('div', h('h1', 'Set-up wizard'), h('p.lede', 'Everything the Hub needs to know, in six steps. Answers go straight into the workbook (Start Here, People and Library), so you can stop and come back at any time.')),
+    h('div.page-head', h('div', h('h1', 'Set-up wizard'), h('p.lede', 'Everything the Hub needs to know, in six steps. Your answers fill in the Start Here sheet. You don\'t need to fill it in as well. People and services go into People and Library, and you can stop and come back at any time.')),
       h('button.btn', { type: 'button', onclick: () => store.showRange('Start Here', 'B1').catch((e) => toast(e.message, true)) }, 'Start Here sheet')),
     h('div', { style: { display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '18px' } }, progress, body,
       h('div', { style: { display: 'flex', gap: '8px' } },

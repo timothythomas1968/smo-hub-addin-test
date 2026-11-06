@@ -1,10 +1,30 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.9.5.20261106193911';
-import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.9.5.20261106193911';
-import { readinessOf } from '../readiness.js?v=0.9.5.20261106193911';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.9.5.20261106193911';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.10.0.20261106213331';
+import { serviceCounts, countTests, COUNT_RULES } from '../counts.js?v=0.10.0.20261106213331';
+import { readinessOf } from '../readiness.js?v=0.10.0.20261106213331';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.10.0.20261106213331';
 
 const EXITED = new Set(['Exited', 'Terminated']);
+// This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
+// hover help, word for word the ScreenTips on the sheet (workbook/builder/polish_part.py, TIPS).
+const MANUAL_STEPS = ['cal', 'start', 'cost', 'inv', 'ourinv', 'cons', 'pack'];
+const STEP_TIPS = {
+  rd: 'Goes to the reporting month at the top of this page. Type the last day of the new month; every sheet, report and pack follows it.',
+  cal: 'Key Dates: the calendar of contract dates, notice deadlines, forums, actions and decisions. Look at the next few weeks.',
+  start: 'Workstream Reports. Each lead fills in a report (in the Hub, the report file or Teams). Send the leads the request for this month.',
+  rep: 'Workstream Reports: check each lead has reported. The consolidated report then builds itself from these reports and feeds the governance packs.',
+  raid: 'Risks. Review the items raised on reports and the starter suggestions; adopt or remove them. Then issues and overdue actions.',
+  int: 'Plan & Gantt: record progress on exit tasks and milestones. Then hold any readiness interviews due.',
+  cr: 'TSA Changes: change requests waiting for the Change Forum. Process date changes here so the register follows the decision.',
+  tpc: 'Third Parties: vendor consents still outstanding. Chase those blocking a service from moving across.',
+  drwo: 'Data Requests: requests and work orders due or overdue. Follow up with the other party.',
+  cost: 'TSA Cost Tracker: check this month\'s fees, changes and credits are in and look right.',
+  inv: 'Invoices Log: record the invoices received and check them against the TSA fees. Lines outside the threshold are flagged.',
+  ourinv: 'Our Invoice: the invoice for the reverse services we provide. Check the month and send it.',
+  dq: 'Data Quality: fix the errors before the packs, so the numbers in them are right.',
+  cons: 'Consolidated WS Reporting: built automatically from the workstream reports. Add the programme commentary, then save the month to history.',
+  pack: 'Prepare each forum\'s governance pack. It draws on the consolidated report, the registers and the finance figures.'
+};
 const closedLike = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled', 'Complete', 'Not required']);
 
 export default {
@@ -49,7 +69,12 @@ export default {
 
     // ---- this month checklist: some items tick themselves from the data; the rest are ticked by hand
     const key = 'month-' + RD;
-    const manual = store.src.getSetting(key) || {};
+    const sharedTicks = !!n.WF_Mark;   // workbook v0.11: the ticks live in cells on Home, shared with the sheet
+    const manual = sharedTicks ? Object.fromEntries(MANUAL_STEPS.map((k) => [k, n['WF_' + k] === n.WF_Mark])) : (store.src.getSetting(key) || {});
+    const setTick = async (k, on) => {
+      if (sharedTicks) await store.writeNames([['WF_' + k, on ? n.WF_Mark : (n.WF_ToDo || 'To do')]]);
+      else { manual[k] = on; await store.src.setSetting(key, manual); }
+    };
     const daysSinceRD = T - RD;   // the workbook's Today, minus RD
     const waive = store.src.getSetting('ri-waive') || {}, xr = Object.fromEntries(store.records('tblReadiness').map((r) => [r.get('TSA ID'), r]));
     const interviewsDue = live.filter((r) => { const ro = readinessOf(store, r, xr[r.get('TSA ID')], waive, T); return ro.overdue || (ro.next && ro.next <= T + 14); }).length;
@@ -63,64 +88,73 @@ export default {
       const subj = `Workstream reports for ${fmtMonth(RD)}`;
       const body = `Hello all,\n\nPlease send your ${fmtMonth(RD)} workstream report by the usual date: open the Hub workbook, then TransitionSuite > Workstream report and pick your workstream${n.Use_WR === 'N' ? '' : ', or fill in your report file and send it back'}.\n\nThank you.`;
       window.open(`mailto:?bcc=${encodeURIComponent(to.join(';'))}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`, '_blank');
-      manual.start = true; store.src.setSetting(key, manual).then(() => ctx.rerender());
+      setTick('start', true).then(() => ctx.rerender());
     };
     // The 15 steps in four phases, the same as the worksheet Home's workflow (evaluation K: the two Homes stay consistent).
     // Steps tick themselves from the data where they can; the rest are ticked by hand. Steps for parts of the Hub not in use are left out.
     const use = (k) => n[k] !== 'N';
     const M0 = (() => { const d = new Date((RD - 25569) * 86400000); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1) / 86400000) + 25569; })();
-    const wsActive = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') !== 'N').map((r) => r.get('Code'));
-    const wsIn = new Set(store.records('tblStatus').filter((r) => (r.get('Scope') || 'Overall') === 'Overall' && Number(r.get('Period')) >= M0 && r.get('RAG')).map((r) => r.get('Workstream')));
+    const wsActive = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get('Code'));
+    const M1 = (() => { const d = new Date((M0 - 25569) * 86400000); return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1) / 86400000) + 25569; })();
+    const wsIn = new Set(store.records('tblStatus').filter((r) => (r.get('Scope') || 'Overall') === 'Overall' && Number(r.get('Period')) >= M0 && Number(r.get('Period')) < M1 && r.get('RAG')).map((r) => r.get('Workstream')));
     const repIn = wsActive.filter((c) => wsIn.has(c)).length;
     const raidWaiting = suggested + fromReports;
     const has = (t) => store.has ? store.has(t) : true;
     const crWaiting = has('tblChange') && use('Mod_CR') ? store.records('tblChange').filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status'))).length : null;
-    const tpcOut = has('tblTPC') && use('Use_TPC') ? store.records('tblTPC').filter((r) => r.get('Consent alert') === 'Outstanding' || (r.get('Status') && !/^(Agreed|Not needed|Not required|Complete|Closed|Remove)/i.test(r.get('Status')))).length : null;
+    const tpcOut = has('tblTPC') && use('Use_TPC') ? store.records('tblTPC').filter((r) => r.get('Consent alert') === 'Outstanding' || !/^(Agreed|Not needed|Not required|Complete|Closed)/i.test(r.get('Status'))).length : null;   // as the health check
     const drOn = has('tblDataReq') && use('Use_DR'), woOn = has('tblWO') && use('Use_WO');
     const drLate = (drOn ? store.records('tblDataReq').filter((r) => !/^(Delivered|Cancelled|Canceled|Withdrawn|Closed)/i.test(r.get('Status')) && Number(r.get('Due date')) && Number(r.get('Due date')) < T).length : 0)
       + (woOn ? store.records('tblWO').filter((r) => !/^(Complete|Cancelled|Canceled|Rejected|Closed)/i.test(r.get('Status')) && Number(r.get('Target completion')) && Number(r.get('Target completion')) < T).length : 0);
     const planLate = store.records('tblPlan').filter((r) => r.get('Status') === 'Late').length;
     const sheet = (name) => () => store.showRange(name, 'A1').catch((e) => toast(e.message, true));
+    // [key, step, due note, status, done (null: ticked by hand), open, button label]: the sheet's wording, due notes and status words
+    const dueIn = (k) => `Due ${fmtDate(RD + k, true)}`;
+    const word = (done, txt) => (done ? 'Done' : txt);
     const phases = [
       ['Start the month', [
-        ['rd', `Roll the reporting month forward (now ${fmtMonth(RD)})`, ed('Ticks itself when the reporting date is within the last month'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
-        ['cal', 'Check the calendar for the coming weeks', ed('Contract dates, notice deadlines, forums, actions and decisions. Tick it yourself'), null, () => go('dates'), 'Key dates'],
-        ['start', 'Ask the workstream leads for their reports', ed('One email to every workstream lead. Ticks itself when you send it'), null, startReporting, 'Email the leads']]],
+        ['rd', 'Roll the reporting month forward', fmtMonth(RD), word(daysSinceRD <= 35, 'Roll forward'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
+        ['cal', 'Check the calendar for the coming weeks', 'Next 30 days', null, null, () => go('dates'), 'Key dates'],
+        ['start', 'Ask the workstream leads for their reports', `Send by ${fmtDate(RD + 1, true)}`, null, null, startReporting, 'Email the leads']]],
       ['Collect and update', [
-        ['rep', wsActive.length ? `Bring the reports in and check them (${repIn} of ${wsActive.length} in)` : 'Bring the reports in and check them', ed('Ticks itself when every active workstream has reported'), wsActive.length ? repIn >= wsActive.length : null, () => go('report')],
-        ['raid', raidWaiting || overdue ? `Review new risks, issues and overdue actions (${raidWaiting} waiting, ${overdue} overdue)` : 'Review new risks, issues and overdue actions: nothing waiting', ed('Ticks itself when nothing is waiting and no actions are overdue'), raidWaiting === 0 && overdue === 0, () => go('raid', fromReports ? { newOnly: true } : { suggested: true })],
-        ['int', `Update plan progress and readiness interviews${planLate || interviewsDue ? ` (${plural(planLate, 'late item')}, ${plural(interviewsDue, 'interview')} due)` : ''}`, ed('Ticks itself when nothing in the plan is late and no interviews are due'), planLate === 0 && interviewsDue === 0, () => go(interviewsDue && !planLate ? 'interview' : 'plan')],
-        crWaiting == null ? null : ['cr', crWaiting ? `Process date changes and change requests (${crWaiting} waiting)` : 'Process date changes and change requests: none waiting', ed('Ticks itself when no change requests are waiting'), crWaiting === 0, () => go('changes')],
-        tpcOut == null ? null : ['tpc', tpcOut ? `Chase vendor consents (${tpcOut} outstanding)` : 'Vendor consents: none outstanding', ed('Ticks itself when no consents are outstanding'), tpcOut === 0, () => go('thirdparties')],
-        drOn || woOn ? ['drwo', drLate ? `Follow up data requests and work orders (${drLate} overdue)` : 'Follow up data requests and work orders: none overdue', ed('Ticks itself when none are overdue'), drLate === 0, () => go(drOn ? 'datareq' : 'workorders')] : null]],
+        ['rep', 'Bring the reports in and check them', dueIn(7), `${repIn} of ${wsActive.length} in`, repIn >= wsActive.length, () => go('report')],
+        ['raid', 'Review new risks, issues and overdue actions', dueIn(8), raidWaiting ? `${raidWaiting} waiting` : word(!overdue, `${overdue} overdue`), raidWaiting === 0 && overdue === 0, () => go('raid', fromReports ? { newOnly: true } : { suggested: true })],
+        ['int', 'Update plan progress and readiness interviews', dueIn(9), planLate ? `${planLate} late` : word(!interviewsDue, `${interviewsDue} due`), planLate === 0 && interviewsDue === 0, () => go(interviewsDue && !planLate ? 'interview' : 'plan')],
+        crWaiting == null ? null : ['cr', 'Process date changes and change requests', dueIn(13), word(!crWaiting, `${crWaiting} waiting`), crWaiting === 0, () => go('changes')],
+        tpcOut == null ? null : ['tpc', 'Chase vendor consents', dueIn(9), word(!tpcOut, `${tpcOut} outstanding`), tpcOut === 0, () => go('thirdparties')],
+        drOn || woOn ? ['drwo', 'Follow up data requests and work orders', dueIn(9), word(!drLate, `${drLate} overdue`), drLate === 0, () => go(drOn ? 'datareq' : 'workorders')] : null]],
       ['Check the money', [
-        ['cost', 'Check the TSA cost tracker is up to date', ed('This month\'s fees, changes and credits. Tick it yourself'), null, sheet('TSA Cost Tracker'), 'Open sheet'],
-        use('Use_INV') ? ['inv', 'Check the invoices received against the TSA fees', ed('Lines outside the threshold are flagged. Tick it yourself'), null, () => go('invoices')] : null,
-        ['ourinv', 'Send our invoice for the reverse services', ed('Tick it yourself'), null, () => go('invoice')]]],
+        ['cost', 'Check the TSA cost tracker is up to date', dueIn(10), null, null, sheet('TSA Cost Tracker'), 'Open sheet'],
+        use('Use_INV') ? ['inv', 'Check the invoices received against the TSA fees', dueIn(10), null, null, () => go('invoices')] : null,
+        ['ourinv', 'Send our invoice for the reverse services', dueIn(12), null, null, () => go('invoice')]]],
       ['Report', [
-        ['dq', dqE ? `Clear the data quality errors (${dqE})` : 'Data quality: no errors', ed('Ticks itself when there are no errors'), dqE === 0, sheet('Data Quality'), 'Open sheet'],
-        ['cons', 'Review the consolidated report and save the month', ed(`Add the ${team()} commentary. Tick it yourself`), null, () => go('consolidated')],
-        ['pack', 'Prepare the governance packs', ed('Tick it yourself'), null, () => go('pack')]]]
+        ['dq', 'Clear data quality errors', 'Before packs', word(!dqE, `${dqE} ${dqE === 1 ? 'error' : 'errors'}`), dqE === 0, sheet('Data Quality'), 'Open sheet'],
+        ['cons', 'Review the consolidated report and save the month', dueIn(13), null, null, () => go('consolidated')],
+        ['pack', 'Prepare the governance packs', dueIn(14), null, null, () => go('pack')]]]
     ].map(([p, ss]) => [p, ss.filter(Boolean)]);
     const items = phases.flatMap(([, ss]) => ss);
-    const isDone = (it) => (manual[it[0]] != null ? manual[it[0]] : !!it[3]);
+    const byHand = (it) => it[4] == null;
+    const isDone = (it) => (byHand(it) || !sharedTicks ? (manual[it[0]] != null ? !!manual[it[0]] : !!it[4]) : !!it[4]);
     const doneCount = items.filter(isDone).length;
     let k = 0;
     const month = h('section.card', { style: { flex: '1 1 340px' } },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
-        h('h2.cap', `This month · ${fmtMonth(RD)}`), h('div.bar', h('div', { style: { width: Math.round(doneCount / items.length * 100) + '%' } })),
-        h('span.small', { style: { fontWeight: 600, color: 'var(--navy)' } }, `${doneCount} of ${items.length}`)),
+        h('h2.cap', `This month's workflow · ${fmtMonth(RD)}`), h('div.bar', h('div', { style: { width: Math.round(doneCount / items.length * 100) + '%' } })),
+        h('span.small', { style: { fontWeight: 600, color: 'var(--navy)' } }, `${doneCount} of ${items.length} done`)),
       phases.map(([pname, ss]) => [
-        h('div.small', { style: { fontWeight: 700, letterSpacing: '0.06em', color: 'var(--muted)', margin: '10px 0 2px', textTransform: 'uppercase', fontSize: '11px' } }, pname),
+        h('div.small', { style: { fontWeight: 700, letterSpacing: '0.06em', color: 'var(--muted)', margin: '10px 0 2px', textTransform: 'uppercase', fontSize: '11px' } }, ed(pname)),
         ss.map((it) => {
           k++;
-          const done = isDone(it), id = 'm-' + it[0];
-          const cb = h('input', { type: 'checkbox', id, checked: done, 'aria-label': `Step ${k}`, style: { width: '18px', height: '18px', accentColor: 'var(--navy)', flex: '0 0 auto' } });
-          cb.addEventListener('change', async () => { manual[it[0]] = cb.checked; await store.src.setSetting(key, manual); ctx.rerender(); });
-          return h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderTop: '1px solid var(--line-soft)' } },
+          const done = isDone(it), id = 'm-' + it[0], tip = ed(STEP_TIPS[it[0]] || '');
+          const auto = !byHand(it) && sharedTicks;
+          const cb = h('input', { type: 'checkbox', id, checked: done, disabled: auto || null, 'aria-label': `Step ${k}`, title: auto ? 'Ticks itself from the workbook' : null, style: { width: '18px', height: '18px', accentColor: 'var(--navy)', flex: '0 0 auto' } });
+          cb.addEventListener('change', async () => { await setTick(it[0], cb.checked); ctx.rerender(); });
+          const status = byHand(it) ? (done ? `Done ${fmtMonth(RD)}` : 'To do') : it[3];
+          const tone = done ? 'Green' : byHand(it) ? 'n' : /overdue|late|error/.test(status) ? 'Red' : 'Amber';
+          return h('div', { title: tip, style: { display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderTop: '1px solid var(--line-soft)' } },
             h('span', { style: { flex: '0 0 18px', textAlign: 'center', fontWeight: 700, color: 'var(--navy)', fontSize: '13px' } }, String(k)),
-            cb, h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', color: done ? 'var(--muted)' : 'var(--ink)' } }, it[1], h('br'), h('span.small.muted', it[2])),
-            it[4] ? h('button.btn.btn-sm', { type: 'button', onclick: it[4], style: { whiteSpace: 'nowrap', flex: '0 0 auto' } }, it[5] || 'Open') : null);
+            cb, h('label', { for: id, style: { flex: '1 1 auto', fontSize: '13px', color: done ? 'var(--muted)' : 'var(--ink)' } }, ed(it[1]), h('br'), h('span.small.muted', it[2])),
+            h('span.chip', { class: tone, style: { whiteSpace: 'nowrap', flex: '0 0 auto' } }, ed(status)),
+            it[5] ? h('button.btn.btn-sm', { type: 'button', onclick: it[5], style: { whiteSpace: 'nowrap', flex: '0 0 auto' } }, it[6] || 'Open') : null);
         })]));
 
     // ---- workstream status from Consolidated WS Reporting (latest period, with trend against the one before)

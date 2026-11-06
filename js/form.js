@@ -1,8 +1,8 @@
 // Builds an edit form from the workbook's own column definitions (schema.json, generated from the builder).
 // Inputs (I) and suggested values (D) are editable; calculated columns (C) are shown read-only.
 // Values the workbook works out (scores, statuses, due dates) update as you type: see live.js.
-import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed, dateBox } from './util.js?v=0.9.5.20261106193911';
-import { LIVE } from './live.js?v=0.9.5.20261106193911';
+import { h, fmtDate, fmtMoney, fmtMonth, serialToIso, isoToSerial, ed, dateBox } from './util.js?v=0.10.0.20261106213331';
+import { LIVE } from './live.js?v=0.10.0.20261106213331';
 
 export function display(store, col, v) {
   if (v === '' || v == null) return '';

@@ -1,9 +1,9 @@
 // Home's one-page health check: nine cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.9.5.20261106193911';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.9.5.20261106193911';
-import { readinessOf } from '../readiness.js?v=0.9.5.20261106193911';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.0.20261106213331';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.0.20261106213331';
+import { readinessOf } from '../readiness.js?v=0.10.0.20261106213331';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];

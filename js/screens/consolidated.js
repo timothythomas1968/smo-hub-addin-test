@@ -1,8 +1,8 @@
 // Consolidated WS Reporting (0.10 item 5): every workstream's status for a month, side by side, with a month picker.
 // The reporting month comes from the workstream reports; earlier months are the stored history and are read-only.
 // The sheet behind it is Consolidated WS Reporting (tblStatus).
-import { h, fmtMonth, toast, ed, fromSerial, toSerial } from '../util.js?v=0.9.5.20261106193911';
-import { buildForm } from '../form.js?v=0.9.5.20261106193911';
+import { h, fmtMonth, toast, ed, fromSerial, toSerial } from '../util.js?v=0.10.0.20261106213331';
+import { buildForm } from '../form.js?v=0.10.0.20261106213331';
 
 const T = 'tblStatus';
 const ui = { period: null, sel: null };

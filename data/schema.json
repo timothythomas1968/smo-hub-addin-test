@@ -383,71 +383,24 @@
     "sec": "Service"
    },
    {
-    "k": "Desc",
-    "h": "Service description",
-    "t": "D",
-    "f": "long",
-    "dv": null,
-    "n": "",
-    "sec": "Service"
-   },
-   {
-    "k": "WS",
-    "h": "Workstream",
+    "k": "WSN",
+    "h": "Workstream (full name)",
     "t": "C",
     "f": "text",
     "dv": null,
-    "n": "From the TSA ID.",
+    "n": "The workstream's full name, from Lists.",
     "sec": "Service"
    },
    {
-    "k": "Dir",
-    "h": "Direction",
-    "t": "C",
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
     "f": "text",
-    "dv": null,
-    "n": "",
-    "sec": "Service"
-   },
-   {
-    "k": "Start",
-    "h": "Service start",
-    "t": "D",
-    "f": "date",
     "dv": {
-     "date": true
+     "name": "L_TSAStatus"
     },
-    "n": "",
-    "sec": "Term"
-   },
-   {
-    "k": "Term",
-    "h": "Initial term (months)",
-    "t": "D",
-    "f": "int",
-    "dv": null,
-    "n": "Often 12 or 18 months; nothing in the Hub is limited to it.",
-    "sec": "Term"
-   },
-   {
-    "k": "InitEnd",
-    "h": "Initial end date",
-    "t": "C",
-    "f": "date",
-    "dv": null,
-    "n": "The service start plus the initial term, moved to the day services end on (Start Here): e.g. 15 Nov 2026 + 12 months = 1 Dec 2027 when services end on the first of the month.",
-    "sec": "Term"
-   },
-   {
-    "k": "Planned",
-    "h": "Planned exit date",
-    "t": "D",
-    "f": "date",
-    "dv": {
-     "date": true
-    },
-    "n": "The contract exit date: the initial end date, or the new date from the latest approved extension, early exit or termination on TSA Changes (applied automatically).",
-    "sec": "Term"
+    "n": "Suggested from the dates. Overwrite for Terminated.",
+    "sec": "Status and checks"
    },
    {
     "k": "Fcst",
@@ -461,35 +414,13 @@
     "sec": "Term"
    },
    {
-    "k": "Actual",
-    "h": "Actual exit date",
-    "t": "I",
+    "k": "ExitDL",
+    "h": "Exit notice deadline",
+    "t": "C",
     "f": "date",
-    "dv": {
-     "date": true
-    },
-    "n": "Enter when the service ends.",
-    "sec": "Term"
-   },
-   {
-    "k": "Ccy",
-    "h": "Fee currency",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "CcyCode"
-    },
-    "n": "Suggested: same as the row above.",
-    "sec": "Cost"
-   },
-   {
-    "k": "Fee",
-    "h": "Monthly fee (key input)",
-    "t": "I",
-    "f": "money",
     "dv": null,
-    "n": "KEY INPUT: the monthly fee from the TSA schedule, in the fee currency. TSA fees, the executive summary and the invoices all depend on it. Leave blank only if the fee is not a fixed amount, and explain in the fee basis note.",
-    "sec": "Cost"
+    "n": "Forecast exit minus the early exit notice (early exit) or the on-time exit notice.",
+    "sec": "Dates (calculated)"
    },
    {
     "k": "FeeRep",
@@ -499,73 +430,6 @@
     "dv": null,
     "n": "",
     "sec": "Cost"
-   },
-   {
-    "k": "Basis",
-    "h": "Charging basis",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "L_Basis"
-    },
-    "n": "Suggested: same as the row above.",
-    "sec": "Cost"
-   },
-   {
-    "k": "FeeNote",
-    "h": "Fee basis note",
-    "t": "I",
-    "f": "text",
-    "dv": null,
-    "n": "Only for fees that are not a fixed amount, e.g. \"per rate card\".",
-    "sec": "Cost"
-   },
-   {
-    "k": "Cap",
-    "h": "Inside fee cap",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "list": [
-      "Y",
-      "N"
-     ]
-    },
-    "n": "",
-    "sec": "Cost"
-   },
-   {
-    "k": "POwner",
-    "h": "Provider service owner",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "L_People"
-    },
-    "n": "Suggested: the providing party's workstream lead.",
-    "sec": "Owners"
-   },
-   {
-    "k": "ROwner",
-    "h": "Recipient service owner",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "L_People"
-    },
-    "n": "Suggested: the receiving party's workstream lead. Attests service levels and readiness.",
-    "sec": "Owners"
-   },
-   {
-    "k": "Status",
-    "h": "Status",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "L_TSAStatus"
-    },
-    "n": "Suggested from the dates. Overwrite for Terminated.",
-    "sec": "Status and checks"
    },
    {
     "k": "DRAG",
@@ -599,6 +463,208 @@
     "sec": "Status and checks"
    },
    {
+    "k": "ROwner",
+    "h": "Recipient service owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the receiving party's workstream lead. Attests service levels and readiness.",
+    "sec": "Owners"
+   },
+   {
+    "k": "POwner",
+    "h": "Provider service owner",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "Suggested: the providing party's workstream lead.",
+    "sec": "Owners"
+   },
+   {
+    "k": "Comm",
+    "h": "Comments",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "Internal; never on the shared report.",
+    "sec": "Notes"
+   },
+   {
+    "k": "Planned",
+    "h": "Planned exit date",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The contract exit date: the initial end date, or the new date from the latest approved extension, early exit or termination on TSA Changes (applied automatically).",
+    "sec": "Term"
+   },
+   {
+    "k": "Actual",
+    "h": "Actual exit date",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Enter when the service ends.",
+    "sec": "Term"
+   },
+   {
+    "k": "Dir",
+    "h": "Direction",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "Route",
+    "h": "Exit route",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Route"
+    },
+    "n": "Suggested from the library, otherwise the same as the row above.",
+    "sec": "Exit plan"
+   },
+   {
+    "k": "ExtOK",
+    "h": "Qualifies for extension",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y if the contract lets this service be extended (Tim, 6 Nov 2026: captured at set-up and on import). N for services the contract says cannot be extended.",
+    "sec": "Contract terms"
+   },
+   {
+    "k": "Crit",
+    "h": "Critical",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Suggested Y for high-complexity exits. Critical services get a dress rehearsal and closer monitoring.",
+    "sec": "Service detail"
+   },
+   {
+    "k": "Ccy",
+    "h": "Fee currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "Suggested: same as the row above.",
+    "sec": "Cost"
+   },
+   {
+    "k": "Fee",
+    "h": "Monthly fee (key input)",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "KEY INPUT: the monthly fee from the TSA schedule, in the fee currency. TSA fees, the executive summary and the invoices all depend on it. Leave blank only if the fee is not a fixed amount, and explain in the fee basis note.",
+    "sec": "Cost"
+   },
+   {
+    "k": "FeeNote",
+    "h": "Fee basis note",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Only for fees that are not a fixed amount, e.g. \"per rate card\".",
+    "sec": "Cost"
+   },
+   {
+    "k": "Desc",
+    "h": "Service description",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "From the TSA ID.",
+    "sec": "Service"
+   },
+   {
+    "k": "Start",
+    "h": "Service start",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Term"
+   },
+   {
+    "k": "Term",
+    "h": "Initial term (months)",
+    "t": "D",
+    "f": "int",
+    "dv": null,
+    "n": "Often 12 or 18 months; nothing in the Hub is limited to it.",
+    "sec": "Term"
+   },
+   {
+    "k": "InitEnd",
+    "h": "Initial end date",
+    "t": "C",
+    "f": "date",
+    "dv": null,
+    "n": "The service start plus the initial term, moved to the day services end on (Start Here): e.g. 15 Nov 2026 + 12 months = 1 Dec 2027 when services end on the first of the month.",
+    "sec": "Term"
+   },
+   {
+    "k": "Basis",
+    "h": "Charging basis",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Basis"
+    },
+    "n": "Suggested: same as the row above.",
+    "sec": "Cost"
+   },
+   {
+    "k": "Cap",
+    "h": "Inside fee cap",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Cost"
+   },
+   {
     "k": "PTG",
     "h": "Path to green",
     "t": "I",
@@ -615,17 +681,6 @@
     "dv": null,
     "n": "The Data Quality checks for this row. Red TSA IDs have an error, amber ones a warning.",
     "sec": "Status and checks"
-   },
-   {
-    "k": "Route",
-    "h": "Exit route",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "name": "L_Route"
-    },
-    "n": "Suggested from the library, otherwise the same as the row above.",
-    "sec": "Exit plan"
    },
    {
     "k": "PlanApp",
@@ -718,20 +773,6 @@
      "name": "L_LOB"
     },
     "n": "Suggested from the library, otherwise the same as the row above.",
-    "sec": "Service detail"
-   },
-   {
-    "k": "Crit",
-    "h": "Critical",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "list": [
-      "Y",
-      "N"
-     ]
-    },
-    "n": "Suggested Y for high-complexity exits. Critical services get a dress rehearsal and closer monitoring.",
     "sec": "Service detail"
    },
    {
@@ -848,20 +889,6 @@
     "sec": "Contract terms"
    },
    {
-    "k": "ExtOK",
-    "h": "Qualifies for extension",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "list": [
-      "Y",
-      "N"
-     ]
-    },
-    "n": "Y if the contract lets this service be extended (Tim, 6 Nov 2026: captured at set-up and on import). N for services the contract says cannot be extended.",
-    "sec": "Contract terms"
-   },
-   {
     "k": "ExtMax",
     "h": "Maximum extension (months)",
     "t": "D",
@@ -903,15 +930,6 @@
     "sec": "Dates (calculated)"
    },
    {
-    "k": "ExitDL",
-    "h": "Exit notice deadline",
-    "t": "C",
-    "f": "date",
-    "dv": null,
-    "n": "Forecast exit minus the early exit notice (early exit) or the on-time exit notice.",
-    "sec": "Dates (calculated)"
-   },
-   {
     "k": "ExtDL",
     "h": "Extension notice deadline",
     "t": "C",
@@ -946,15 +964,6 @@
     "dv": null,
     "n": "",
     "sec": "Dates (calculated)"
-   },
-   {
-    "k": "Comm",
-    "h": "Comments",
-    "t": "I",
-    "f": "long",
-    "dv": null,
-    "n": "Internal; never on the shared report.",
-    "sec": "Notes"
    },
    {
     "k": "SComm",
@@ -1069,6 +1078,24 @@
     "h": "On our invoice",
     "t": "C",
     "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "FeeY0",
+    "h": "Fees this year (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "FeeY1",
+    "h": "Fees next year (reporting currency)",
+    "t": "C",
+    "f": "money",
     "dv": null,
     "n": "",
     "sec": "Calculated"
@@ -4922,6 +4949,24 @@
     "dv": null,
     "n": "",
     "sec": "Calculated"
+   },
+   {
+    "k": "RdySoon",
+    "h": "Interview due within 14 days or overdue",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "RdyLate",
+    "h": "Interview overdue",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
    }
   ]
  },
@@ -5703,6 +5748,15 @@
     "h": "Key figures (calculated)",
     "t": "C",
     "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Calculated"
+   },
+   {
+    "k": "Key",
+    "h": "Lookup key",
+    "t": "C",
+    "f": "text",
     "dv": null,
     "n": "",
     "sec": "Calculated"
