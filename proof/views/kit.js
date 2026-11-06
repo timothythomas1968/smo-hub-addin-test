@@ -16,7 +16,8 @@
       if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
       else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
       else if (k === 'class') String(v).split(' ').filter(Boolean).forEach((c) => e.classList.add(c));
-      else e.setAttribute(k, v === true ? '' : v);
+      else if (k === 'href' && typeof v === 'string' && /\.html/.test(v) && !/^https?:/.test(v)) e.setAttribute(k, carry(v));
+      else e.setAttribute(k, v === true ? '' : (typeof v === 'string' && /^(data-tip|title|placeholder|aria-label)$/.test(k) ? T(v) : v));
     }
     add(e, kids);
     return e;
@@ -24,7 +25,33 @@
   // The programme's own name for its team (set-up answer TeamName; the demo's is "Separation Management Office (SMO)").
   // Screen text is written with "SMO"; it is shown with the programme's short name. Try ?team=IMO on any page.
   const TEAM = (() => { try { return new URLSearchParams(location.search).get('team') || (D && D.meta && D.meta.teamShort) || 'SMO'; } catch (e) { return 'SMO'; } })();
-  const T = (s) => (TEAM === 'SMO' ? s : s.replace(/\bSMO\b/g, TEAM));
+  // ?edition=US: US spelling, US dates and dollars (the US demo keeps the same figures, reported in USD).
+  const US = (() => { try { return /^us$/i.test(new URLSearchParams(location.search).get('edition') || ''); } catch (e) { return false; } })();
+  // The same lists as GLOSS and GLOSS_WORDS in src/js/util.js and workbook/builder/hub3_a.py: keep them in step.
+  const GLOSS = [['programme', 'program'], ['Programme', 'Program'], ['organisation', 'organization'], ['Organisation', 'Organization'],
+    ['Operationalisation', 'Operationalization'], ['operationalisation', 'operationalization'], ['prioritis', 'prioritiz'],
+    ['colour', 'color'], ['Colour', 'Color'], ['behaviour', 'behavior'], ['centre', 'center'], ['licence', 'license'], ['Licence', 'License'],
+    ['authoris', 'authoriz'], ['summaris', 'summariz'], ['recognis', 'recogniz'], ['cancelled', 'canceled'], ['Cancelled', 'Canceled'],
+    ['judgement', 'judgment'], ['catalogue', 'catalog']];
+  const GW = { tick: 'check', ticks: 'checks', ticked: 'checked', ticking: 'checking', untick: 'uncheck', unticked: 'unchecked', grey: 'gray', greyed: 'grayed', greys: 'grays' };
+  for (const [a, b] of Object.entries(GW)) GW[a[0].toUpperCase() + a.slice(1)] = b[0].toUpperCase() + b.slice(1);
+  const GW_RE = new RegExp('\\b(' + Object.keys(GW).join('|') + ')\\b', 'g');
+  const MONS = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec';
+  const UKDATE = new RegExp('\\b(\\d{1,2}) (' + MONS + ')( 20\\d\\d)?\\b', 'g');
+  const ed = (s) => {
+    if (!US) return s;
+    for (const [a, b] of GLOSS) s = s.split(a).join(b);
+    // Dates written into the demo text ("1 Dec", "1 Dec 2026") read the US way; money in £ reads in $.
+    return s.replace(GW_RE, (w) => GW[w]).replace(UKDATE, (m, d, mo, y) => `${mo} ${d}${y ? ',' + y : ''}`).replace(/£/g, '$').replace(/\bGBP\b/g, 'USD');
+  };
+  const T = (s) => ed(TEAM === 'SMO' ? s : s.replace(/\bSMO\b/g, TEAM));
+  // Links between mock-up pages keep ?edition= and ?team= (also inside frame.html?src=...).
+  function carry(href) {
+    let q = ''; try { const p = new URLSearchParams(location.search); ['edition', 'team'].forEach((k) => { if (p.get(k)) q += '&' + k + '=' + encodeURIComponent(p.get(k)); }); } catch (e) { /* no query */ }
+    if (!q) return href;
+    const [path, hash = ''] = href.split('#');
+    return path + (path.includes('?') ? '&' : '?') + q.slice(1) + (hash ? '#' + hash : '');
+  }
   function add(e, kids) { for (const k of kids.flat(Infinity)) if (k != null && k !== false) e.append(k.nodeType ? k : T(String(k))); }
   function s(tag, attrs, ...kids) {
     const e = document.createElementNS(SVGNS, tag);
@@ -33,16 +60,17 @@
     return e;
   }
 
-  // ---------- formats (UK edition) ----------
+  // ---------- formats (UK edition; US with ?edition=US) ----------
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const dt = (iso) => (iso ? new Date(iso + (iso.length === 10 ? 'T00:00:00Z' : 'Z')) : null);
-  const fdate = (iso) => { const d = dt(iso); return d ? `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}` : ''; };
-  const fshort = (iso) => { const d = dt(iso); return d ? `${d.getUTCDate()} ${MON[d.getUTCMonth()]}` : ''; };
+  const fdate = (iso) => { const d = dt(iso); return d ? (US ? `${MON[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}` : `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`) : ''; };
+  const fshort = (iso) => { const d = dt(iso); return d ? (US ? `${MON[d.getUTCMonth()]} ${d.getUTCDate()}` : `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`) : ''; };
   const fmonth = (iso) => { const d = dt(iso); return d ? `${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}` : ''; };
   const fmon = (iso) => { const d = dt(iso); return d ? MON[d.getUTCMonth()] : ''; };
   const ftime = (iso) => { const d = dt(iso); return d ? `${fshort(iso.slice(0, 10))}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` : ''; };
-  const money = (v) => '£' + Math.round(Number(v) || 0).toLocaleString('en-GB');
-  const mshort = (v) => { v = Number(v) || 0; const a = Math.abs(v); return (v < 0 ? '−' : '') + '£' + (a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'm' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : Math.round(a)); };
+  const CUR = US ? '$' : '£';
+  const money = (v) => CUR + Math.round(Number(v) || 0).toLocaleString(US ? 'en-US' : 'en-GB');
+  const mshort = (v) => { v = Number(v) || 0; const a = Math.abs(v); return (v < 0 ? '−' : '') + CUR + (a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'm' : a >= 1e3 ? Math.round(a / 1e3) + 'k' : Math.round(a)); };
   const pct = (v) => Math.round(v * 100) + '%';
   const days = (a, b) => Math.round((dt(b) - dt(a)) / 864e5);
   const ws = (code) => D.ws.find((w) => w.code === code);
@@ -249,5 +277,5 @@
     return src.submit(kind, payload);
   }
 
-  window.K = { TEAM, T, submit, D, h, s, C, fdate, fshort, fmonth, fmon, ftime, money, mshort, pct, days, ws, tsa, ragClass, spark, ring, donut, ragDots, stackBar, burndown, columns, meter, delta, shell, router, toast, modal, chip, skeleton };
+  window.K = { TEAM, T, US, ed, submit, D, h, s, C, fdate, fshort, fmonth, fmon, ftime, money, mshort, pct, days, ws, tsa, ragClass, spark, ring, donut, ragDots, stackBar, burndown, columns, meter, delta, shell, router, toast, modal, chip, skeleton };
 })();

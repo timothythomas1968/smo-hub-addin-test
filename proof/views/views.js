@@ -328,7 +328,7 @@
           const w = filter === 'coming' ? coming(p) : filter === 'attention' ? attention(p) : null;
           const pend = pendingOf('task:' + p.id) || pendingOf('pred:' + p.id);
           const track = h('div.bar-track', h('span.today-line', { style: { left: pos(M.today) + '%' } }),
-            exit ? null : h('span.bar', { 'data-bar': p.id, class: p.type !== 'Task' ? 'ms' : null, style: { left: pos(p.start) + '%', width: p.type !== 'Task' ? null : Math.max(1, pos(p.finish) - pos(p.start)) + '%', background: p.status === 'Complete' ? C.g : C.c1 }, 'data-tip': `${p.name}: ${fdate(p.start)} to ${fdate(p.finish)}` }),
+            exit ? null : h('span.bar', { 'data-bar': p.id, class: p.type !== 'Task' ? 'ms' : null, style: { left: pos(p.start) + '%', width: p.type !== 'Task' ? null : Math.max(1, pos(p.finish) - pos(p.start)) + '%', background: p.status === 'Complete' ? '#007BFF' : C.g }, 'data-tip': `${p.name}: ${fdate(p.start)} to ${fdate(p.finish)}` }),
             moved ? (() => { const c = D.dc.chain.find((x) => x.id === p.id); return h('span.bar.ghost', { style: { left: pos(p.start) + '%', width: Math.max(1, pos(c.to) - pos(p.start)) + '%' }, 'data-tip': `Proposed finish ${fdate(c.to)}` }); })() : null);
           return h('tr', { 'data-row': p.id, class: [exit ? '' : 'click', p.id === sel ? 'sel' : '', moved ? 'moved' : ''].join(' '), onclick: exit ? null : () => { sel = p.id; drawList(); drawPanel(); } },
             h('td', exit ? h('b', tsaName(p.tsa)) : h('div', { style: { paddingLeft: '10px' } }, p.name,
@@ -664,7 +664,7 @@
   // ======================================================================
   function execSummary(main, dir = DEF()) {
     const reds = TSA.filter((t) => t['Service delivery RAG'] === 'Red' || t['Exit readiness RAG'] === 'Red');
-    const yr = D.quarters.filter((q) => q.q.endsWith('2026')), fc26 = yr.reduce((a, q) => a + q.fc, 0), bud26 = yr.reduce((a, q) => a + q.budget, 0);
+    const Y0 = M.rd.slice(0, 4), yr = D.quarters.filter((q) => q.q.endsWith(Y0)), fc26 = yr.reduce((a, q) => a + q.fc, 0), bud26 = yr.reduce((a, q) => a + q.budget, 0);
     const X = D.exits, gap = X.actual - X.plan;
     const vsPlan = gap === 0 ? chip(`On plan · ${X.plan} planned by now (${CUR.id})`, 'g') : gap > 0 ? chip(`${gap} ahead of plan (${X.plan} planned)`, 'g') : chip(`${-gap} behind plan (${X.plan} planned)`, 'r');
     const R = D.reverse;
@@ -684,7 +684,7 @@
       h('div.sheet-body',
         h('div.grid.g4', k('Services exited', `${X.actual} of ${X.total}`, `${X.total - X.actual} forward services still live · next exits ${fshort(nextExit)}`, null, h('div', vsPlan)),
           k('Monthly run-rate, forward services', mshort(burnNow.fcFee), `Reverse services: ${mshort(R.runRate)} a month (${R.live} live). Last invoiced forward month ${fmonth(lastAct.m)}: ${mshort(lastAct.actFee)}`),
-          k('TSA fees 2026', mshort(fc26), `${pct(fc26 / bud26 - 1)} over budget`, 'alert'),
+          k(`TSA fees ${Y0}`, mshort(fc26), `${pct(fc26 / bud26 - 1)} over budget`, 'alert'),
           k('One-off costs', mshort(D.oneoff.fac), `forecast at completion · budget ${mshort(D.oneoff.budget)}`)),
         h('div.grid', { style: { gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)' } },
           h('div.card', h('div.card-head', h('h2', 'TSA burn-down, forward services'), h('span.legend-inline', h('span', h('span.ln.act'), 'Actual (invoiced)'), h('span', h('span.ln'), 'Forecast'), h('span', h('span.ln.plan'), `Baseline ${CUR.id}`))), burndown(D.burn, { h: 200, plan: 'b1', planLabel: `Baseline ${CUR.id}` })),
@@ -737,6 +737,7 @@
 
   function finance(main) {
     const yrs = (yr) => D.quarters.filter((q) => q.q.endsWith(yr));
+    const YEARS = [...new Set(D.quarters.map((q) => q.q.slice(-4)))];   // every year the programme runs (Tim, 0.9.5)
     const sum = (rows, k) => rows.reduce((a, q) => a + (q[k] || 0), 0);
     const planK = state.base === 'B0' ? 'plan' : 'b1', budK = state.base === 'B0' ? 'budget0' : 'budget';
     const PT = D.passThrough, ptYear = (yr) => PT.reduce((a, x) => a + Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0), 0);
@@ -748,13 +749,13 @@
     const revYear = (yr) => yearTile(yr, 'rTSA fees forecast', mshort(sum(yrs(yr), 'rev')), `we provide · baseline ${mshort(D.burn.filter((b) => b.m.startsWith(yr)).reduce((a, b) => a + b.revPlan, 0))}`);
     const q2 = D.quarters.map((q) => Object.assign({}, q, { fees: q.act && q.q <= 'Q2 2026' ? q.act : q.fc }));
     const ptCard = h('div.card', h('div.card-head', h('h2', 'Pass-through expenses'), h('span.small.muted', 'Charged at cost by the provider, outside the TSA fees'), sim('pass-through register simulated until workbook v0.11')),
-      h('div', { style: { overflowX: 'auto' } }, h('table.t', h('thead', h('tr', h('th', 'ID'), h('th', 'Charge'), h('th', 'Type'), h('th', 'TSA'), h('th.n', 'Per month'), h('th', 'Runs'), h('th.n', 'To date'), h('th.n', '2026'), h('th.n', '2027'))),
+      h('div', { style: { overflowX: 'auto' } }, h('table.t', h('thead', h('tr', h('th', 'ID'), h('th', 'Charge'), h('th', 'Type'), h('th', 'TSA'), h('th.n', 'Per month'), h('th', 'Runs'), h('th.n', 'To date'), YEARS.map((y) => h('th.n', y)))),
         h('tbody', PT.map((x) => { const y_ = (yr) => Object.entries(x.monthly).filter(([m]) => m.startsWith(yr)).reduce((b, [, v]) => b + v, 0);
-          return h('tr', h('td.id', x.id), h('td', x.desc), h('td', x.cat), h('td', x.tsa || '–'), h('td.n', money(x.amount)), h('td.num', `${fmonth(x.from)} – ${fmonth(x.to)}`), h('td.n', money(x.toDate)), h('td.n', money(y_('2026'))), h('td.n', money(y_('2027')))); })),
-        h('tfoot', h('tr', h('td', { colspan: 6 }, 'Total'), h('td.n', money(PT.reduce((a, x) => a + x.toDate, 0))), h('td.n', money(ptYear('2026'))), h('td.n', money(ptYear('2027'))))))));
+          return h('tr', h('td.id', x.id), h('td', x.desc), h('td', x.cat), h('td', x.tsa || '–'), h('td.n', money(x.amount)), h('td.num', `${fmonth(x.from)} – ${fmonth(x.to)}`), h('td.n', money(x.toDate)), YEARS.map((y) => h('td.n', money(y_(y))))); })),
+        h('tfoot', h('tr', h('td', { colspan: 6 }, 'Total'), h('td.n', money(PT.reduce((a, x) => a + x.toDate, 0))), YEARS.map((y) => h('td.n', money(ptYear(y)))))))));
     const baseSel = h('div.seg', { role: 'group', 'aria-label': 'Compare with' }, BASES.map((b) => h('button', { type: 'button', 'aria-pressed': String(b.id === state.base), onclick: () => { state.base = b.id; main.textContent = ''; finance(main); } }, b.id === CUR.id ? `${b.id} current baseline` : `${b.id} original contract`)));
     main.append(h('div.page', { style: { maxWidth: 'none' } }, head('Finance', `TSA fees, pass-through expenses and one-off costs · ${M.programme} · read only, as at ${fdate(M.rd)}`, h('div.row', h('span.small', { style: { color: 'var(--on-navy)' } }, 'Compare with'), baseSel)),
-      h('div.grid.g4', { class: DEF() === 'b' ? 'lift' : null }, tsaYear('2026'), tsaYear('2027'), revYear('2026'), revYear('2027')),
+      h('div.grid.g4', { class: DEF() === 'b' ? 'lift' : null }, YEARS.map(tsaYear), YEARS.map(revYear)),
       h('div.grid.g3',
         kpi('Monthly run-rate now', mshort(burnNow.fcFee), `forward services · ${burnNow.fcN} live. Reverse: ${mshort(D.reverse.runRate)}`, D.burn.slice(0, D.burn.indexOf(burnNow) + 1).map((b) => b.fcFee)),
         yearTile(thisYear, 'Pass-through expenses', mshort(ptYear(thisYear)), `${PT.length} charges · ${mshort(ptNow)} this month`),
