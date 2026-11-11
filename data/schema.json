@@ -618,20 +618,6 @@
     "sec": "Cost"
    },
    {
-    "k": "Tax",
-    "h": "Taxed on our invoice (Y/N)",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "list": [
-      "Y",
-      "N"
-     ]
-    },
-    "n": "Only for the services we provide: is tax added to this line on Our Invoice? Y unless the service is exempt.",
-    "sec": "Cost"
-   },
-   {
     "k": "WS",
     "h": "Workstream",
     "t": "C",
@@ -2217,24 +2203,6 @@
     "sec": "Assessment"
    },
    {
-    "k": "Score",
-    "h": "Score",
-    "t": "C",
-    "f": "int",
-    "dv": null,
-    "n": "",
-    "sec": "Assessment"
-   },
-   {
-    "k": "Rating",
-    "h": "Rating",
-    "t": "C",
-    "f": "text",
-    "dv": null,
-    "n": "Blank for closed or removed risks.",
-    "sec": "Assessment"
-   },
-   {
     "k": "Resp",
     "h": "Mitigation / response",
     "t": "I",
@@ -2260,6 +2228,24 @@
     },
     "n": "Suggested risks from the starter library show \"Suggested\": change to Open to adopt one, or Remove to drop it. Suggested items stay out of reports and checks.",
     "sec": "Tracking"
+   },
+   {
+    "k": "Score",
+    "h": "Score",
+    "t": "C",
+    "f": "int",
+    "dv": null,
+    "n": "",
+    "sec": "Assessment"
+   },
+   {
+    "k": "Rating",
+    "h": "Rating",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Blank for closed or removed risks.",
+    "sec": "Assessment"
    },
    {
     "k": "Raised",
@@ -2393,24 +2379,6 @@
     "sec": "Tracking"
    },
    {
-    "k": "Status",
-    "h": "Status",
-    "t": "D",
-    "f": "text",
-    "dv": {
-     "list": [
-      "Suggested",
-      "New",
-      "Open",
-      "In progress",
-      "Closed",
-      "Remove"
-     ]
-    },
-    "n": "",
-    "sec": "Tracking"
-   },
-   {
     "k": "Raised",
     "h": "Date raised",
     "t": "I",
@@ -2430,6 +2398,24 @@
      "date": true
     },
     "n": "Suggested from the priority: 7, 14 or 30 days after raising.",
+    "sec": "Tracking"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Suggested",
+      "New",
+      "Open",
+      "In progress",
+      "Closed",
+      "Remove"
+     ]
+    },
+    "n": "",
     "sec": "Tracking"
    },
    {

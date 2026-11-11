@@ -1,7 +1,7 @@
 // Our invoice: the invoice we send the other party for the services we provide, built by the Our Invoice sheet.
 // Settings (month, currency, number, date, tax, payment details) and the other-charges log are edited here;
 // the invoice itself is shown as a printable page with the client's logo.
-import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox, ed } from '../util.js?v=0.10.2.20261111182242';
+import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox, ed } from '../util.js?v=0.10.3.20261111202844';
 
 const SHEET = 'Our Invoice';
 const OC0 = 20, OC1 = 119;
@@ -44,14 +44,19 @@ function build(ctx) {
   const taxable = store.src.getSetting('inv-taxable') || {};
   // Services are taxed unless switched off; other charges only when switched on (Tim, 6 Nov 2026: a tax switch for each additional charge).
   const tkey = (l) => (isService(l) ? l.ref : 'oc:' + (l.ref || '') + '|' + (l.desc || ''));
-  // Workbook v0.11 keeps the tax choice in cells (TSA register "Taxed on our invoice (Y/N)", the charges log "Taxed (Y/N)"), shared with the sheet;
-  // older workbooks keep it in the add-in setting inv-taxable
+  // Workbook v0.11 keeps the tax choice in cells on the Our Invoice sheet, shared with the sheet: our services are taxed unless their TSA ID is in
+  // "Services not taxed" (the name TSA_NoTax), other charges when the charges log's "Taxed (Y/N)" says Y. Older workbooks keep it in the setting inv-taxable.
   const inCells = String((D[18] || [])[14] || '').startsWith(ed('Taxed'));
-  const tsaRow = Object.fromEntries(store.records('tblTSA').map((r) => [r.get('TSA ID'), r]));
   const isTaxed = (l) => (inCells ? Number(l.rflag) === 1 : isService(l) ? taxable[tkey(l)] !== false : taxable[tkey(l)] === true);
   const setTaxed = async (l, on) => {
     if (!inCells) { const t = store.src.getSetting('inv-taxable') || {}; t[tkey(l)] = on; await store.src.setSetting('inv-taxable', t); return; }
-    if (isService(l)) { const r = tsaRow[l.ref]; if (r) await store.save('tblTSA', r.i, { 'Taxed on our invoice (Y/N)': on ? 'Y' : 'N' }, { force: true }); }
+    if (isService(l)) {
+      const list = Array.isArray(n.TSA_NoTax) ? n.TSA_NoTax : [];
+      const at = list.indexOf(l.ref), free = list.findIndex((v) => v === '' || v == null);
+      if (on && at >= 0) await store.writeNameItem('TSA_NoTax', at, '');
+      else if (!on && at < 0 && free >= 0) await store.writeNameItem('TSA_NoTax', free, l.ref);
+      else if (!on && at < 0) toast('The "Services not taxed" list on the Our Invoice sheet is full.');
+    }
     else if (l.q) await store.writeCells(SHEET, [{ addr: `O${l.q}`, value: on ? 'Y' : 'N' }]);
     ui.data = null;
   };
@@ -146,6 +151,7 @@ function build(ctx) {
   };
   const others = lines.filter((l) => !isService(l));
   const taxBox = taxRate ? h('div.card', h('h2.cap', { style: { marginBottom: '6px' } }, 'Which lines are taxed'),
+    inCells ? h('p.small.muted', { style: { margin: '0 0 4px' } }, 'The same choice as on the Our Invoice sheet ("Services not taxed", and the charges log\'s Taxed column). Each service keeps its choice from month to month.') : null,
     h('div.small', { style: { fontWeight: 700, color: 'var(--heading)', marginTop: '4px' } }, 'Services'),
     lines.filter(isService).map(taxRow),
     h('div.small', { style: { fontWeight: 700, color: 'var(--heading)', marginTop: '8px' } }, 'Other charges'),

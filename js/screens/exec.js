@@ -1,11 +1,11 @@
 // Executive summary (Tim, 0.9.5 feedback): the one-page summary from the Teams tab, inside the Hub, worked out live:
 // exits against plan, the monthly run-rate (forward and reverse), this year's TSA fees, one-off costs, workstream status,
 // decisions needed and the watch list. Print or save as PDF like the packs.
-import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf } from '../util.js?v=0.10.2.20261111182242';
-import { COL, donut, columns } from '../charts.js?v=0.10.2.20261111182242';
-import { financeData } from '../findata.js?v=0.10.2.20261111182242';
-import { serviceCounts } from '../counts.js?v=0.10.2.20261111182242';
-import { mshort } from './health.js?v=0.10.2.20261111182242';
+import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf } from '../util.js?v=0.10.3.20261111202844';
+import { COL, donut, columns } from '../charts.js?v=0.10.3.20261111202844';
+import { financeData } from '../findata.js?v=0.10.3.20261111202844';
+import { serviceCounts } from '../counts.js?v=0.10.3.20261111202844';
+import { mshort } from './health.js?v=0.10.3.20261111202844';
 
 export default {
   tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines', 'tblStatus', 'tblWorkstreams', 'tblDecisions'],

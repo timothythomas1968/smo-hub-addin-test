@@ -1,13 +1,13 @@
-// Home's one-page health check: nine cards, each a number, a small chart and the few items that need attention.
+// Home's one-page health check: ten cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.2.20261111182242';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.2.20261111182242';
-import { readinessOf } from '../readiness.js?v=0.10.2.20261111182242';
-import { reportsIn } from '../counts.js?v=0.10.2.20261111182242';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.3.20261111202844';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.3.20261111202844';
+import { readinessOf } from '../readiness.js?v=0.10.3.20261111202844';
+import { reportsIn } from '../counts.js?v=0.10.3.20261111202844';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
-  'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
+  'tblDay1', 'tblFirst100', 'tblPlan', 'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
 
 const monthStart = (n) => { const d = fromSerial(n); return d ? toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))) : 0; };
 const addMonths = (n, k) => { const d = fromSerial(n); return toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k, 1))); };
@@ -151,6 +151,26 @@ export function healthCheck(ctx) {
       tone: late.length ? 'red' : dr.length + wo.length ? 'amber' : 'ok',
       chart: stackBar([{ v: late.length, c: COL.r, label: 'Overdue' }, { v: dr.length + wo.length - late.length, c: COL.a, label: 'Due in 30 days' }], { width: 120, height: 12, label: 'Data requests and work orders' }),
       items, more: items.length - 4
+    }));
+  }
+
+  // 6b. Plans: overdue (Tim, 11 Nov 2026): Day 1 tasks past due and not done, First 100 days tasks late, exit plan items late.
+  // The same rule as the card on the Home sheet (polish_part.py, d1Late, f100Late, planLate).
+  const d1On = store.has('tblDay1') && use('Use_D1'), f1On = store.has('tblFirst100') && use('Use_F100'), spOn = store.has('tblPlan') && use('Use_SP');
+  if (d1On || f1On || spOn) {
+    const d1 = d1On ? store.records('tblDay1').filter((r) => num(r.get('Due date')) && num(r.get('Due date')) < T && !/^(Complete|Not required)$/.test(r.get('Status'))) : [];
+    const f1 = f1On ? store.records('tblFirst100').filter((r) => num(r.get('Days late')) > 0) : [];
+    const sp = spOn ? store.records('tblPlan').filter((r) => r.get('Status') === 'Late') : [];
+    const total = d1.length + f1.length + sp.length;
+    const items = [...d1.map((r) => ({ when: when(r.get('Due date')), late: true, what: `Day 1: ${r.get('Task')}` })),
+      ...f1.map((r) => ({ when: when(r.get('Due date')), late: true, what: `First 100 days: ${r.get('Task')}` })),
+      ...sp.map((r) => ({ when: when(r.get('Planned finish')), late: true, what: `Exit plan: ${r.get('Activity')}` }))];
+    const parts = [d1On ? `Day 1: ${d1.length}` : null, f1On ? `First 100 days: ${f1.length}` : null, spOn ? `exit plan: ${sp.length}` : null].filter(Boolean).join(' · ');
+    cards.push(card({
+      title: 'Plans: overdue', big: String(total), bigSub: parts, tone: total ? 'red' : 'ok',
+      chart: stackBar([{ v: d1.length, c: COL.r, label: 'Day 1' }, { v: f1.length, c: COL.a, label: 'First 100 days' }, { v: sp.length, c: COL.navy, label: 'Exit plan' }], { width: 120, height: 12, label: 'Overdue plan items' }),
+      items, more: items.length - 4, empty: 'Nothing overdue in the plans.',
+      open: () => go(d1.length || (!f1.length && !sp.length && d1On) ? 'day1' : f1.length || (!sp.length && f1On) ? 'f100' : 'plan'), openLabel: 'Open the plan'
     }));
   }
 
