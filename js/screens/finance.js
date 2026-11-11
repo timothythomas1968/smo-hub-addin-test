@@ -1,10 +1,10 @@
 // Finance (Tim, 0.9.5 feedback): the Teams Finance report, inside the Hub. Read only, worked out live from the registers (findata.js):
 // TSA fees forecast for every year the programme runs, against the current plan or the original contract, the reverse services we
 // provide, invoiced actuals, work orders and one-off separation costs. The governance pack's fees section drills into it by year.
-import { h, fmtMoney, fmtMonth, fmtDate, ed, team } from '../util.js?v=0.10.1.20261106220328';
-import { COL, columns, stackColumns, meter } from '../charts.js?v=0.10.1.20261106220328';
-import { financeData } from '../findata.js?v=0.10.1.20261106220328';
-import { mshort } from './health.js?v=0.10.1.20261106220328';
+import { h, fmtMoney, fmtMonth, fmtDate, ed, team } from '../util.js?v=0.10.2.20261111182242';
+import { COL, columns, stackColumns, meter } from '../charts.js?v=0.10.2.20261111182242';
+import { financeData } from '../findata.js?v=0.10.2.20261111182242';
+import { mshort } from './health.js?v=0.10.2.20261111182242';
 
 const ui = { cmp: 'plan', year: null };
 

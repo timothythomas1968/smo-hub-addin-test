@@ -1,7 +1,7 @@
 // Change the reporting date: one dialog, opened from the title bar, Home or the workstream report.
 // The date lives in the name RD: typed in Home's title band since workbook v0.11 (before that, 'Consolidated WS Reporting'!B5).
 // It is written by name, so both work; every screen reports to its month.
-import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox } from './util.js?v=0.10.1.20261106220328';
+import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox } from './util.js?v=0.10.2.20261111182242';
 
 const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() * 12 + d.getUTCMonth() : 0; };
 

@@ -5,13 +5,13 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.10.1.20261106220328';
+import { ed, isUS, setTeam } from './util.js?v=0.10.2.20261111182242';
 
 const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
   'QDone', 'QReq',   // set-up progress, the same cells Start Here shows
   'WF_Mark', 'WF_ToDo', 'WF_cal', 'WF_start', 'WF_cost', 'WF_inv', 'WF_ourinv', 'WF_cons', 'WF_pack', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
-  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL'];
+  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID', 'WRS_WS', 'WRS_Sum'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
 const FALLBACK_LISTS = { Workstream: 'WS_Code', Owner: 'L_People', 'TSA ID': 'TSA_ID' };
@@ -94,6 +94,14 @@ export class ExcelSource {
     });
   }
 
+  /** Write item i (0-based) of a one-column named range, e.g. WS_Active. */
+  async writeNameItem(name, i, value) {
+    return Excel.run(async (ctx) => {
+      ctx.workbook.names.getItem(name).getRange().getCell(i, 0).values = [[value]];
+      await ctx.sync();
+    });
+  }
+
   /** cells: [{addr, value}] on one sheet. */
   async writeCells(sheet, cells) {
     return Excel.run(async (ctx) => {
@@ -164,6 +172,13 @@ export class PreviewSource {
     return out;
   }
   async writeNames(pairs) { pairs.forEach(([n, v]) => { this.snap.names[n] = v; }); }
+  async writeNameItem(name, i, value) {
+    const arr = this.snap.names[name] = [...(this.snap.names[name] || [])]; arr[i] = value;
+    if (name === 'WS_Active') {   // the Lists table shows the answer: keep the preview's copy in step
+      const t = this.snap.tables.tblWorkstreams, c = t && t.headers.indexOf('Active (Y/N)');
+      if (t && c >= 0 && t.full && t.full[i]) t.full[i].v[c] = value;
+    }
+  }
   async writeCells(sheet, list) {
     this.snap.cells = this.snap.cells || {};
     const cells = this.snap.cells[sheet] = this.snap.cells[sheet] || {};
@@ -311,6 +326,15 @@ export class Store {
     await this.need([name]);
     await this.reloadNames();
     return writes.length;
+  }
+
+  /** Write item i of a one-column named range (WS_Active: which workstreams are in use, on Start Here since v0.11). */
+  async writeNameItem(name, i, value) {
+    this.lastWrite = Date.now();
+    await this.src.writeNameItem(name, i, value);
+    this.lastWrite = Date.now();
+    Object.keys(this.t).forEach((n) => this.stale.add(n));
+    await this.reloadNames();
   }
 
   show(name, row) { return this.src.show(name, row); }

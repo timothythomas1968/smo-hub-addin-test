@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.10.1.20261106220328';
-import { buildForm, personLabel } from '../form.js?v=0.10.1.20261106220328';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.10.2.20261111182242';
+import { buildForm, personLabel } from '../form.js?v=0.10.2.20261111182242';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -191,7 +191,8 @@ function workstreamsStep(ctx) {
   const T = 'tblWorkstreams';
   const rows = store.records(T);
   const toggle = async (r, on) => {
-    try { await store.save(T, r.i, { 'Active (Y/N)': on ? 'Y' : 'N' }, { force: true }); ctx.rerender(); } catch (e) { toast('Could not save: ' + (e.message || e), true); }
+    // written by name: since v0.11 the answer lives on Start Here (Your workstreams), and Lists shows it
+    try { await store.writeNameItem('WS_Active', r.i, on ? 'Y' : 'N'); await store.need([T]); ctx.rerender(); } catch (e) { toast('Could not save: ' + (e.message || e), true); }
   };
   const codeIn = h('input', { type: 'text', maxlength: '6', placeholder: 'e.g. LEG', style: { ...inp(), textTransform: 'uppercase' } });
   const nameIn = h('input', { type: 'text', placeholder: 'e.g. Legal entity and governance', style: inp() });
@@ -199,7 +200,7 @@ function workstreamsStep(ctx) {
     const c = codeIn.value.trim().toUpperCase(), nm = nameIn.value.trim();
     if (!c || !nm) { toast('Type a short code and a name', true); return; }
     if (rows.some((r) => String(r.get('Code')).toUpperCase() === c)) { toast(`${c} is already a workstream`, true); return; }
-    try { await store.add(T, { Code: c, Name: nm, 'Active (Y/N)': 'Y' }); await store.reloadNames(); toast(`${c} added`); ctx.rerender(); } catch (e) { toast('Could not add: ' + (e.message || e), true); }
+    try { const i = await store.add(T, { Code: c, Name: nm }); await store.writeNameItem('WS_Active', i, 'Y'); await store.need([T]); toast(`${c} added`); ctx.rerender(); } catch (e) { toast('Could not add: ' + (e.message || e), true); }
   };
   return h('div.row-wrap',
     h('div.card', { style: { flex: '999 1 480px', minWidth: 0 } },

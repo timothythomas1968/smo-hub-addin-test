@@ -1,5 +1,5 @@
 // Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.10.1.20261106220328';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.10.2.20261111182242';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -47,6 +47,8 @@ function events(store) {
     add('raid', r.get('Due date'), `Issue due: ${r.get('Issue')}`, r.get('Issue ID'), { k: 'raid', arg: { tab: 'ISS', id: r.get('Issue ID') } }));
   recs('tblActions').filter((r) => r.get('Status') === 'Open').forEach((r) =>
     add('raid', r.get('Due date'), `Action due: ${r.get('Action')}`, `${r.get('AC ID')} · ${r.get('Owner')}`, { k: 'raid', arg: { tab: 'AC', id: r.get('AC ID') } }));
+  recs('tblAssumpDep').filter((r) => ['Open', 'In progress'].includes(r.get('Status (adopt or remove)'))).forEach((r) =>
+    add('raid', r.get('Needed by'), `${r.get('Type') || 'Assumption or dependency'} needed by: ${r.get('Assumption or dependency')}`, r.get('ID'), { k: 'raid', arg: { tab: 'AD', id: r.get('ID') } }));
   recs('tblDataReq').filter((r) => !['Delivered', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status'))).forEach((r) =>
     add('dr', r.get('Due date'), `Data due: ${r.get('Data set requested')}`, `${r.get('DR ID')} · from ${r.get('Requested from')}`, null));
   recs('tblWO').filter((r) => !['Complete', 'Rejected', 'Cancelled', 'Canceled'].includes(r.get('Status'))).forEach((r) =>
@@ -59,7 +61,7 @@ function events(store) {
 }
 
 export default {
-  tables: ['tblTSA', 'tblForums', 'tblOBL', 'tblDecisions', 'tblIssues', 'tblActions', 'tblDataReq', 'tblWO', 'tblREG', 'tblPlan'],
+  tables: ['tblTSA', 'tblForums', 'tblOBL', 'tblDecisions', 'tblIssues', 'tblActions', 'tblAssumpDep', 'tblDataReq', 'tblWO', 'tblREG', 'tblPlan'],
   render(ctx) {
     const { store, go } = ctx;
     const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date

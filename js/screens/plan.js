@@ -1,12 +1,13 @@
 // Exit plan: the Plan & Gantt register drawn as a Gantt chart, grouped by service, with an edit panel.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.10.1.20261106220328';
-import { buildForm } from '../form.js?v=0.10.1.20261106220328';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.10.2.20261111182242';
+import { buildForm } from '../form.js?v=0.10.2.20261111182242';
 
 const T = 'tblPlan';
 const ui = { ws: '', q: '', open: null, sel: null, lateOnly: false, critOnly: false, horizon: 12, exited: false };
 
 export default {
   tables: [T, 'tblTSA', 'tblWorkstreams'],
+  use: 'Use_SP',   // the exit plan is optional: some programmes plan in another tool (Tim, 11 Nov 2026)
   render(ctx) {
     const { store } = ctx;
     const RD = asOf(store.names);   // alerts run from today (the workbook's Today), not the reporting date

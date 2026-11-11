@@ -1,8 +1,8 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob } from '../util.js?v=0.10.1.20261106220328';
-import { packDeck } from '../packdeck.js?v=0.10.1.20261106220328';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.10.1.20261106220328';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob } from '../util.js?v=0.10.2.20261111182242';
+import { packDeck } from '../packdeck.js?v=0.10.2.20261111182242';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.10.2.20261111182242';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -35,7 +35,10 @@ export default {
     const secSet = store.src.getSetting('pack-sections') || {};
     const chosen = secSet[f.name] || defaultsFor(f.name, f.joint);
     const d1Due = close && RD >= close - 60 && RD <= close + 100;
-    const on = (k) => (k === 'd1' ? d1Due : (k === 'reg' || k === 'costs') && f.joint ? false : chosen.includes(k));
+    // parts switched off in set-up never appear in a pack (Tim, 11 Nov 2026)
+    const OFF = { data: ['Use_DR'], sla: ['Use_SLA'], obl: ['Use_OBL'], consents: ['Use_TPC'], reg: ['Use_REG'], changes: ['Mod_CR'], d1: ['Use_D1', 'Use_F100'] };
+    const switchedOff = (k) => (OFF[k] || []).length > 0 && OFF[k].every((u) => store.names[u] === 'N');
+    const on = (k) => (switchedOff(k) ? false : k === 'd1' ? d1Due : (k === 'reg' || k === 'costs') && f.joint ? false : chosen.includes(k));
     const toggle = async (k) => {
       const all = store.src.getSetting('pack-sections') || {};
       const cur = all[f.name] || defaultsFor(f.name, f.joint);
@@ -59,7 +62,7 @@ export default {
       h('div.panel-body',
         fieldBox(`${team()} commentary for this pack`, commIn),
         h('div.sec', 'Sections'),
-        SECTIONS.map(([k, label, kind]) => {
+        SECTIONS.filter(([k]) => !switchedOff(k)).map(([k, label, kind]) => {
           const locked = kind === 'auto' || (kind === 'internal' && f.joint);
           const id = 'pk-' + k;
           const cb = h('input', { type: 'checkbox', id, checked: on(k), disabled: locked });

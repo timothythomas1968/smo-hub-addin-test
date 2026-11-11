@@ -390,6 +390,15 @@
     "sec": "Service"
    },
    {
+    "k": "Desc",
+    "h": "Service description",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Service"
+   },
+   {
     "k": "WSN",
     "h": "Workstream (full name)",
     "t": "C",
@@ -571,6 +580,15 @@
     "sec": "Service detail"
    },
    {
+    "k": "SLAText",
+    "h": "Service levels",
+    "t": "D",
+    "f": "long",
+    "dv": null,
+    "n": "Suggested from the library. Copied to the SLA tracker.",
+    "sec": "Service detail"
+   },
+   {
     "k": "Ccy",
     "h": "Fee currency",
     "t": "D",
@@ -600,13 +618,18 @@
     "sec": "Cost"
    },
    {
-    "k": "Desc",
-    "h": "Service description",
+    "k": "Tax",
+    "h": "Taxed on our invoice (Y/N)",
     "t": "D",
-    "f": "long",
-    "dv": null,
-    "n": "",
-    "sec": "Service"
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Only for the services we provide: is tax added to this line on Our Invoice? Y unless the service is exempt.",
+    "sec": "Cost"
    },
    {
     "k": "WS",
@@ -848,15 +871,6 @@
     "f": "text",
     "dv": null,
     "n": "Optional: services that migrate together share a move group, e.g. MG-03.",
-    "sec": "Service detail"
-   },
-   {
-    "k": "SLAText",
-    "h": "Service levels",
-    "t": "D",
-    "f": "long",
-    "dv": null,
-    "n": "Suggested from the library. Copied to the SLA tracker.",
     "sec": "Service detail"
    },
    {
@@ -2852,9 +2866,7 @@
     "h": "Proposed exit date",
     "t": "D",
     "f": "date",
-    "dv": {
-     "date": true
-    },
+    "dv": null,
     "n": "Suggested for an extension: the old date plus the maximum months per extension.",
     "sec": "Dates and money"
    },
@@ -2950,10 +2962,10 @@
    {
     "k": "Decision",
     "h": "Decision",
-    "t": "I",
+    "t": "D",
     "f": "long",
     "dv": null,
-    "n": "",
+    "n": "Filled in from the status and the approval forum once a decision is made. Type over it to add any conditions.",
     "sec": "Decision"
    },
    {
@@ -3851,6 +3863,15 @@
     "f": "text",
     "dv": null,
     "n": "Suggested from the entity on the Lists sheet.",
+    "sec": "Filing"
+   },
+   {
+    "k": "Reg2",
+    "h": "Second regulator",
+    "t": "D",
+    "f": "text",
+    "dv": null,
+    "n": "Suggested from the entity's second regulator on the Lists sheet. Type over it, or clear it if this filing goes to one regulator only.",
     "sec": "Filing"
    },
    {

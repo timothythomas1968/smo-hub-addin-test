@@ -1,14 +1,14 @@
 // Our invoice: the invoice we send the other party for the services we provide, built by the Our Invoice sheet.
 // Settings (month, currency, number, date, tax, payment details) and the other-charges log are edited here;
 // the invoice itself is shown as a printable page with the client's logo.
-import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox } from '../util.js?v=0.10.1.20261106220328';
+import { h, fmtDate, fmtMonth, toast, printNode, isoToSerial, serialToIso, fromSerial, toSerial, fieldBox, dateBox, ed } from '../util.js?v=0.10.2.20261111182242';
 
 const SHEET = 'Our Invoice';
 const OC0 = 20, OC1 = 119;
 const ui = { data: null, logAdd: false, taxable: null };
 
 export default {
-  tables: [],
+  tables: ['tblTSA'],
   render(ctx) {
     const { store } = ctx;
     const page = h('div.page', h('div.loading', h('div.spinner'), 'Reading the invoice…'));
@@ -21,7 +21,7 @@ async function load(ctx, page) {
   const { store } = ctx;
   try {
     if (ui.gen !== store.gen) { ui.gen = store.gen; ui.data = null; }
-    if (!ui.data) ui.data = await store.readRange(SHEET, `A1:Q${OC1}`);
+    if (!ui.data) ui.data = await store.readRange(SHEET, `A1:R${OC1}`);
     page.replaceChildren(...build(ctx).childNodes);
   } catch (e) {
     page.replaceChildren(h('div.banner.warn', 'Could not read the Our Invoice sheet: ' + (e.message || e)));
@@ -38,13 +38,23 @@ function build(ctx) {
   const buyer = n.Perspective !== 'Seller';
   const last = Number(n.InvLastRow) || Number(c('P3')) || 27;
   const lines = [];
-  for (let r = 21; r < last && r <= OC1; r++) { const row = D[r - 1]; if (row[1] !== '' && row[2] !== '') lines.push({ n: row[1], ref: row[2], desc: row[3], fee: row[5], mk: row[6], amt: Number(row[7]) || 0 }); }
+  for (let r = 21; r < last && r <= OC1; r++) { const row = D[r - 1]; if (row[1] !== '' && row[2] !== '') lines.push({ n: row[1], ref: row[2], desc: row[3], fee: row[5], mk: row[6], amt: Number(row[7]) || 0, q: Number(row[16]) || 0, rflag: row[17] }); }
   const isService = (l) => l.fee !== '' && l.fee != null;
   const taxRate = Number(c('K9')) || 0;
   const taxable = store.src.getSetting('inv-taxable') || {};
   // Services are taxed unless switched off; other charges only when switched on (Tim, 6 Nov 2026: a tax switch for each additional charge).
   const tkey = (l) => (isService(l) ? l.ref : 'oc:' + (l.ref || '') + '|' + (l.desc || ''));
-  const isTaxed = (l) => (isService(l) ? taxable[tkey(l)] !== false : taxable[tkey(l)] === true);
+  // Workbook v0.11 keeps the tax choice in cells (TSA register "Taxed on our invoice (Y/N)", the charges log "Taxed (Y/N)"), shared with the sheet;
+  // older workbooks keep it in the add-in setting inv-taxable
+  const inCells = String((D[18] || [])[14] || '').startsWith(ed('Taxed'));
+  const tsaRow = Object.fromEntries(store.records('tblTSA').map((r) => [r.get('TSA ID'), r]));
+  const isTaxed = (l) => (inCells ? Number(l.rflag) === 1 : isService(l) ? taxable[tkey(l)] !== false : taxable[tkey(l)] === true);
+  const setTaxed = async (l, on) => {
+    if (!inCells) { const t = store.src.getSetting('inv-taxable') || {}; t[tkey(l)] = on; await store.src.setSetting('inv-taxable', t); return; }
+    if (isService(l)) { const r = tsaRow[l.ref]; if (r) await store.save('tblTSA', r.i, { 'Taxed on our invoice (Y/N)': on ? 'Y' : 'N' }, { force: true }); }
+    else if (l.q) await store.writeCells(SHEET, [{ addr: `O${l.q}`, value: on ? 'Y' : 'N' }]);
+    ui.data = null;
+  };
   const taxOf = (l) => (taxRate && isTaxed(l) ? l.amt * taxRate : 0);
   const svcTot = lines.filter(isService).reduce((a, l) => a + l.amt, 0);
   const othTot = lines.filter((l) => !isService(l)).reduce((a, l) => a + l.amt, 0);
@@ -131,7 +141,7 @@ function build(ctx) {
   const taxRow = (l, i) => {
     const id = 'tx-' + i;
     const cb = h('input', { type: 'checkbox', id, checked: isTaxed(l) });
-    cb.addEventListener('change', async () => { const t = store.src.getSetting('inv-taxable') || {}; t[tkey(l)] = cb.checked; await store.src.setSetting('inv-taxable', t); ctx.rerender(); });
+    cb.addEventListener('change', async () => { try { await setTaxed(l, cb.checked); } catch (e) { toast('Could not save: ' + (e.message || e), true); } ctx.rerender(); });
     return h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', padding: '4px 0' } }, cb, h('label', { for: id }, [l.ref, l.desc].filter(Boolean).join(' · ')));
   };
   const others = lines.filter((l) => !isService(l));
