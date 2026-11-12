@@ -1,24 +1,24 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.1.20261112214706';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.1.20261112214706';
-import { openRDDialog } from './rd.js?v=0.11.1.20261112214706';
-import home from './screens/home.js?v=0.11.1.20261112214706';
-import register from './screens/register.js?v=0.11.1.20261112214706';
-import raid from './screens/raid.js?v=0.11.1.20261112214706';
-import dates from './screens/dates.js?v=0.11.1.20261112214706';
-import interview from './screens/interview.js?v=0.11.1.20261112214706';
-import report from './screens/report.js?v=0.11.1.20261112214706';
-import invoice from './screens/invoice.js?v=0.11.1.20261112214706';
-import pack from './screens/pack.js?v=0.11.1.20261112214706';
-import plan from './screens/plan.js?v=0.11.1.20261112214706';
-import setup from './screens/setup.js?v=0.11.1.20261112214706';
-import contents from './screens/contents.js?v=0.11.1.20261112214706';
-import { tidyTabs } from './tabs.js?v=0.11.1.20261112214706';
-import { day1, f100 } from './screens/checklist.js?v=0.11.1.20261112214706';
-import consolidated from './screens/consolidated.js?v=0.11.1.20261112214706';
-import finance from './screens/finance.js?v=0.11.1.20261112214706';
-import execSummary from './screens/exec.js?v=0.11.1.20261112214706';
-import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.1.20261112214706';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.1.20261112220436';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.1.20261112220436';
+import { openRDDialog } from './rd.js?v=0.11.1.20261112220436';
+import home from './screens/home.js?v=0.11.1.20261112220436';
+import register from './screens/register.js?v=0.11.1.20261112220436';
+import raid from './screens/raid.js?v=0.11.1.20261112220436';
+import dates from './screens/dates.js?v=0.11.1.20261112220436';
+import interview from './screens/interview.js?v=0.11.1.20261112220436';
+import report from './screens/report.js?v=0.11.1.20261112220436';
+import invoice from './screens/invoice.js?v=0.11.1.20261112220436';
+import pack from './screens/pack.js?v=0.11.1.20261112220436';
+import plan from './screens/plan.js?v=0.11.1.20261112220436';
+import setup from './screens/setup.js?v=0.11.1.20261112220436';
+import contents from './screens/contents.js?v=0.11.1.20261112220436';
+import { tidyTabs } from './tabs.js?v=0.11.1.20261112220436';
+import { day1, f100 } from './screens/checklist.js?v=0.11.1.20261112220436';
+import consolidated from './screens/consolidated.js?v=0.11.1.20261112220436';
+import finance from './screens/finance.js?v=0.11.1.20261112220436';
+import execSummary from './screens/exec.js?v=0.11.1.20261112220436';
+import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.1.20261112220436';
 
 export const VERSION = '0.11.1';
 
@@ -175,7 +175,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.11.1.20261112214706')).json();
+    const schema = await (await fetch('data/schema.json?v=0.11.1.20261112220436')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
