@@ -1,10 +1,10 @@
 // Readiness interviews: up to four interviews per service, recorded on the Readiness Interview sheet
 // (one 17-row block per service, in TSA register order). Exit Readiness picks up the latest automatically.
-import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.10.4.20261112143117';
-import { personLabel } from '../form.js?v=0.10.4.20261112143117';
-import { colName } from '../data.js?v=0.10.4.20261112143117';
-import { todaySerial } from './checklist.js?v=0.10.4.20261112143117';
-import { readinessOf } from '../readiness.js?v=0.10.4.20261112143117';
+import { h, fmtDate, toast, plural, isoToSerial, serialToIso, theTeam, asOf, fieldBox, dateBox } from '../util.js?v=0.11.0.20261112200344';
+import { personLabel } from '../form.js?v=0.11.0.20261112200344';
+import { colName } from '../data.js?v=0.11.0.20261112200344';
+import { todaySerial } from './checklist.js?v=0.11.0.20261112200344';
+import { readinessOf } from '../readiness.js?v=0.11.0.20261112200344';
 
 const SHEET = 'Readiness Interview';
 const B0 = 22, BH = 17;

@@ -1,29 +1,31 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.10.4.20261112143117';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.10.4.20261112143117';
-import { openRDDialog } from './rd.js?v=0.10.4.20261112143117';
-import home from './screens/home.js?v=0.10.4.20261112143117';
-import register from './screens/register.js?v=0.10.4.20261112143117';
-import raid from './screens/raid.js?v=0.10.4.20261112143117';
-import dates from './screens/dates.js?v=0.10.4.20261112143117';
-import interview from './screens/interview.js?v=0.10.4.20261112143117';
-import report from './screens/report.js?v=0.10.4.20261112143117';
-import invoice from './screens/invoice.js?v=0.10.4.20261112143117';
-import pack from './screens/pack.js?v=0.10.4.20261112143117';
-import plan from './screens/plan.js?v=0.10.4.20261112143117';
-import setup from './screens/setup.js?v=0.10.4.20261112143117';
-import { day1, f100 } from './screens/checklist.js?v=0.10.4.20261112143117';
-import consolidated from './screens/consolidated.js?v=0.10.4.20261112143117';
-import finance from './screens/finance.js?v=0.10.4.20261112143117';
-import execSummary from './screens/exec.js?v=0.10.4.20261112143117';
-import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.10.4.20261112143117';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.0.20261112200344';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.0.20261112200344';
+import { openRDDialog } from './rd.js?v=0.11.0.20261112200344';
+import home from './screens/home.js?v=0.11.0.20261112200344';
+import register from './screens/register.js?v=0.11.0.20261112200344';
+import raid from './screens/raid.js?v=0.11.0.20261112200344';
+import dates from './screens/dates.js?v=0.11.0.20261112200344';
+import interview from './screens/interview.js?v=0.11.0.20261112200344';
+import report from './screens/report.js?v=0.11.0.20261112200344';
+import invoice from './screens/invoice.js?v=0.11.0.20261112200344';
+import pack from './screens/pack.js?v=0.11.0.20261112200344';
+import plan from './screens/plan.js?v=0.11.0.20261112200344';
+import setup from './screens/setup.js?v=0.11.0.20261112200344';
+import contents from './screens/contents.js?v=0.11.0.20261112200344';
+import { tidyTabs } from './tabs.js?v=0.11.0.20261112200344';
+import { day1, f100 } from './screens/checklist.js?v=0.11.0.20261112200344';
+import consolidated from './screens/consolidated.js?v=0.11.0.20261112200344';
+import finance from './screens/finance.js?v=0.11.0.20261112200344';
+import execSummary from './screens/exec.js?v=0.11.0.20261112200344';
+import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.0.20261112200344';
 
-export const VERSION = '0.10.4';
+export const VERSION = '0.11.0';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
   { group: 'Every month', items: [
-    ['home', 'Home', home], ['dates', 'Key dates', dates],
+    ['home', 'Home', home], ['dates', 'Calendar', dates],
     ['report', 'Workstream report', report], ['consolidated', 'Consolidated reporting', consolidated],
     ['interview', 'Readiness interviews', interview],
     ['invoice', 'Our invoice', invoice],
@@ -40,7 +42,7 @@ const NAV = [
     ['plan', 'Exit plan', plan],
     ['day1', 'Day 1 plan', day1],
     ['f100', 'First 100 days', f100]] },
-  { group: 'Set-up', items: [['setup', 'Set-up wizard', setup]] }
+  { group: 'Set-up', items: [['contents', 'Contents (every sheet)', contents], ['setup', 'Set-up wizard', setup]] }
 ];
 const SCREENS = Object.fromEntries(NAV.flatMap((g) => g.items.map(([k, label, mod]) => [k, { k, label, mod }])));
 
@@ -173,7 +175,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.10.4.20261112143117')).json();
+    const schema = await (await fetch('data/schema.json?v=0.11.0.20261112200344')).json();
     let src;
     if (inExcel) src = new ExcelSource();
     else {
@@ -195,7 +197,7 @@ async function start(inExcel) {
       } catch (e) { /* not supported: ignore */ }
     }
     state.store = store;
-    if (inExcel) watchWorkbook();
+    if (inExcel) { watchWorkbook(); tidyTabs(store).catch((e) => console.warn('tidy tabs', e)); }
     installSelectFix(new URLSearchParams(location.search).get('pick') === '1');   // Windows Excel; ?pick=1 tries it in a browser
     try { const k = localStorage.getItem('smohub.screen'); if (SCREENS[k]) state.screen = k; } catch (e) { /* ignore */ }
     // Until the required set-up questions are answered, the panel opens on the set-up wizard (Tim, 6 Nov 2026)

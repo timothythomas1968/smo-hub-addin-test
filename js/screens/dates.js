@@ -1,5 +1,5 @@
-// Key dates: a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.10.4.20261112143117';
+// Calendar (the Calendar sheet, formerly Key Dates): a month calendar of every dated item in the Hub, with a type filter and a day list.
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.11.0.20261112200344';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],
@@ -125,7 +125,7 @@ export default {
         ui.exp ? exportBox(store, shown, RD, rerender) : h('button.link-btn', { type: 'button', style: { alignSelf: 'flex-start' }, onclick: () => { ui.exp = true; rerender(); } }, 'Copy these dates to Outlook…')));
 
     return h('div.page',
-      h('div.page-head', h('div', h('h1', 'Key dates'),
+      h('div.page-head', h('div', h('h1', 'Calendar'),
         h('p.lede', 'Exits, notice deadlines, readiness interviews, forums, obligations, RAID and action due dates, data requests, work orders, regulatory filings and plan milestones.'))),
       typeTable(all, first, first + days - 1, rerender),
       grid, side);

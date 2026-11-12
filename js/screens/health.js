@@ -1,10 +1,10 @@
 // Home's one-page health check: ten cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.10.4.20261112143117';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.10.4.20261112143117';
-import { readinessOf } from '../readiness.js?v=0.10.4.20261112143117';
-import { reportsIn } from '../counts.js?v=0.10.4.20261112143117';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.11.0.20261112200344';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.11.0.20261112200344';
+import { readinessOf } from '../readiness.js?v=0.11.0.20261112200344';
+import { reportsIn } from '../counts.js?v=0.11.0.20261112200344';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblDay1', 'tblFirst100', 'tblPlan', 'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -55,7 +55,7 @@ export function healthCheck(ctx) {
       tone: regLate.length || tpcDue.some((r) => num(r.get('Response due')) < T) ? 'red' : regOpen.length || tpcOpen.length ? 'amber' : 'ok',
       chart: donut([{ v: regDone.length + (tpc.length - tpcOpen.length), c: COL.g, label: 'Done' }, { v: regOpen.length + tpcOpen.length - regLate.length, c: COL.a, label: 'Outstanding' }, { v: regLate.length, c: COL.r, label: 'Overdue' }],
         { size: 84, centre: `${regDone.length + tpc.length - tpcOpen.length}/${reg.length + tpc.length}`, caption: 'done', label: 'Approvals and consents done' }),
-      items, more: items.length - 4, open: () => go('dates'), openLabel: 'Key dates'
+      items, more: items.length - 4, open: () => go('dates'), openLabel: 'Calendar'
     }));
   }
 

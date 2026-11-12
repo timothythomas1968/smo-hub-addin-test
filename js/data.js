@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.10.4.20261112143117';
+import { ed, isUS, setTeam } from './util.js?v=0.11.0.20261112200344';
 
 const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
@@ -114,7 +114,23 @@ export class ExcelSource {
   async showRange(sheet, addr) {
     return Excel.run(async (ctx) => {
       const ws = ctx.workbook.worksheets.getItem(sheet);
+      ws.visibility = Excel.SheetVisibility.visible;   // a sheet the panel tidied away comes back when it is opened (tabs.js)
       ws.activate(); ws.getRange(addr).select();
+      await ctx.sync();
+    });
+  }
+
+  /** Tidy tabs (tabs.js): show the sheets in `show` (all when null), hide the rest except very hidden ones; `never` stay hidden. */
+  async setVisibleSheets(show, never = []) {
+    return Excel.run(async (ctx) => {
+      const sheets = ctx.workbook.worksheets; sheets.load('items/name,items/visibility');
+      const active = sheets.getActiveWorksheet(); active.load('name');
+      await ctx.sync();
+      const want = (w) => !never.includes(w.name) && (!show || show.has(w.name));
+      // show first, then hide, so the workbook always has a visible sheet; the active one is never hidden
+      sheets.items.forEach((w) => { if (w.visibility !== 'VeryHidden' && want(w) && w.visibility !== 'Visible') w.visibility = Excel.SheetVisibility.visible; });
+      await ctx.sync();
+      sheets.items.forEach((w) => { if (w.visibility !== 'VeryHidden' && !want(w) && w.name !== active.name && w.visibility === 'Visible') w.visibility = Excel.SheetVisibility.hidden; });
       await ctx.sync();
     });
   }
@@ -128,6 +144,7 @@ export class ExcelSource {
   async show(name, row) {
     return Excel.run(async (ctx) => {
       const t = ctx.workbook.tables.getItem(name);
+      t.worksheet.visibility = Excel.SheetVisibility.visible;
       t.worksheet.activate();
       (row == null ? t.getHeaderRowRange() : t.getDataBodyRange().getRow(row)).select();
       await ctx.sync();

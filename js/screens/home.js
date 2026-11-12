@@ -1,8 +1,8 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.10.4.20261112143117';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.10.4.20261112143117';
-import { readinessOf } from '../readiness.js?v=0.10.4.20261112143117';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.10.4.20261112143117';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.11.0.20261112200344';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.11.0.20261112200344';
+import { readinessOf } from '../readiness.js?v=0.11.0.20261112200344';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.0.20261112200344';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -10,7 +10,7 @@ const EXITED = new Set(['Exited', 'Terminated']);
 const MANUAL_STEPS = ['cal', 'start', 'cost', 'inv', 'ourinv', 'cons', 'pack'];
 const STEP_TIPS = {
   rd: 'Goes to the reporting month at the top of this page. Type the last day of the new month; every sheet, report and pack follows it.',
-  cal: 'Key Dates: the calendar of contract dates, notice deadlines, forums, actions and decisions. Look at the next few weeks.',
+  cal: 'Calendar: the contract dates, notice deadlines, forums, actions and decisions. Look at the next few weeks.',
   start: 'Workstream Reports. Each lead fills in a report (in the Hub, the report file or Teams). Send the leads the request for this month.',
   rep: 'Workstream Reports: check each lead has reported. The consolidated report then builds itself from these reports and feeds the governance packs.',
   raid: 'Risks. Review the items raised on reports and the starter suggestions; adopt or remove them. Then issues and overdue actions.',
@@ -112,7 +112,7 @@ export default {
     const phases = [
       ['Start the month', [
         ['rd', 'Roll the reporting month forward', fmtMonth(RD), word(daysSinceRD <= 35, 'Roll forward'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
-        ['cal', 'Check the calendar for the coming weeks', 'Next 30 days', null, null, () => go('dates'), 'Key dates'],
+        ['cal', 'Check the calendar for the coming weeks', 'Next 30 days', null, null, () => go('dates'), 'Calendar'],
         ['start', 'Ask the workstream leads for their reports', `Send by ${fmtDate(RD + 1, true)}`, null, null, startReporting, 'Email the leads']]],
       ['Collect and update', [
         ['rep', 'Bring the reports in and check them', dueIn(7), `${repIn} of ${wsActive.length} in`, repIn >= wsActive.length, () => go('report')],
