@@ -1,8 +1,8 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob } from '../util.js?v=0.11.0.20261112200344';
-import { packDeck } from '../packdeck.js?v=0.11.0.20261112200344';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.11.0.20261112200344';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.11.1.20261112214706';
+import { packDeck } from '../packdeck.js?v=0.11.1.20261112214706';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.11.1.20261112214706';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -78,7 +78,7 @@ export default {
         h('div', h('h1', 'Governance pack'), h('p.lede', `Built from the registers as at ${fmtDate(RD)}. Pick the forum, write your commentary, then print, save as PDF or make PowerPoint slides. Select an ID or a workstream to see the detail behind it.`)),
         h('button.btn', { type: 'button', onclick: async (e) => {
           const b = e.currentTarget; b.disabled = true;
-          try { const cm = document.getElementById('pack-comm'); const blob = await packDeck({ ...pack.model, commentary: cm ? cm.textContent : pack.model.commentary }); saveBlob(blob, `${f.name} pack ${fmtMonth(RD)}.pptx`); toast('PowerPoint saved to your Downloads. Everything in it can be edited, including the charts (Edit Data).'); }
+          try { const cm = document.getElementById('pack-comm'); const blob = await packDeck({ ...pack.model, commentary: cm ? cm.textContent : pack.model.commentary }); saveBlob(blob, `${f.name} pack ${fmtMonth(RD)}.pptx`); toast(printNeedsFile() ? 'Choose where to save the slides (next time the Mac offers the same folder), then open them from there. Everything can be edited, including the charts (Edit Data).' : 'Slides saved to your Downloads: choose Open file to open them in PowerPoint. Everything can be edited, including the charts (Edit Data).'); }
           catch (err) { toast('Could not make the slides: ' + (err.message || err), true); }
           finally { b.disabled = false; }
         } }, 'PowerPoint (.pptx)'),

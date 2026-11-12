@@ -6,7 +6,7 @@
 //  - parts switched off in set-up are hidden, and so is everything else (the registers and logs, the dividers).
 // The panel's Contents screen opens any sheet, hidden or not (ExcelSource.showRange shows a hidden sheet first).
 // Users can turn tidying off there (setting 'tidy-tabs' = 'off'); the workbook's own Contents sheet lists everything.
-import { ed, asOf } from './util.js?v=0.11.0.20261112200344';
+import { ed, asOf } from './util.js?v=0.11.1.20261112214706';
 
 export const MAIN = ['Home', 'Contents', 'Calendar', 'TSA Register', 'TSA Cost Tracker', 'One-off Costs', 'Consolidated WS Reporting', 'RAID Summary',
   'Actions', 'Plan & Gantt', 'Readiness Interview'];
@@ -73,4 +73,10 @@ export const GROUPS = [
     ['Library', 'The library of standard TSA services to start from.'],
     ['People', 'Everyone on the programme, with their role and workstream.'],
     ['AI Prompts', 'Prompts for your AI assistant to pull set-up answers out of the deal documents.']]]];
+/** Turn tab tidying on or off (the switch on Contents and the line at the foot of Home). */
+export async function setTidy(store, on) {
+  await store.src.setSetting('tidy-tabs', on ? 'on' : 'off');
+  if (on) await tidyTabs(store);
+  else if (store.src.setVisibleSheets) await store.src.setVisibleSheets(null, ALWAYS_HIDDEN.map(ed));
+}
 export const isOff = (store, sheet) => !!(SWITCH[sheet] && store.names[SWITCH[sheet]] === 'N');

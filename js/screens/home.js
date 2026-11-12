@@ -1,8 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.11.0.20261112200344';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.11.0.20261112200344';
-import { readinessOf } from '../readiness.js?v=0.11.0.20261112200344';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.0.20261112200344';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.11.1.20261112214706';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.11.1.20261112214706';
+import { readinessOf } from '../readiness.js?v=0.11.1.20261112214706';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.1.20261112214706';
+import { setTidy } from '../tabs.js?v=0.11.1.20261112214706';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -275,7 +276,15 @@ export default {
       ctx.preview ? h('div.banner', h('b', 'Browser preview.'), 'You are looking at the demo workbook outside Excel. Edits are kept until you reload and calculated values do not update. In Excel, every change goes straight into the workbook.') : null,
       healthCheck(ctx),
       phaseCards,
-      h('div.row-wrap', month, wsList, h('div', { style: { flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '18px', minWidth: 0 } }, comingUp, milesCard)));
+      h('div.row-wrap', month, wsList, h('div', { style: { flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '18px', minWidth: 0 } }, comingUp, milesCard)),
+      // the tab tidying switch, also on Contents (Tim, 12 Nov 2026): a quiet line, only in Excel
+      store.src.setVisibleSheets ? (() => {
+        const tidy = store.src.getSetting('tidy-tabs') !== 'off';
+        const flip = () => setTidy(store, !tidy).then(() => { toast(tidy ? 'Every tab shows again.' : 'Tabs tidied: only the main sheets show.'); ctx.rerender(); }).catch((e) => toast(e.message, true));
+        return h('p.small.muted', { style: { margin: '6px 0 0' } }, tidy ? 'Tabs: only the main sheets show. ' : 'Tabs: every sheet shows. ',
+          h('button.link-btn', { type: 'button', onclick: flip }, tidy ? 'Show all tabs' : 'Tidy the tabs'), ' · ',
+          h('button.link-btn', { type: 'button', onclick: () => go('contents') }, 'Contents'));
+      })() : null);
   }
 };
 

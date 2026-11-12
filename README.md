@@ -5,7 +5,7 @@ The test build is served from GitHub Pages:
 - Manifest: https://timothythomas1968.github.io/smo-hub-addin-test/manifest.xml
 - Browser preview (demo data, no Excel needed): https://timothythomas1968.github.io/smo-hub-addin-test/taskpane.html
 
-Use the demo workbook **TransitionSuite Hub (UK) v0.11 Complete DEMO.xlsx**. The add-in reads and writes whichever Hub workbook is open.
+Use the demo workbook **TransitionSuite Hub (UK) v0.11 DEMO.xlsx** (in `workbook/preview-v0.11/` on GitHub). The add-in reads and writes whichever Hub workbook is open.
 
 First, download `manifest.xml` from the link above (right-click, Save link as).
 
@@ -17,7 +17,8 @@ First, download `manifest.xml` from the link above (right-click, Save link as).
 3. If there is no folder called `wef` there, create it. Copy `manifest.xml` into `wef`.
 4. Open Excel and the demo workbook.
 5. On the **Home** tab, click **TransitionSuite (test)** at the right-hand end of the ribbon.
-   If it isn't there: **Home → Add-ins** (or **Insert → My Add-ins**), and pick TransitionSuite (test) under Developer add-ins.
+   If it isn't there: **Home → Add-ins → More Add-ins → My Add-ins** tab, and pick TransitionSuite (test) under **Developer Add-ins** (the small Add-ins menu does not list sideloaded add-ins on recent Excel for Mac).
+   Check the manifest really is in `wef` (Finder, Cmd+I, "Where"): a copy saved to iCloud Drive is not seen.
 6. Drag the panel's left edge to make it as wide as you like.
 
 ## Windows (Excel for Microsoft 365)
@@ -48,6 +49,10 @@ The screens load from GitHub Pages each time, so a new build normally appears wh
 
 - Mac: quit Excel, delete the contents of `~/Library/Containers/com.microsoft.Excel/Data/Library/Caches/` and `~/Library/Containers/com.microsoft.Excel/Data/Library/Application Support/Microsoft/Office/16.0/Wef/`
 - Windows: quit Excel, delete the contents of `%LOCALAPPDATA%\Microsoft\Office\16.0\Wef\`
+
+- Windows, if Explorer says the `webview2` folder is in use: tick "Do this for all current items" and **Skip**; the add-in's saved copy is still cleared.
+
+An old ribbon button (for example "SMO Hub (test)" from before the rename) is the same add-in under its old label: **Add** does nothing because Excel thinks it is installed. Clear the cache as above, then add it again (Windows: **Add-ins → More Add-ins → SHARED FOLDER**).
 
 You only need a new manifest when the ribbon button or permissions change; I'll tell you when.
 

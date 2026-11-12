@@ -1,6 +1,6 @@
 // Contents: every sheet in the Hub, opened from here even when the panel has tidied it away (Stage 2b), and the tidy-tabs switch.
-import { h, toast, ed } from '../util.js?v=0.11.0.20261112200344';
-import { GROUPS, isOff, tidyTabs } from '../tabs.js?v=0.11.0.20261112200344';
+import { h, toast, ed } from '../util.js?v=0.11.1.20261112214706';
+import { GROUPS, isOff, setTidy as applyTidy } from '../tabs.js?v=0.11.1.20261112214706';
 
 export default {
   tables: [],
@@ -10,9 +10,7 @@ export default {
     const tidy = store.src.getSetting('tidy-tabs') !== 'off';
     const open = (sheet) => store.showRange(ed(sheet), 'A1').then(() => toast(`${ed(sheet)} is open in the workbook.`)).catch((e) => toast(e.message, true));
     const setTidy = async (on) => {
-      await store.src.setSetting('tidy-tabs', on ? 'on' : 'off');
-      if (on) await tidyTabs(store).catch((e) => toast(e.message, true));
-      else if (inExcel) await store.src.setVisibleSheets(null, ['Governance dates', 'Fees Summary']).catch((e) => toast(e.message, true));
+      await applyTidy(store, on).catch((e) => toast(e.message, true));
       toast(on ? 'Tabs tidied: only the main sheets show.' : 'Every tab shows again.');
       ctx.rerender();
     };

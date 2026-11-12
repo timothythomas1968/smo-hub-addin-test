@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.11.0.20261112200344';
+import { ed, isUS, setTeam } from './util.js?v=0.11.1.20261112214706';
 
 const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
@@ -126,6 +126,8 @@ export class ExcelSource {
       const sheets = ctx.workbook.worksheets; sheets.load('items/name,items/visibility');
       const active = sheets.getActiveWorksheet(); active.load('name');
       await ctx.sync();
+      // only a Hub with the v0.11 tab layout (it has a Contents sheet) is tidied: in an older Hub "Calendar" is the hidden event list
+      if (!sheets.items.some((w) => w.name === 'Contents')) return;
       const want = (w) => !never.includes(w.name) && (!show || show.has(w.name));
       // show first, then hide, so the workbook always has a visible sheet; the active one is never hidden
       sheets.items.forEach((w) => { if (w.visibility !== 'VeryHidden' && want(w) && w.visibility !== 'Visible') w.visibility = Excel.SheetVisibility.visible; });
