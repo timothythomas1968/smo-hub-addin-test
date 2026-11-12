@@ -82,11 +82,13 @@ class Slide {
       + `<p:txBody><a:bodyPr wrap="square" lIns="36000" tIns="18000" rIns="36000" bIns="18000" rtlCol="0" anchor="${o.anchor || 't'}"><a:normAutofit/></a:bodyPr><a:lstStyle/>${paras(s, o)}</p:txBody></p:sp>`);
     return this;
   }
-  /** A native table. cols: widths in cm. rows: arrays of cells; a cell is text or {t, bold, color, fill, align}. The first row is the header. */
-  table(x, y, cols, rows, { size = 10, rowH = 0.8, head = '003A70' } = {}) {
+  /** A native table. cols: widths in cm. rows: arrays of cells; a cell is text or {t, bold, color, fill, align}. The first row is the header.
+   *  heights: optional height of each row in cm (PowerPoint still grows a row to fit its text). */
+  table(x, y, cols, rows, { size = 10, rowH = 0.8, head = '003A70', heights = null } = {}) {
+    const hOf = (ri) => (heights && heights[ri]) || rowH;
     const id = this.id++, w = cols.reduce((a, b) => a + b, 0);
     const border = (side, c) => `<a:${side} w="6350"><a:solidFill><a:srgbClr val="${c}"/></a:solidFill></a:${side}>`;
-    const trs = rows.map((r, ri) => `<a:tr h="${cm(rowH)}">` + r.map((c0, ci) => {
+    const trs = rows.map((r, ri) => `<a:tr h="${cm(hOf(ri))}">` + r.map((c0, ci) => {
       const c = c0 && typeof c0 === 'object' ? c0 : { t: c0 };
       const hdr = ri === 0;
       const fill = hdr ? head : c.fill || null;
@@ -96,7 +98,7 @@ class Slide {
         + (fill ? `<a:solidFill><a:srgbClr val="${fill}"/></a:solidFill>` : '<a:noFill/>') + '</a:tcPr></a:tc>';
     }).join('') + '</a:tr>').join('');
     this.items.push(`<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="${id}" name="Table ${id}"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr>`
-      + `<p:xfrm><a:off x="${cm(x)}" y="${cm(y)}"/><a:ext cx="${cm(w)}" cy="${cm(rowH * rows.length)}"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">`
+      + `<p:xfrm><a:off x="${cm(x)}" y="${cm(y)}"/><a:ext cx="${cm(w)}" cy="${cm(rows.reduce((a, _, ri) => a + hOf(ri), 0))}"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">`
       + `<a:tbl><a:tblPr firstRow="1" bandRow="0"/><a:tblGrid>${cols.map((c) => `<a:gridCol w="${cm(c)}"/>`).join('')}</a:tblGrid>${trs}</a:tbl></a:graphicData></a:graphic></p:graphicFrame>`);
     return this;
   }
