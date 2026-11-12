@@ -1,5 +1,5 @@
 // Calendar (the Calendar sheet, formerly Key Dates): a month calendar of every dated item in the Hub, with a type filter and a day list.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.11.1.20261112220436';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed } from '../util.js?v=0.11.2.20261112223532';
 
 const TYPES = {
   exit: ['Exits', '#003A70'],

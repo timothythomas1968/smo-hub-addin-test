@@ -2,7 +2,7 @@
 // closed, how many close soon, and how many are past their exit date. Home, the TSA register, the governance
 // pack (and later the executive summary, Teams and Finance) all use these, so the numbers always agree.
 // Counts run from today (asOf), not the reporting date. The workbook holds the same rules (Today, TSA Status).
-import { fmtDate } from './util.js?v=0.11.1.20261112220436';
+import { fmtDate } from './util.js?v=0.11.2.20261112223532';
 
 export const CLOSED = new Set(['Exited', 'Terminated']);
 export const isOpen = (r) => !CLOSED.has(r.get('Status'));

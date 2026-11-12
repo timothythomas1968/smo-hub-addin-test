@@ -1,26 +1,27 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.1.20261112220436';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.1.20261112220436';
-import { openRDDialog } from './rd.js?v=0.11.1.20261112220436';
-import home from './screens/home.js?v=0.11.1.20261112220436';
-import register from './screens/register.js?v=0.11.1.20261112220436';
-import raid from './screens/raid.js?v=0.11.1.20261112220436';
-import dates from './screens/dates.js?v=0.11.1.20261112220436';
-import interview from './screens/interview.js?v=0.11.1.20261112220436';
-import report from './screens/report.js?v=0.11.1.20261112220436';
-import invoice from './screens/invoice.js?v=0.11.1.20261112220436';
-import pack from './screens/pack.js?v=0.11.1.20261112220436';
-import plan from './screens/plan.js?v=0.11.1.20261112220436';
-import setup from './screens/setup.js?v=0.11.1.20261112220436';
-import contents from './screens/contents.js?v=0.11.1.20261112220436';
-import { tidyTabs } from './tabs.js?v=0.11.1.20261112220436';
-import { day1, f100 } from './screens/checklist.js?v=0.11.1.20261112220436';
-import consolidated from './screens/consolidated.js?v=0.11.1.20261112220436';
-import finance from './screens/finance.js?v=0.11.1.20261112220436';
-import execSummary from './screens/exec.js?v=0.11.1.20261112220436';
-import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.1.20261112220436';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.2.20261112223532';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.2.20261112223532';
+import { openRDDialog } from './rd.js?v=0.11.2.20261112223532';
+import home from './screens/home.js?v=0.11.2.20261112223532';
+import register from './screens/register.js?v=0.11.2.20261112223532';
+import raid from './screens/raid.js?v=0.11.2.20261112223532';
+import dates from './screens/dates.js?v=0.11.2.20261112223532';
+import interview from './screens/interview.js?v=0.11.2.20261112223532';
+import report from './screens/report.js?v=0.11.2.20261112223532';
+import invoice from './screens/invoice.js?v=0.11.2.20261112223532';
+import pack from './screens/pack.js?v=0.11.2.20261112223532';
+import plan from './screens/plan.js?v=0.11.2.20261112223532';
+import setup from './screens/setup.js?v=0.11.2.20261112223532';
+import contents from './screens/contents.js?v=0.11.2.20261112223532';
+import { tidyTabs } from './tabs.js?v=0.11.2.20261112223532';
+import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.11.2.20261112223532';
+import { day1, f100 } from './screens/checklist.js?v=0.11.2.20261112223532';
+import consolidated from './screens/consolidated.js?v=0.11.2.20261112223532';
+import finance from './screens/finance.js?v=0.11.2.20261112223532';
+import execSummary from './screens/exec.js?v=0.11.2.20261112223532';
+import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.2.20261112223532';
 
-export const VERSION = '0.11.1';
+export const VERSION = '0.11.2';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -80,8 +81,11 @@ function shell() {
       h('div.top-right',
         h('span.top-label', 'Reporting to'), h('button.top-date', { type: 'button', title: 'Change the reporting date', onclick: changeRD }, fmtDate(n.RD) || 'not set'),
         Number(n.Today) > 0 && Math.floor(Number(n.Today)) !== realToday() ? h('span.top-label', { title: 'This workbook fixes today at this date, so the demo tells the same story whatever the real date is. Overdue and due-soon alerts measure against it.' }, `Today: ${fmtDate(n.Today)} (demo)`) : null,
-        preview ? h('span.pill-top.pill-preview', 'BROWSER PREVIEW') : null)),
-    widthHint(),
+        preview ? h('span.pill-top.pill-preview', 'BROWSER PREVIEW') : null,
+        inWindow ? h('span.pill-top.pill-preview', { id: 'win-timing', title: 'How long the last screen took to read from the workbook through the panel (full window trial).' }, 'FULL WINDOW (TRIAL)') : null,
+        inWindow ? h('button.top-date', { type: 'button', onclick: () => s.src.close() }, 'Back to the panel') : null,
+        state.inExcel && canOpenWindow() ? h('button.top-date', { type: 'button', title: 'Open TransitionSuite in a large window. Keep this panel open: the window works through it.', onclick: fullWindow }, '⤢ Full window') : null)),
+    inWindow ? null : widthHint(),
     h('div.body', nav, h('div.scrim', { onclick: closeNav }), h('main.main', { id: 'main' })));
   document.body.replaceChildren(app);
 }
@@ -97,16 +101,22 @@ function watchWorkbook() {
         clearTimeout(watchTimer);
         watchTimer = setTimeout(async () => {
           if (Date.now() - (state.store.lastWrite || 0) < 3000) return;
-          // Screens with their own sheet forms keep what is being typed: they only get a reminder.
-          const ownForms = ['report', 'interview', 'invoice', 'setup'].includes(state.screen);
-          const editing = ownForms || document.querySelector('.field.dirty, .modal-back');
-          if (editing) { toast('The workbook has changed. When you have saved your edits, choose Refresh from the workbook to see the changes.'); return; }
-          try { await state.store.refresh(); await render(); } catch (e) { /* the next change or Refresh will try again */ }
+          if (windowOpen()) { notifyWindow({ t: 'changed' }); return; }   // the full window is in use: it decides
+          onWorkbookChanged();
         }, 1200);
       });
       await ctx.sync();
     }).catch(() => { /* older Excel: Refresh still works */ });
   } catch (e) { /* not supported */ }
+}
+
+async function onWorkbookChanged() {
+  if (Date.now() - (state.store.lastWrite || 0) < 3000) return;   // our own save (in the full window the panel tells us about it too)
+  // Screens with their own sheet forms keep what is being typed: they only get a reminder.
+  const ownForms = ['report', 'interview', 'invoice', 'setup'].includes(state.screen);
+  const editing = ownForms || document.querySelector('.field.dirty, .modal-back');
+  if (editing) { toast('The workbook has changed. When you have saved your edits, choose Refresh from the workbook to see the changes.'); return; }
+  try { await state.store.refresh(); await render(); } catch (e) { /* the next change or Refresh will try again */ }
 }
 
 function changeRD() { openRDDialog(state.store, () => render()); }
@@ -159,11 +169,38 @@ async function render() {
     const ctx = { store: state.store, go, arg: state.arg, rerender: render, changeRD, preview: state.store.src.kind === 'preview' };
     updateTop();
     main.replaceChildren(sc.mod.render(ctx));
+    if (inWindow) showTiming(sc.label);
   } catch (e) {
     console.error(e);
     main.replaceChildren(h('div.banner.warn', `Could not read the workbook: ${e.message || e}`));
   }
 }
+
+// Full window trial: how long each screen took, and how many trips to the workbook through the panel
+const T0 = performance.now(); let firstShown = false, callsAt = 0;
+function showTiming(label) {
+  const src = state.store.src, calls = src.calls || [], now = performance.now();
+  const recent = calls.slice(callsAt); callsAt = calls.length;
+  const sec = (ms) => (ms / 1000).toFixed(1) + ' s';
+  const txt = !firstShown ? `Opened in ${sec(now - T0)}` : recent.length ? `${label}: ${sec(recent.reduce((a, c) => a + c.total, 0))}, ${recent.length} reads` : `${label}: no reads needed`;
+  firstShown = true;
+  const el = document.getElementById('win-timing'); if (el) el.textContent = 'FULL WINDOW (TRIAL) · ' + txt;
+}
+
+// The panel opens the full window and steps aside: it shows a note, and relays the window's reads and writes until it closes.
+function fullWindow() {
+  openFullWindow(state.store.src, {
+    onOpen: () => {
+      document.getElementById('main').replaceChildren(h('div.page',
+        h('div.page-head', h('div', h('h1', 'Open in the full window'),
+          h('p.lede', 'TransitionSuite is open in a large window. Keep this panel open while you use it: the window reads and writes the workbook through this panel.'))),
+        h('button.btn', { type: 'button', onclick: () => { closeFullWindow(); backFromWindow(); } }, 'Close the full window')));
+    },
+    onClosed: backFromWindow,
+    onError: (e) => toast('The full window could not open: ' + ((e && e.message) || e), true)
+  });
+}
+async function backFromWindow() { try { await state.store.refresh(); shell(); await render(); } catch (e) { /* Refresh still works */ } }
 
 async function refresh() {
   try { await state.store.refresh(); shell(); await render(); toast('Refreshed from the workbook'); }
@@ -175,9 +212,10 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.11.1.20261112220436')).json();
+    const schema = await (await fetch('data/schema.json?v=0.11.2.20261112223532')).json();
     let src;
-    if (inExcel) src = new ExcelSource();
+    if (inWindow) { src = new RelaySource(); await src.connect(); }
+    else if (inExcel) src = new ExcelSource();
     else {
       // Preview only: ?edition=US shows the US demo (US spelling and dates, in dollars).
       const us = /^us$/i.test(new URLSearchParams(location.search).get('edition') || '');
@@ -189,7 +227,7 @@ async function start(inExcel) {
     await store.init();
     if (inExcel && !store.names.ProgName && !store.names.RD) throw new Error('This workbook does not look like a TransitionSuite Hub. Open the Hub workbook, then open TransitionSuite again.');
     setEdition(store.names.Edition);
-    if (inExcel) {
+    if (inExcel && !inWindow) {
       // Open this panel automatically whenever this workbook is opened (the flag is saved inside the workbook).
       try {
         const st = Office.context.document.settings;
@@ -197,7 +235,9 @@ async function start(inExcel) {
       } catch (e) { /* not supported: ignore */ }
     }
     state.store = store;
-    if (inExcel) { watchWorkbook(); tidyTabs(store).catch((e) => console.warn('tidy tabs', e)); }
+    state.inExcel = inExcel && !inWindow;
+    if (state.inExcel) { watchWorkbook(); tidyTabs(store).catch((e) => console.warn('tidy tabs', e)); }
+    if (inWindow) src.onEvent = (msg) => { if (msg.t === 'changed') onWorkbookChanged(); };
     installSelectFix(new URLSearchParams(location.search).get('pick') === '1');   // Windows Excel; ?pick=1 tries it in a browser
     try { const k = localStorage.getItem('smohub.screen'); if (SCREENS[k]) state.screen = k; } catch (e) { /* ignore */ }
     // Until the required set-up questions are answered, the panel opens on the set-up wizard (Tim, 6 Nov 2026)

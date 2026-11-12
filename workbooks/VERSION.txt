@@ -1,1 +1,1 @@
-Add-in 0.11.1 · workbooks v0.11 preview · published 2026-11-12 22:04 UTC
+Add-in 0.11.2 · workbooks v0.11 preview · published 2026-11-12 22:35 UTC
