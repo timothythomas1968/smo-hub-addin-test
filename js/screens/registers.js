@@ -1,9 +1,9 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.2.20261112223532';
-import { buildForm, personLabel } from '../form.js?v=0.11.2.20261112223532';
-import { LIVE } from '../live.js?v=0.11.2.20261112223532';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.3.20261117210951';
+import { buildForm, personLabel } from '../form.js?v=0.11.3.20261117210951';
+import { LIVE } from '../live.js?v=0.11.3.20261117210951';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
@@ -75,7 +75,7 @@ function fieldsFor(store, cfg) {
   return store.schema[cfg.t].cols.filter((c) => !(c.h === cfg.id && c.t === 'C')).map((c) => (c.h === cfg.name ? { h: c.h, full: true } : c.f === 'long' ? { h: c.h, full: true } : c.h));
 }
 
-function editPanel(ctx, cfg, ui, rec) {
+export function editPanel(ctx, cfg, ui, rec) {
   const { store } = ctx;
   if (!rec) return h('aside.panel', h('div.panel-empty', 'Select an item to see it here.'));
   const form = buildForm(store, cfg.t, rec, fieldsFor(store, cfg));
@@ -97,9 +97,9 @@ function editPanel(ctx, cfg, ui, rec) {
 
 // People (Tim, 0.9.5): take someone off the register when they leave the programme or the company. Their name stays on the items they
 // own until those are given to someone else, so the warning lists them first.
-const OWNED = [['tblTSA', ['Provider service owner', 'Recipient service owner'], 'service'], ['tblRisks', ['Owner'], 'risk'], ['tblIssues', ['Owner'], 'issue'],
+export const OWNED = [['tblTSA', ['Provider service owner', 'Recipient service owner'], 'service'], ['tblRisks', ['Owner'], 'risk'], ['tblIssues', ['Owner'], 'issue'],
   ['tblActions', ['Owner'], 'action'], ['tblDecisions', ['Owner'], 'decision']];
-function removeRecord(ctx, cfg, ui, rec) {
+export function removeRecord(ctx, cfg, ui, rec) {
   const { store } = ctx;
   const who = String(rec.get(cfg.name) || '');
   const closed = /^(Exited|Terminated|Closed|Remove|Made|Withdrawn|Cancelled|Canceled|Complete)$/;
@@ -147,13 +147,13 @@ function addPanel(ctx, cfg, ui) {
 const num = (v) => Number(v) || 0;
 const open = (r, c, done) => !done.includes(String(r.get(c)));
 
-export const people = registerScreen({
+export const PEOPLE_CFG = {
   t: 'tblPeople', title: 'People', one: 'a person', id: 'Name', name: 'Name', status: 'Organisation', wide: true, remove: 'Remove from the register',
   also: ['tblTSA', 'tblRisks', 'tblIssues', 'tblActions', 'tblDecisions'],
   lede: 'Everyone on the programme: owners, leads, chairs and contacts. Search by name, workstream or role. Email and the rest are in the panel.',
   placeholder: 'Search by name, role, workstream or organisation', search: ['Name', 'Role', 'Workstream or function', 'Organisation', 'Email'],
   cols: [['Name', 'Name'], ['Role'], ['Workstream or function'], ['Organisation']]
-});
+};
 export const changes = registerScreen({
   t: 'tblChange', title: 'TSA changes', one: 'a change request', id: 'CR ID', name: 'Title', status: 'Status', live: 'Request type', also: ['tblTSA'],
   lede: 'Every change request: extensions, early exits, date changes, disputes and their decisions. To move a planned exit date, use Process a date change on the TSA register.',

@@ -1,27 +1,28 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.2.20261112223532';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.2.20261112223532';
-import { openRDDialog } from './rd.js?v=0.11.2.20261112223532';
-import home from './screens/home.js?v=0.11.2.20261112223532';
-import register from './screens/register.js?v=0.11.2.20261112223532';
-import raid from './screens/raid.js?v=0.11.2.20261112223532';
-import dates from './screens/dates.js?v=0.11.2.20261112223532';
-import interview from './screens/interview.js?v=0.11.2.20261112223532';
-import report from './screens/report.js?v=0.11.2.20261112223532';
-import invoice from './screens/invoice.js?v=0.11.2.20261112223532';
-import pack from './screens/pack.js?v=0.11.2.20261112223532';
-import plan from './screens/plan.js?v=0.11.2.20261112223532';
-import setup from './screens/setup.js?v=0.11.2.20261112223532';
-import contents from './screens/contents.js?v=0.11.2.20261112223532';
-import { tidyTabs } from './tabs.js?v=0.11.2.20261112223532';
-import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.11.2.20261112223532';
-import { day1, f100 } from './screens/checklist.js?v=0.11.2.20261112223532';
-import consolidated from './screens/consolidated.js?v=0.11.2.20261112223532';
-import finance from './screens/finance.js?v=0.11.2.20261112223532';
-import execSummary from './screens/exec.js?v=0.11.2.20261112223532';
-import { people, changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.2.20261112223532';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.3.20261117210951';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.3.20261117210951';
+import { openRDDialog } from './rd.js?v=0.11.3.20261117210951';
+import home from './screens/home.js?v=0.11.3.20261117210951';
+import register from './screens/register.js?v=0.11.3.20261117210951';
+import raid from './screens/raid.js?v=0.11.3.20261117210951';
+import dates from './screens/dates.js?v=0.11.3.20261117210951';
+import interview from './screens/interview.js?v=0.11.3.20261117210951';
+import report from './screens/report.js?v=0.11.3.20261117210951';
+import invoice from './screens/invoice.js?v=0.11.3.20261117210951';
+import pack from './screens/pack.js?v=0.11.3.20261117210951';
+import plan from './screens/plan.js?v=0.11.3.20261117210951';
+import setup from './screens/setup.js?v=0.11.3.20261117210951';
+import contents from './screens/contents.js?v=0.11.3.20261117210951';
+import { tidyTabs } from './tabs.js?v=0.11.3.20261117210951';
+import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.11.3.20261117210951';
+import { day1, f100 } from './screens/checklist.js?v=0.11.3.20261117210951';
+import consolidated from './screens/consolidated.js?v=0.11.3.20261117210951';
+import finance from './screens/finance.js?v=0.11.3.20261117210951';
+import execSummary from './screens/exec.js?v=0.11.3.20261117210951';
+import people from './screens/people.js?v=0.11.3.20261117210951';
+import { changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.3.20261117210951';
 
-export const VERSION = '0.11.2';
+export const VERSION = '0.11.3';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -59,6 +60,29 @@ function go(k, arg) {
   window.scrollTo(0, 0);
 }
 
+// Collapsible menu groups (Tim, 17 Nov 2026): Every month open by default, the rest folded; the group holding
+// the current screen is always open. Each user's choice is remembered in this browser only.
+const FOLD_KEY = 'smohub.navFolded';
+function foldedGroups() {
+  try { const v = localStorage.getItem(FOLD_KEY); if (v) return new Set(JSON.parse(v)); } catch (e) { return new Set(); }
+  return new Set(NAV.map((g) => g.group).filter((g) => g !== 'Every month'));
+}
+function saveFolded(set) { try { localStorage.setItem(FOLD_KEY, JSON.stringify([...set])); } catch (e) { /* storage unavailable */ } }
+function toggleGroup(group) {
+  const set = foldedGroups(), sec = document.querySelector(`.nav-sec[data-group="${group}"]`);
+  const holdsCurrent = sec && sec.querySelector('.nav-item[aria-current="page"]');
+  if (set.has(group)) set.delete(group); else if (!holdsCurrent) set.add(group);
+  saveFolded(set); applyFolds();
+}
+function applyFolds() {
+  const set = foldedGroups();
+  document.querySelectorAll('.nav-sec').forEach((sec) => {
+    const open = !set.has(sec.dataset.group) || !!sec.querySelector('.nav-item[aria-current="page"]');
+    sec.classList.toggle('folded', !open);
+    sec.querySelector('.nav-group').setAttribute('aria-expanded', String(open));
+  });
+}
+
 function closeNav() { document.querySelector('.nav')?.classList.remove('open'); }
 
 function shell() {
@@ -66,8 +90,15 @@ function shell() {
   const side = n.Perspective === 'Seller' ? `${n.SellerName || 'Seller'} (seller)` : `${n.BuyerName || 'Buyer'} (buyer)`;
   const preview = s.src.kind === 'preview';
   const nav = h('nav.nav', { 'aria-label': 'Hub sections' },
-    NAV.map((g) => [h('span.nav-group', g.group.toUpperCase()),
-      g.items.filter(([, , mod]) => !(mod.use && state.store && state.store.names[mod.use] === 'N')).map(([k, label, mod]) => h('button.nav-item', { type: 'button', 'data-k': k, onclick: () => go(k) }, label, mod.placeholder ? h('span.nav-soon', 'SOON') : null))]),
+    NAV.map((g) => {
+      const items = g.items.filter(([, , mod]) => !(mod.use && state.store && state.store.names[mod.use] === 'N'));
+      const id = `nav-g-${g.group.replace(/\W+/g, '-').toLowerCase()}`;
+      return h('div.nav-sec', { 'data-group': g.group },
+        h('button.nav-group', { type: 'button', 'aria-expanded': 'true', 'aria-controls': id, onclick: () => toggleGroup(g.group) },
+          h('span', g.group.toUpperCase()), h('span.nav-chev', { 'aria-hidden': 'true' }, '▾')),
+        h('div.nav-items', { id },
+          items.map(([k, label, mod]) => h('button.nav-item', { type: 'button', 'data-k': k, onclick: () => go(k) }, label, mod.placeholder ? h('span.nav-soon', 'SOON') : null))));
+    }),
     h('div.nav-foot',
       h('button.btn.btn-sm', { type: 'button', onclick: refresh }, 'Refresh from the workbook'),
       h('span', 'Everything is saved in', h('br'), h('b', s.file)),
@@ -159,6 +190,7 @@ async function render() {
   const sc = SCREENS[state.screen];
   updateTop();
   document.querySelectorAll('.nav-item').forEach((b) => (b.dataset.k === sc.k ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
+  applyFolds();
   const main = document.getElementById('main');
   const seq = ++renderSeq;
   const tables = sc.mod.tables || [];
@@ -212,7 +244,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.11.2.20261112223532')).json();
+    const schema = await (await fetch('data/schema.json?v=0.11.3.20261117210951')).json();
     let src;
     if (inWindow) { src = new RelaySource(); await src.connect(); }
     else if (inExcel) src = new ExcelSource();

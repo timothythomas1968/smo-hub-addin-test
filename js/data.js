@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.11.2.20261112223532';
+import { ed, isUS, setTeam } from './util.js?v=0.11.3.20261117210951';
 
 const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
@@ -160,6 +160,8 @@ export class PreviewSource {
   async readNames(wanted) {
     const out = {};
     wanted.forEach((n) => { if (n in this.snap.names) out[n] = this.snap.names[n]; });
+    const p = this.snap.tables.tblPeople;   // in the workbook L_People is the People sheet's Name column: follow edits made in the preview
+    if (p && p.full && 'L_People' in out) { const c = p.headers.indexOf('Name'); out.L_People = p.full.map((r) => r.v[c]).filter((v) => v !== ''); }
     return out;
   }
   async readTables(names) {
@@ -323,6 +325,36 @@ export class Store {
     const vals = Object.fromEntries(Object.entries(values).filter(([, v]) => v !== '' && v != null));
     await this.save(name, empty.i, vals, { unhide: true, force: true });
     return empty.i;
+  }
+
+  /** Several rows at once (People: Paste from Excel). list: [{i, changes}], i null for a new record in the next empty row.
+   *  Writes every row, then re-reads once. Returns {added, updated}. */
+  async saveMany(name, list) {
+    const t = this.t[name];
+    const key = t.live != null ? t.live : 0;
+    const taken = new Set(list.map((x) => x.i).filter((x) => x != null));
+    const free = t.rows.filter((r) => (r.v[key] === '' || r.v[key] == null) && !taken.has(r.i)).map((r) => r.i);
+    let added = 0, updated = 0;
+    this.lastWrite = Date.now();
+    for (const { i, changes } of list) {
+      const isNew = i == null, row = isNew ? free.shift() : i;
+      if (row == null) throw new Error('This register is full. Ask the Hub owner to extend it.');
+      const writes = [];
+      for (const [hd, val] of Object.entries(changes)) {
+        const col = t.idx[hd];
+        if (col == null || (t.cols[hd] && t.cols[hd].t === 'C') || val === '' || val == null) continue;
+        if (!isNew && String(t.rows[row].v[col]) === String(val)) continue;
+        writes.push({ col, value: val });
+      }
+      if (!writes.length) continue;
+      await this.src.write(name, row, writes, isNew);
+      this.lastWrite = Date.now();
+      if (isNew) added++; else updated++;
+    }
+    Object.keys(this.t).forEach((n) => this.stale.add(n));
+    await this.need([name]);
+    await this.reloadNames();
+    return { added, updated };
   }
 
   /** Take a record off its register: clear every value typed on the row (calculated and suggestion formulas stay),
