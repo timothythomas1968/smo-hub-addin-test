@@ -1265,10 +1265,10 @@
    {
     "k": "Pct",
     "h": "% complete",
-    "t": "I",
+    "t": "D",
     "f": "pct",
     "dv": null,
-    "n": "",
+    "n": "Suggested: 100% once an actual finish date is typed. Before then, type the progress.",
     "sec": "Progress"
    },
    {
@@ -1285,12 +1285,12 @@
    {
     "k": "AFin",
     "h": "Actual finish",
-    "t": "D",
+    "t": "I",
     "f": "date",
     "dv": {
      "date": true
     },
-    "n": "",
+    "n": "Type the date it finished: % complete then shows 100%.",
     "sec": "Progress"
    },
    {

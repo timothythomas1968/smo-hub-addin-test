@@ -1,6 +1,6 @@
 // Contents: every sheet in the Hub, opened from here even when the panel has tidied it away (Stage 2b), and the tidy-tabs switch.
-import { h, toast, ed } from '../util.js?v=0.11.4.20261117215350';
-import { GROUPS, isOff, setTidy as applyTidy } from '../tabs.js?v=0.11.4.20261117215350';
+import { h, toast, ed } from '../util.js?v=0.11.5.20261117220441';
+import { GROUPS, isOff, setTidy as applyTidy } from '../tabs.js?v=0.11.5.20261117220441';
 
 export default {
   tables: [],
