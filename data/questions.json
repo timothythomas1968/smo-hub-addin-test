@@ -203,7 +203,7 @@
     "q": "How many days' notice are needed to end a service on its planned date?",
     "fmt": "int",
     "dv": null,
-    "help": "",
+    "help": "After set-up, changing this is a contract amendment: raise a change request in TSA Changes (the panel does this for you).",
     "example": "30",
     "required": true,
     "ai": true
@@ -213,7 +213,7 @@
     "q": "How many days' notice are needed to end a service early?",
     "fmt": "int",
     "dv": null,
-    "help": "",
+    "help": "After set-up, changing this is a contract amendment: raise a change request in TSA Changes (the panel does this for you).",
     "example": "60",
     "required": true,
     "ai": true
@@ -223,7 +223,7 @@
     "q": "How many days' notice are needed to extend a service?",
     "fmt": "int",
     "dv": null,
-    "help": "",
+    "help": "After set-up, changing this is a contract amendment: raise a change request in TSA Changes (the panel does this for you).",
     "example": "60",
     "required": true,
     "ai": true
@@ -385,6 +385,16 @@
     "ai": true
    },
    {
+    "name": "InvDay",
+    "q": "On which day of the month are TSA invoices issued (for the month before)?",
+    "fmt": "int",
+    "dv": null,
+    "help": "The billing terms: suggests the invoice date on Our Invoice. 1 = the first day of the next month.",
+    "example": "1",
+    "required": true,
+    "ai": true
+   },
+   {
     "name": "PayTerms",
     "q": "How many days are allowed to pay an invoice?",
     "fmt": "int",
@@ -488,6 +498,66 @@
     "example": "3",
     "required": true,
     "ai": true
+   }
+  ]
+ },
+ {
+  "group": "Reporting and change control",
+  "qs": [
+   {
+    "name": "RepFreq",
+    "q": "How often do the workstreams report?",
+    "fmt": "text",
+    "dv": [
+     "Monthly",
+     "Fortnightly",
+     "Weekly"
+    ],
+    "help": "Sets the reporting dates you pick from on Home and in the panel, and the wording of the workflow. Invoices, the TSA Cost Tracker, the service level month and the fees by month and year stay monthly whatever you choose, and the status history keeps one entry a month (the latest).",
+    "example": "Monthly",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "RepDay",
+    "q": "On which day does each reporting period end?",
+    "fmt": "text",
+    "dv": [
+     "Month-end",
+     "Last working day",
+     "Monday",
+     "Tuesday",
+     "Wednesday",
+     "Thursday",
+     "Friday"
+    ],
+    "help": "Monthly reporting: Month-end or Last working day. Weekly or fortnightly: the weekday, usually Friday.",
+    "example": "Month-end",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "PlanXWS",
+    "q": "How many working days may an exit plan change move another workstream's work before it needs a change request?",
+    "fmt": "int",
+    "dv": null,
+    "help": "The exit plan change rules: when a date change knocks on to another workstream's work by more than this, the change forum must approve it. Suggested: 10.",
+    "example": "10",
+    "required": true,
+    "ai": false
+   },
+   {
+    "name": "PlanMSCR",
+    "q": "Does every milestone date change need a change request? (Y or N)",
+    "fmt": "text",
+    "dv": [
+     "Y",
+     "N"
+    ],
+    "help": "Y for strict change control. N: only changes that threaten an exit, move another workstream, move a critical-path item or pass the long-stop date need one.",
+    "example": "N",
+    "required": true,
+    "ai": false
    }
   ]
  }

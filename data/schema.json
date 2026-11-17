@@ -1497,6 +1497,46 @@
     "dv": null,
     "n": "",
     "sec": "Calculated"
+   },
+   {
+    "k": "PropS",
+    "h": "Proposed start",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "A plan change waiting for approval: the start date proposed. The planned start stays in force until the change is approved.",
+    "sec": "Change control"
+   },
+   {
+    "k": "PropF",
+    "h": "Proposed finish",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "A plan change waiting for approval: the finish date proposed.",
+    "sec": "Change control"
+   },
+   {
+    "k": "PCR",
+    "h": "Change request",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "The change request (CR ID) for the proposed dates.",
+    "sec": "Change control"
+   },
+   {
+    "k": "CRNeed",
+    "h": "Change request needed?",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "The checks the workbook can make by itself: an item that now finishes after its service's exit date or the long-stop date, or a critical-path item later than its baseline. The panel also checks the knock-on to other workstreams.",
+    "sec": "Change control"
    }
   ]
  },
@@ -2293,6 +2333,31 @@
     },
     "n": "",
     "sec": "Tracking"
+   },
+   {
+    "k": "LUpd",
+    "h": "Lead updated on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Set by the panel when the workstream lead updates this item from their report. The programme office reviews items updated in this period.",
+    "sec": "Lead review"
+   },
+   {
+    "k": "PClose",
+    "h": "Close proposed (lead)",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y when the workstream lead proposes closing this item. The programme office confirms by closing it (and clearing this).",
+    "sec": "Lead review"
    }
   ]
  },
@@ -2476,6 +2541,40 @@
     },
     "n": "",
     "sec": "Tracking"
+   },
+   {
+    "k": "Upd",
+    "h": "Latest update",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "The lead's latest word on progress, from their report.",
+    "sec": "Lead review"
+   },
+   {
+    "k": "LUpd",
+    "h": "Lead updated on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Set by the panel when the workstream lead updates this item from their report. The programme office reviews items updated in this period.",
+    "sec": "Lead review"
+   },
+   {
+    "k": "PClose",
+    "h": "Close proposed (lead)",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y when the workstream lead proposes closing this item. The programme office confirms by closing it (and clearing this).",
+    "sec": "Lead review"
    }
   ]
  },
@@ -2608,6 +2707,31 @@
     },
     "n": "Suggested Y for decisions made by a joint forum.",
     "sec": "Outcome"
+   },
+   {
+    "k": "LUpd",
+    "h": "Lead updated on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "Set by the panel when the workstream lead updates this item from their report. The programme office reviews items updated in this period.",
+    "sec": "Lead review"
+   },
+   {
+    "k": "PClose",
+    "h": "Close proposed (lead)",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "Y when the workstream lead proposes closing this item. The programme office confirms by closing it (and clearing this).",
+    "sec": "Lead review"
    }
   ]
  },
@@ -3041,6 +3165,15 @@
     "dv": null,
     "n": "For approved extend, early exit and terminate requests: Y once the TSA register planned exit date equals the new date.",
     "sec": "Calculated"
+   },
+   {
+    "k": "Item",
+    "h": "Item ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "For a date change or plan change raised from the panel: the item whose date moves (for example WO-003 or SP-FIN-0012). The panel applies the new date when the request is approved.",
+    "sec": "Decision"
    }
   ]
  },

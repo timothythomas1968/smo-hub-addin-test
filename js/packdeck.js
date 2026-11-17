@@ -3,9 +3,9 @@
 // Built from the same figures as the pack on screen (pack.js records them as it draws), in direction B: a navy band, big numbers,
 // white space. Every content slide leads with its message, a sentence worked out from the figures, like a consultant's action title;
 // the evidence (cards, tables, a chart) sits below it. Everything stays native and editable: text, shapes, tables, charts.
-import { Deck, W, H } from './pptx.js?v=0.11.3.20261117210951';
-import { team, ed } from './util.js?v=0.11.3.20261117210951';
-import { mshort } from './screens/health.js?v=0.11.3.20261117210951';
+import { Deck, W, H } from './pptx.js?v=0.11.4.20261117215350';
+import { team, ed, unit } from './util.js?v=0.11.4.20261117215350';
+import { mshort } from './screens/health.js?v=0.11.4.20261117215350';
 
 const NAVY = '003A70', NAVY2 = '0B4A87', INK = '212529', MUTED = '5A6573', HEAD = '3A4250', ONNAVY = 'C4D3E6', EYEBROW = '8FB8E6';
 const LINE = 'D5DCE5', SOFT = 'ECEFF3', BAND = 'F7F9FC', SEL = 'E6EEF7', BLUE = '007BFF';
@@ -132,7 +132,7 @@ export async function packDeck(model) {
     const cnt = { Red: 0, Amber: 0, Green: 0 }; ws.forEach((r) => { if (cnt[r.rag] != null) cnt[r.rag]++; });
     const red = ws.filter((r) => r.rag === 'Red').map((r) => r.ws);
     const noPath = ws.filter((r) => ['Red', 'Amber'].includes(r.rag) && !r.path).length;
-    const msg = ed(!rows.length ? 'No workstream status for this month yet.'
+    const msg = ed(!rows.length ? `No workstream status for this ${unit()} yet.`
       : (prog && RAG[prog.rag] ? `Programme ${prog.rag.toLowerCase()}; workstreams ` : 'Workstreams ') + `${cnt.Red} red, ${cnt.Amber} amber, ${cnt.Green} green.`
         + (red.length ? ` ${listOf(red)} ${red.length === 1 ? 'needs' : 'need'} the forum's attention.` : noPath ? ` ${noPath} amber without a path to green yet.` : cnt.Amber ? ' Every amber workstream has a path to green.' : ''));
     const PER = 8, cols = 2, gap = 0.5, cw = (CW - gap) / cols, ch = (BOTTOM - TOP - gap * 3) / 4;

@@ -1,7 +1,8 @@
 // Shared screen for the Day 1 checklist and the first 100 days plan: a long task list with
 // filters, a status you can change in the row, an edit panel, add and delete.
-import { h, fmtDate, toast, plural, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { buildForm } from '../form.js?v=0.11.3.20261117210951';
+import { h, fmtDate, toast, plural, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { openPlanImport } from '../planimport.js?v=0.11.4.20261117215350';
+import { buildForm } from '../form.js?v=0.11.4.20261117215350';
 
 export function checklist(cfg) {
   // cfg: { t, title, lede, id, dueLabel, extraTile(store, recs), lateTest(r, RD), statusTags }
@@ -81,6 +82,7 @@ export function checklist(cfg) {
         h('div.page-head',
           h('div', h('h1', cfg.title), h('p.lede', cfg.lede(store))),
           h('button.btn', { type: 'button', onclick: () => store.show(cfg.t, sel ? sel.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
+          h('button.btn', { type: 'button', onclick: () => openPlanImport(ctx, cfg.t === 'tblDay1' ? 'day1' : 'f100'), title: 'Bring in your own plan from Excel or a .csv file' }, 'Import a plan'),
           h('button.btn.btn-primary', { type: 'button', onclick: () => go({ adding: true, sel: null }) }, '+ Add a task')),
         h('div.tiles',
           h('div.tile', h('span.tile-label', 'Complete'), h('span.tile-value', `${done} of ${req.length}`), h('div.bar', { style: { flex: '0 0 8px', marginTop: '4px' } }, h('div', { style: { width: (req.length ? Math.round(done / req.length * 100) : 0) + '%' } }))),

@@ -1,7 +1,7 @@
 // Set-up wizard: the Start Here questions, the people in each role, the services marked in the Library,
 // and the letterhead, in five steps. Every answer is written straight to the workbook cell the sheets use.
-import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial } from '../util.js?v=0.11.3.20261117210951';
-import { buildForm, personLabel } from '../form.js?v=0.11.3.20261117210951';
+import { h, fmtDate, toast, isoToSerial, serialToIso, plural, ed, isUS, fieldBox, dateBox, team, fromSerial, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { buildForm, personLabel } from '../form.js?v=0.11.4.20261117215350';
 
 const STEPS = [
   ['deal', 'The deal', ['About the programme', 'Key dates', 'Money']],
@@ -91,9 +91,28 @@ function build(ctx) {
           : h('button.btn.btn-primary', { type: 'button', onclick: () => ctx.go('home') }, 'Finish and go to Home'))));
 }
 
+// Contract terms behind the calendar's notice deadlines (Tim, 17 Nov 2026): once set-up is done, changing one is a contract
+// amendment, so it raises a change request and the answer changes only when the request is approved (datechange.js, openDecision).
+export const CONTRACT_TERMS = { DefExitNotice: 'Notice to end a service on its planned date (days)', DefEENotice: 'Notice to end a service early (days)', DefExtNotice: 'Notice to extend a service (days)' };
 async function saveEdits(ctx) {
-  const pairs = Object.entries(ui.edits).filter(([n, v]) => String(v) !== String(ui.vals[n] ?? ''));
+  let pairs = Object.entries(ui.edits).filter(([n, v]) => String(v) !== String(ui.vals[n] ?? ''));
   if (!pairs.length) return true;
+  const n = ctx.store.names, setUp = Number(n.QReq) > 0 && Number(n.QDone) >= Number(n.QReq);
+  const terms = pairs.filter(([k]) => CONTRACT_TERMS[k] && setUp && String(ui.vals[k] ?? '') !== '');
+  if (terms.length) {
+    try {
+      await ctx.store.need(['tblChange']);
+      for (const [k, v] of terms) {
+        await ctx.store.add('tblChange', { 'Request type': 'Contract change', Title: `Contract change: ${CONTRACT_TERMS[k]} from ${ui.vals[k]} to ${v}`,
+          'Raised on': asOf(n), 'Item ID': `Setting: ${k} = ${v}`, Status: 'Pending',
+          'Impact summary': `${CONTRACT_TERMS[k]} changes from ${ui.vals[k]} to ${v}. Every service's notice deadline moves with it. The answer changes when this request is approved.` });
+        delete ui.edits[k];
+      }
+      toast(`${plural(terms.length, 'notice period')} is a contract term: a change request is raised, and the answer changes when it is approved (TSA changes › Record decision).`);
+    } catch (e) { toast('Could not raise the change request: ' + (e.message || e), true); return false; }
+    pairs = pairs.filter(([k]) => !terms.some(([t]) => t === k));
+    if (!pairs.length) return true;
+  }
   try {
     await ctx.store.writeNames(pairs);
     pairs.forEach(([n, v]) => { ui.vals[n] = v; });

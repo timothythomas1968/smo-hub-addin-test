@@ -5,14 +5,14 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam } from './util.js?v=0.11.3.20261117210951';
+import { ed, isUS, setTeam, setCycle } from './util.js?v=0.11.4.20261117215350';
 
-const SCALAR_NAMES = ['Today', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
+const SCALAR_NAMES = ['Today', 'RepFreq', 'RepDay', 'PlanXWS', 'PlanMSCR', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
   'QDone', 'QReq',   // set-up progress, the same cells Start Here shows
   'WF_Mark', 'WF_ToDo', 'WF_cal', 'WF_start', 'WF_cost', 'WF_inv', 'WF_ourinv', 'WF_cons', 'WF_pack', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
   'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR'];
-const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID', 'WRS_WS', 'WRS_Sum', 'TSA_NoTax'];
+const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID', 'WRS_WS', 'WRS_Sum', 'TSA_NoTax', 'DCR_Key', 'DCR_Rule', 'MV_Forum', 'MV_From', 'MV_To'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
 const FALLBACK_LISTS = { Workstream: 'WS_Code', Owner: 'L_People', 'TSA ID': 'TSA_ID' };
 
@@ -241,7 +241,7 @@ export class Store {
     const lists = new Set(LIST_NAMES);
     Object.values(this.schema).forEach((t) => t.cols.forEach((c) => { if (c.dv && c.dv.name) lists.add(c.dv.name); }));
     this.names = await this.src.readNames([...SCALAR_NAMES, ...lists]);
-    setTeam(this.names);
+    setTeam(this.names); setCycle(this.names);
   }
 
   /** Make sure these tables are loaded and fresh. */
@@ -342,7 +342,7 @@ export class Store {
       const writes = [];
       for (const [hd, val] of Object.entries(changes)) {
         const col = t.idx[hd];
-        if (col == null || (t.cols[hd] && t.cols[hd].t === 'C') || val === '' || val == null) continue;
+        if (col == null || (t.cols[hd] && t.cols[hd].t === 'C') || (isNew && (val === '' || val == null))) continue;
         if (!isNew && String(t.rows[row].v[col]) === String(val)) continue;
         writes.push({ col, value: val });
       }

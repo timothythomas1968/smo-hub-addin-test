@@ -1,10 +1,10 @@
 // Home's one-page health check: ten cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.11.3.20261117210951';
-import { readinessOf } from '../readiness.js?v=0.11.3.20261117210951';
-import { reportsIn } from '../counts.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.11.4.20261117215350';
+import { readinessOf } from '../readiness.js?v=0.11.4.20261117215350';
+import { reportsIn } from '../counts.js?v=0.11.4.20261117215350';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblDay1', 'tblFirst100', 'tblPlan', 'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -179,9 +179,10 @@ export function healthCheck(ctx) {
     const cr = store.records('tblChange');
     const waiting = cr.filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status')));
     const fresh = waiting.filter((r) => num(r.get('Raised on')) >= T - 30 || /^New/i.test(r.get('Status')));
+    const plans = waiting.filter((r) => r.get('Request type') === 'Plan change').length;   // brief 4.8: plan changes waiting for the change forum
     const items = waiting.sort((a, b) => num(b.get('Raised on')) - num(a.get('Raised on'))).map((r) => ({ when: r.get('Status'), late: num(r.get('Decision due')) && num(r.get('Decision due')) < T, what: `${r.get('CR ID')} ${r.get('Title') || r.get('Request type')}${num(r.get('Decision due')) ? ` · decide by ${fmtDate(num(r.get('Decision due')), true)}` : ''}` }));
     cards.push(card({
-      title: 'Change requests', big: String(waiting.length), bigSub: `awaiting a decision (${fresh.length} new this month)`,
+      title: 'Change requests', big: String(waiting.length), bigSub: `awaiting a decision (${fresh.length} new in 30 days${plans ? `; ${plans} plan change${plans > 1 ? 's' : ''} waiting for the change forum` : ''})`,
       tone: items.some((i) => i.late) ? 'red' : waiting.length ? 'amber' : 'ok',
       chart: donut([{ v: cr.length - waiting.length, c: COL.g, label: 'Decided' }, { v: waiting.length, c: COL.a, label: 'Awaiting a decision' }], { size: 84, centre: String(cr.length), caption: 'in total', label: 'Change requests' }),
       items, more: items.length - 4, empty: 'No change requests waiting.'

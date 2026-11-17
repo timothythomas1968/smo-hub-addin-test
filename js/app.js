@@ -1,28 +1,28 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.3.20261117210951';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.3.20261117210951';
-import { openRDDialog } from './rd.js?v=0.11.3.20261117210951';
-import home from './screens/home.js?v=0.11.3.20261117210951';
-import register from './screens/register.js?v=0.11.3.20261117210951';
-import raid from './screens/raid.js?v=0.11.3.20261117210951';
-import dates from './screens/dates.js?v=0.11.3.20261117210951';
-import interview from './screens/interview.js?v=0.11.3.20261117210951';
-import report from './screens/report.js?v=0.11.3.20261117210951';
-import invoice from './screens/invoice.js?v=0.11.3.20261117210951';
-import pack from './screens/pack.js?v=0.11.3.20261117210951';
-import plan from './screens/plan.js?v=0.11.3.20261117210951';
-import setup from './screens/setup.js?v=0.11.3.20261117210951';
-import contents from './screens/contents.js?v=0.11.3.20261117210951';
-import { tidyTabs } from './tabs.js?v=0.11.3.20261117210951';
-import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.11.3.20261117210951';
-import { day1, f100 } from './screens/checklist.js?v=0.11.3.20261117210951';
-import consolidated from './screens/consolidated.js?v=0.11.3.20261117210951';
-import finance from './screens/finance.js?v=0.11.3.20261117210951';
-import execSummary from './screens/exec.js?v=0.11.3.20261117210951';
-import people from './screens/people.js?v=0.11.3.20261117210951';
-import { changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.3.20261117210951';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.11.4.20261117215350';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.11.4.20261117215350';
+import { openRDDialog } from './rd.js?v=0.11.4.20261117215350';
+import home from './screens/home.js?v=0.11.4.20261117215350';
+import register from './screens/register.js?v=0.11.4.20261117215350';
+import raid from './screens/raid.js?v=0.11.4.20261117215350';
+import dates from './screens/dates.js?v=0.11.4.20261117215350';
+import interview from './screens/interview.js?v=0.11.4.20261117215350';
+import report from './screens/report.js?v=0.11.4.20261117215350';
+import invoice from './screens/invoice.js?v=0.11.4.20261117215350';
+import pack from './screens/pack.js?v=0.11.4.20261117215350';
+import plan from './screens/plan.js?v=0.11.4.20261117215350';
+import setup from './screens/setup.js?v=0.11.4.20261117215350';
+import contents from './screens/contents.js?v=0.11.4.20261117215350';
+import { tidyTabs } from './tabs.js?v=0.11.4.20261117215350';
+import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.11.4.20261117215350';
+import { day1, f100 } from './screens/checklist.js?v=0.11.4.20261117215350';
+import consolidated from './screens/consolidated.js?v=0.11.4.20261117215350';
+import finance from './screens/finance.js?v=0.11.4.20261117215350';
+import execSummary from './screens/exec.js?v=0.11.4.20261117215350';
+import people from './screens/people.js?v=0.11.4.20261117215350';
+import { changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.11.4.20261117215350';
 
-export const VERSION = '0.11.3';
+export const VERSION = '0.11.4';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -244,7 +244,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.11.3.20261117210951')).json();
+    const schema = await (await fetch('data/schema.json?v=0.11.4.20261117215350')).json();
     let src;
     if (inWindow) { src = new RelaySource(); await src.connect(); }
     else if (inExcel) src = new ExcelSource();

@@ -2,7 +2,7 @@
 // closed, how many close soon, and how many are past their exit date. Home, the TSA register, the governance
 // pack (and later the executive summary, Teams and Finance) all use these, so the numbers always agree.
 // Counts run from today (asOf), not the reporting date. The workbook holds the same rules (Today, TSA Status).
-import { fmtDate } from './util.js?v=0.11.3.20261117210951';
+import { fmtDate, periodStart } from './util.js?v=0.11.4.20261117215350';
 
 export const CLOSED = new Set(['Exited', 'Terminated']);
 export const isOpen = (r) => !CLOSED.has(r.get('Status'));
@@ -43,4 +43,13 @@ export function reportsIn(store) {
   const inSet = new Set(codes.filter((c, i) => c && String(sums[i] ?? '').trim()));
   const active = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get('Code'));
   return { active, in: active.filter((c) => inSet.has(c)), waiting: active.filter((c) => !inSet.has(c)), has: (c) => inSet.has(c) };
+}
+
+// Items a workstream lead updated from their report in this period, or proposed to close (brief 4.5): for the programme office to review.
+export const LEAD_UPD = 'Lead updated on', LEAD_CLOSE = 'Close proposed (lead)';
+export function leadUpdated(r, store) {
+  return /^Y/i.test(String(r.get(LEAD_CLOSE) || '')) || (Number(r.get(LEAD_UPD)) || 0) >= periodStart(store.names.RD);
+}
+export function leadUpdates(store) {
+  return ['tblRisks', 'tblIssues', 'tblDecisions'].flatMap((t) => (store.has(t) ? store.records(t).filter((r) => leadUpdated(r, store)) : []));
 }

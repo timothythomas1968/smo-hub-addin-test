@@ -1,9 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast } from '../util.js?v=0.11.3.20261117210951';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn } from '../counts.js?v=0.11.3.20261117210951';
-import { readinessOf } from '../readiness.js?v=0.11.3.20261117210951';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.3.20261117210951';
-import { setTidy } from '../tabs.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.11.4.20261117215350';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.11.4.20261117215350';
+import { readinessOf } from '../readiness.js?v=0.11.4.20261117215350';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.4.20261117215350';
+import { setTidy } from '../tabs.js?v=0.11.4.20261117215350';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -54,6 +54,7 @@ export default {
     const dqE = Number(n.DQ_Errors) || 0, dqW = Number(n.DQ_Warnings) || 0;
 
     const cnt = serviceCounts(tsa, T);
+    const byLeads = leadUpdates(store).filter((r) => !/^(Closed|Remove|Made|Withdrawn)$/.test(String(r.get('Status') || r.get('Status (adopt or remove)')))).length;
     const fromReports = store.records('tblRisks').filter((r) => r.get('Status (adopt or remove)') === 'New').length
       + ['tblIssues', 'tblDecisions'].reduce((k, t) => k + store.records(t).filter((r) => r.get('Status') === 'New').length, 0);
     const tile = (label, value, sub, tone, onclick, rule) => h(onclick ? 'button.tile' : 'div.tile', { type: onclick ? 'button' : null, class: tone, onclick, title: rule || null },
@@ -64,6 +65,7 @@ export default {
       tile('Red or amber', String(reds + ambers), `${reds} red · ${ambers} amber`, reds ? 'red' : ambers ? 'amber' : 'green', () => go('register', { filter: 'ra' })),
       tile('Next exits', nextExit ? fmtDate(nextExit, true) : '–', nextExit ? plural(nextCount, 'service') : 'none planned', null, () => go('register', { filter: 'next' })),
       fromReports ? tile('New from reports', String(fromReports), 'risks, issues and decisions to accept', 'amber', () => go('raid', { newOnly: true })) : null,
+      byLeads ? tile('Updated by leads', String(byLeads), 'items to review, from this period\'s reports', 'info', () => go('raid', { leadOnly: true })) : null,
       tile('Decisions needed', String(decisions.length), nextDec ? `next by ${fmtDate(nextDec, true)}` : 'none open', null, () => go('raid', { tab: 'DEC' })),
       tile('Actions overdue', String(overdue), `${openActions} open`, overdue ? 'red' : null, () => go('raid', { tab: 'AC' })),
       tile('Data quality', String(dqE), `errors · ${dqW} warnings`, dqE ? 'amber' : 'green', () => store.showRange('Data Quality', 'A1').catch((e) => toast(e.message, true)), 'Open the Data Quality sheet: each check, with the row it is about'));
@@ -86,8 +88,8 @@ export default {
       const leads = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get(side)).filter(Boolean);
       const to = [...new Set(leads.map((l) => mail[l]).filter(Boolean))];
       if (!to.length) { toast('No email addresses for the workstream leads yet: add them on the People sheet or in the set-up wizard', true); return; }
-      const subj = `Workstream reports for ${fmtMonth(RD)}`;
-      const body = `Hello all,\n\nPlease send your ${fmtMonth(RD)} workstream report by the usual date: open the Hub workbook, then TransitionSuite > Workstream report and pick your workstream${n.Use_WR === 'N' ? '' : ', or fill in your report file and send it back'}.\n\nThank you.`;
+      const subj = `Workstream reports for ${periodLabel(RD)}`;
+      const body = `Hello all,\n\nPlease send your workstream report for ${periodLabel(RD)} by the usual date: open the Hub workbook, then TransitionSuite > Workstream report and pick your workstream${n.Use_WR === 'N' ? '' : ', or fill in your report file and send it back'}.\n\nThank you.`;
       window.open(`mailto:?bcc=${encodeURIComponent(to.join(';'))}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`, '_blank');
       setTick('start', true).then(() => ctx.rerender());
     };
@@ -110,9 +112,10 @@ export default {
     // [key, step, due note, status, done (null: ticked by hand), open, button label]: the sheet's wording, due notes and status words
     const dueIn = (k) => `Due ${fmtDate(RD + k, true)}`;
     const word = (done, txt) => (done ? 'Done' : txt);
+    const rollDays = { month: 35, fortnight: 17, week: 10 }[unit()];   // the reporting date is current for one period
     const phases = [
-      ['Start the month', [
-        ['rd', 'Roll the reporting month forward', fmtMonth(RD), word(daysSinceRD <= 35, 'Roll forward'), daysSinceRD <= 35, () => ctx.changeRD(), 'Change'],
+      [`Start the ${unit()}`, [
+        ['rd', monthly() ? 'Roll the reporting month forward' : 'Roll the reporting date forward', periodLabel(RD), word(daysSinceRD <= rollDays, 'Roll forward'), daysSinceRD <= rollDays, () => ctx.changeRD(), 'Change'],
         ['cal', 'Check the calendar for the coming weeks', 'Next 30 days', null, null, () => go('dates'), 'Calendar'],
         ['start', 'Ask the workstream leads for their reports', `Send by ${fmtDate(RD + 1, true)}`, null, null, startReporting, 'Email the leads']]],
       ['Collect and update', [
@@ -138,7 +141,7 @@ export default {
     let k = 0;
     const month = h('section.card', { style: { flex: '1 1 340px' } },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
-        h('h2.cap', `This month's workflow · ${fmtMonth(RD)}`), h('div.bar', h('div', { style: { width: Math.round(doneCount / items.length * 100) + '%' } })),
+        h('h2.cap', `This ${unit()}'s workflow · ${periodLabel(RD)}`), h('div.bar', h('div', { style: { width: Math.round(doneCount / items.length * 100) + '%' } })),
         h('span.small', { style: { fontWeight: 600, color: 'var(--navy)' } }, `${doneCount} of ${items.length} done`)),
       phases.map(([pname, ss]) => [
         h('div.small', { style: { fontWeight: 700, letterSpacing: '0.06em', color: 'var(--muted)', margin: '10px 0 2px', textTransform: 'uppercase', fontSize: '11px' } }, ed(pname)),
@@ -176,8 +179,8 @@ export default {
           nNew ? h('span.chip.info', `${nNew} new`) : null,
           h('span.ws-trend', trend),
           h('span.ws-rag', h('span.chip', { class: rag }, rag || '–')));
-      }) : h('p.muted.small', 'No workstream status yet for this month.'),
-      h('p.small.muted', { style: { margin: '8px 0 0' } }, 'Blue badges: risks and issues raised this month. Select a workstream to open its report.'));
+      }) : h('p.muted.small', `No workstream status yet for this ${unit()}.`),
+      h('p.small.muted', { style: { margin: '8px 0 0' } }, `Blue badges: risks and issues raised this ${unit()}. Select a workstream to open its report.`));
 
     // ---- coming up in the next 30 days
     const soonDates = [];

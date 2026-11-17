@@ -50,6 +50,47 @@ export function setTeam(names) {
   else if (full) { const m = /\(([^)]+)\)/.exec(full); TEAM = m ? m[1].trim() : full; }
   else TEAM = names && 'TeamName' in names && names.TeamName !== undefined && names.TeamName !== null ? ed('programme office') : 'SMO';
 }
+// The reporting cycle (Tim, 17 Nov 2026; brief 4.4b): a set-up answer, RepFreq (Monthly, Fortnightly or Weekly) with RepDay
+// (Month-end or Last working day for monthly; a weekday for the others). Before v0.11 every Hub reported monthly.
+let CYCLE = { freq: 'Monthly', day: 'Month-end' };
+export function setCycle(names) {
+  const f = String((names && names.RepFreq) || '').trim();
+  CYCLE = { freq: /^(Weekly|Fortnightly)$/.test(f) ? f : 'Monthly', day: String((names && names.RepDay) || '').trim() || (f === 'Weekly' || f === 'Fortnightly' ? 'Friday' : 'Month-end') };
+}
+/** 'month', 'fortnight' or 'week': for wording such as `this ${unit()}`. */
+export const unit = () => ({ Weekly: 'week', Fortnightly: 'fortnight' }[CYCLE.freq] || 'month');
+export const monthly = () => CYCLE.freq === 'Monthly';
+/** The reporting period a date reports on, for titles: "Oct 2026" when monthly, else "week to 9 Oct 2026". */
+export const periodLabel = (rd) => (monthly() ? fmtMonth(rd) : `${unit()} to ${fmtDate(rd)}`);
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+/** The first day of the reporting period that ends on `rd` (a month, a fortnight or a week). */
+export function periodStart(rd) {
+  const RD = Number(rd) || 0;
+  if (!RD) return 0;
+  if (monthly()) { const d = fromSerial(RD); return toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))); }
+  return RD - (CYCLE.freq === 'Weekly' ? 6 : 13);
+}
+/** The reporting dates around `from` (Excel serials), stepping by the cycle: n before and n after. */
+export function reportingDates(from, n = 6) {
+  const d0 = Number(from) || 0;
+  if (!d0) return [];
+  const out = [];
+  if (monthly()) {
+    const base = fromSerial(d0);
+    for (let k = -n; k <= n; k++) {
+      let e = toSerial(new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + k + 1, 0)));
+      if (/working/i.test(CYCLE.day)) { while (((e - 1) % 7) === 0 || ((e - 1) % 7) === 6) e--; }
+      out.push(e);
+    }
+    return out;
+  }
+  const step = CYCLE.freq === 'Weekly' ? 7 : 14, wd = Math.max(0, WEEKDAYS.indexOf(CYCLE.day));   // 0 = Monday
+  const mon0 = (d) => (d - 2 + 7) % 7;   // serial -> 0 = Monday
+  let first = d0 + ((wd - mon0(d0) + 7) % 7);   // the reporting day on or after `from`
+  for (let k = -n; k <= n; k++) out.push(first + k * step);
+  return out;
+}
+
 /** Today, as an Excel serial: the workbook's Today name (pinned in the DEMO), else the computer's date.
  *  Live alerts (overdue, due soon, closing soon) measure against this; reports measure against RD. */
 export function asOf(names) {
@@ -146,12 +187,13 @@ export function dateBox(serial, attrs = {}) {
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
 
 let toastTimer;
-export function toast(msg, err) {
+export function toast(msg, err, action) {
   document.querySelectorAll('.toast').forEach((t) => t.remove());
-  const t = h('div.toast', { role: 'status', class: err ? 'err' : null }, msg);
+  const t = h('div.toast', { role: 'status', class: err ? 'err' : null }, msg,
+    action ? h('button.toast-act', { type: 'button', onclick: () => { t.remove(); action.fn(); } }, action.label) : null);
   document.body.appendChild(t);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.remove(), err ? 6000 : 2600);
+  toastTimer = setTimeout(() => t.remove(), action ? 9000 : err ? 6000 : 2600);
 }
 
 /** Print just this element (also how users save a PDF: choose "Microsoft Print to PDF" or "Save as PDF"). */

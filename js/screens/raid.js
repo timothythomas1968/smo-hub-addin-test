@@ -1,7 +1,8 @@
 // RAID and actions: risks, issues, decisions, assumptions and dependencies, and the action log, in one list.
-import { h, fmtDate, toast, toSerial, ed, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { buildForm } from '../form.js?v=0.11.3.20261117210951';
-import { LIVE } from '../live.js?v=0.11.3.20261117210951';
+import { h, fmtDate, toast, toSerial, ed, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { leadUpdated, LEAD_CLOSE } from '../counts.js?v=0.11.4.20261117215350';
+import { buildForm } from '../form.js?v=0.11.4.20261117215350';
+import { LIVE } from '../live.js?v=0.11.4.20261117215350';
 
 const TYPES = {
   RSK: { t: 'tblRisks', one: 'Risk', many: 'Risks', id: 'Risk ID', title: 'Risk', st: 'Status (adopt or remove)', raised: 'Date raised' },
@@ -11,7 +12,7 @@ const TYPES = {
   AC: { t: 'tblActions', one: 'Action', many: 'Actions', id: 'AC ID', title: 'Action', st: 'Status' }
 };
 const DONE = new Set(['Closed', 'Remove', 'Removed', 'Made', 'Withdrawn', 'Cancelled', 'Canceled']);
-const ui = { tab: 'ALL', showClosed: false, sel: null, adding: null, ws: null, suggestedOnly: false, newOnly: false };
+const ui = { tab: 'ALL', showClosed: false, sel: null, adding: null, ws: null, suggestedOnly: false, newOnly: false, leadOnly: false };
 
 export default {
   tables: Object.values(TYPES).map((x) => x.t).concat(['tblWorkstreams']),
@@ -20,7 +21,7 @@ export default {
     const RD = asOf(store.names);   // due and overdue run from today
     if (arg && !arg.used) {
       arg.used = true;
-      ui.ws = arg.ws || null; ui.suggestedOnly = !!arg.suggested; ui.newOnly = !!arg.newOnly; ui.showClosed = false;
+      ui.ws = arg.ws || null; ui.suggestedOnly = !!arg.suggested; ui.newOnly = !!arg.newOnly; ui.leadOnly = !!arg.leadOnly; ui.showClosed = false;
       ui.tab = arg.tab || 'ALL';
       if (arg.id) ui.selId = arg.tab + ':' + arg.id;
       if (arg.add) { ui.adding = 'RSK'; ui.sel = null; }
@@ -33,7 +34,7 @@ export default {
       for (const r of store.records(cfg.t)) items.push({ k, cfg, r, key: k + ':' + r.i, idKey: k + ':' + r.get(cfg.id), st: r.get(cfg.st) || '' });   // keyed by row: an ID is only known after the workbook recalculates
     }
     const wsOk = (x) => !ui.ws || x.r.get('Workstream') === ui.ws || (ui.ws === ed('Programme') && !x.r.get('Workstream'));
-    const vis = (x) => (ui.showClosed || !DONE.has(x.st)) && wsOk(x) && (!ui.suggestedOnly || x.st === 'Suggested') && (!ui.newOnly || x.st === 'New');
+    const vis = (x) => (ui.showClosed || !DONE.has(x.st)) && wsOk(x) && (!ui.suggestedOnly || x.st === 'Suggested') && (!ui.newOnly || x.st === 'New') && (!ui.leadOnly || leadUpdated(x.r, store));
     const inTab = (x, t) => t === 'ALL' || x.k === t;
     const list = items.filter((x) => inTab(x, ui.tab) && vis(x))
       .sort((a, b) => (b.st === 'New') - (a.st === 'New') || (a.st === 'Suggested') - (b.st === 'Suggested') || rank(b) - rank(a));   // New from reports first, starter-library suggestions last
@@ -44,6 +45,7 @@ export default {
 
     const open = (k) => items.filter((x) => x.k === k && !DONE.has(x.st) && x.st !== 'Suggested');
     const fresh = items.filter((x) => x.st === 'New').length;
+    const byLeads = items.filter((x) => ['RSK', 'ISS', 'DEC'].includes(x.k) && !DONE.has(x.st) && leadUpdated(x.r, store)).length;
     const tile = (label, value, tone, onclick) => h('button.tile', { type: 'button', class: tone, onclick }, h('span.tile-label', label), h('span.tile-value', String(value)));
     const redRisks = open('RSK').filter((x) => x.r.get('Rating') === 'Red').length;
     const due30 = open('AC').filter((x) => { const d = Number(x.r.get('Due date')); return d && d <= RD + 30; }).length;
@@ -61,8 +63,10 @@ export default {
         tile('Decisions needed', open('DEC').length, null, () => go({ tab: 'DEC', suggestedOnly: false })),
         tile('Actions due in 30 days', due30, null, () => go({ tab: 'AC', suggestedOnly: false })),
         fresh ? tile('New from reports', fresh, 'amber', () => go({ tab: 'ALL', newOnly: true, suggestedOnly: false })) : null,
+        byLeads ? tile('Updated by leads', byLeads, 'info', () => go({ tab: 'ALL', leadOnly: true, newOnly: false, suggestedOnly: false })) : null,
         tile('Waiting for review', waiting, waiting ? 'info' : null, () => go({ tab: 'ALL', suggestedOnly: true, newOnly: false }))),
-      (ui.ws || ui.suggestedOnly || ui.newOnly) ? h('div.filters',
+      (ui.ws || ui.suggestedOnly || ui.newOnly || ui.leadOnly) ? h('div.filters',
+        ui.leadOnly ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ leadOnly: false }) }, 'Updated by leads only  ✕') : null,
         ui.newOnly ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ newOnly: false }) }, 'New from reports only  ✕') : null,
         ui.ws ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ ws: null }) }, `Workstream: ${wsName[ui.ws] || ui.ws}  ✕`) : null,
         ui.suggestedOnly ? h('button.fchip', { type: 'button', 'aria-pressed': 'true', onclick: () => go({ suggestedOnly: false }) }, 'Suggested only  ✕') : null) : null,
@@ -125,7 +129,8 @@ function row(x, sel, ctx, wsName) {
   return h('div.item', { class: [isSel ? 'sel' : '', x.st === 'Suggested' ? 'suggested' : '', x.st === 'New' ? 'is-new' : '', DONE.has(x.st) ? 'faded' : ''].join(' ') },
     h('button.item-main', { type: 'button', onclick: () => { ui.sel = x.key; ui.adding = null; ctx.rerender(); } },
       h('span.item-id', x.r.get(x.cfg.id)),
-      h('span.item-text', h('span.item-title', x.r.get(x.cfg.title)), h('span.item-meta', meta(x, wsName))),
+      h('span.item-text', h('span.item-title', x.r.get(x.cfg.title)), h('span.item-meta', meta(x, wsName)),
+        /^Y/i.test(String(x.r.get(LEAD_CLOSE) || '')) ? h('span.chip.Amber', { style: { alignSelf: 'flex-start' } }, 'Lead proposes closing') : leadUpdated(x.r, store) ? h('span.chip.info', { style: { alignSelf: 'flex-start' } }, 'Updated by the lead') : null),
       badge(x)),
     h('div.item-side',
       x.st === 'Suggested'

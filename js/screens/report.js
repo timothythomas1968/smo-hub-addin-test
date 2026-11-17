@@ -1,7 +1,8 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox } from '../util.js?v=0.11.3.20261117210951';
-import { personLabel, SCALE_WORDS } from '../form.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed } from '../util.js?v=0.11.4.20261117215350';
+import { personLabel, SCALE_WORDS } from '../form.js?v=0.11.4.20261117215350';
+import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.11.4.20261117215350';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -44,8 +45,8 @@ export default {
 
     return h('div.page',
       h('div.page-head',
-        h('div', h('h1', `Workstream report · ${fmtMonth(RD)}`),
-          h('p.lede', 'Each lead\'s monthly status. It flows into Consolidated WS Reporting, Home and the governance pack; new risks, issues and decisions raised here go straight into RAID, marked New.')),
+        h('div', h('h1', `Workstream report · ${periodLabel(RD)}`),
+          h('p.lede', `Each lead's status for the ${unit()}. It flows into Consolidated WS Reporting, Home and the governance pack; new risks, issues and decisions raised here go straight into RAID, marked New.`)),
         h('div.card', { style: { padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
           h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, `Reporting date (set by ${theTeam()})`),
           [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')])),
@@ -111,7 +112,8 @@ function form(ctx, w, wsRow, s) {
       texts: TEXTS.map(([o]) => String(cell(o, 1) || '')),
       // New risks, issues and decisions go straight into the main registers (status New), so these start empty.
       tables: Object.fromEntries(Object.entries(TABLES).map(([k, t]) => [k, [...Array(t.n).keys()].map(() => Array(8).fill(''))])),
-      rows: Object.fromEntries(Object.keys(TABLES).map((k) => [k, 1]))
+      rows: Object.fromEntries(Object.keys(TABLES).map((k) => [k, 1])),
+      open: {}   // edits to the workstream's existing risks, issues and decisions: 'tbl:row' -> {header: value}
     };
   }
   const E = ui.edit;
@@ -200,13 +202,15 @@ function form(ctx, w, wsRow, s) {
     const orig = (addr) => { const m = /^([A-I])(\d+)$/.exec(addr); return S[Number(m[2]) - s]['BCDEFGHI'.indexOf(m[1])]; };
     const changed = cells.filter((c) => String(c.value ?? '') !== String(orig(c.addr) ?? ''));
     const anyNew = Object.keys(TABLES).some((k) => E.tables[k].slice(0, E.rows[k]).some((v) => String(v[0] ?? '').trim()));
-    if (!changed.length && !anyNew) { toast('Nothing changed'); return; }
+    const anyOpen = Object.values(E.open).some((o) => Object.keys(o).length);
+    if (!changed.length && !anyNew && !anyOpen) { toast('Nothing changed'); return; }
     try {
       if (changed.length) await store.writeCells(SHEET, changed);
       const added = anyNew ? await toRegister() : { risk: 0, iss: 0, dec: 0 };
+      const nUpd = anyOpen ? await saveOpen(store, E) : 0;
       const nAdded = added.risk + added.iss + added.dec;
       ui.sec = null; ui.summ = null; ui.edit = null;
-      toast(`${w.name}: report saved` + (nAdded ? `; ${[added.risk && `${added.risk} risk${added.risk > 1 ? 's' : ''}`, added.iss && `${added.iss} issue${added.iss > 1 ? 's' : ''}`, added.dec && `${added.dec} decision${added.dec > 1 ? 's' : ''}`].filter(Boolean).join(', ')} added to RAID as New` : ''));
+      toast(`${w.name}: report saved` + (nUpd ? `; ${nUpd} existing item${nUpd > 1 ? 's' : ''} updated` : '') + (nAdded ? `; ${[added.risk && `${added.risk} risk${added.risk > 1 ? 's' : ''}`, added.iss && `${added.iss} issue${added.iss > 1 ? 's' : ''}`, added.dec && `${added.dec} decision${added.dec > 1 ? 's' : ''}`].filter(Boolean).join(', ')} added to RAID as New` : ''));
       ctx.rerender();
     } catch (e) { toast('Could not save: ' + (e.message || e), true); }
   };
@@ -214,8 +218,8 @@ function form(ctx, w, wsRow, s) {
   // Only a web address (SharePoint or OneDrive) works as a link in an email; a path on someone's computer does not.
   const url = (() => { try { const u = Office.context.document.url || ''; return /^https:\/\//i.test(u) ? encodeURI(decodeURI(u)) : ''; } catch (e) { return ''; } })();
   const RD = Number(store.names.RD) || 0;
-  const mail = `mailto:?subject=${encodeURIComponent(`${w.name}: workstream report for ${fmtMonth(RD)}`)}&body=${encodeURIComponent(
-    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${fmtMonth(RD)} in TransitionSuite: open the Hub workbook, then TransitionSuite > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : '\nIf you use the report file instead, fill in the attached report file and send it back.\n'}\nThank you.`)}`;
+  const mail = `mailto:?subject=${encodeURIComponent(`${w.name}: workstream report for ${periodLabel(RD)}`)}&body=${encodeURIComponent(
+    `Hello${lead ? ' ' + lead.split(' ')[0] : ''},\n\nPlease complete the ${w.name} report for ${periodLabel(RD)} in TransitionSuite: open the Hub workbook, then TransitionSuite > Workstream report and pick ${w.code}.\n${url ? '\nWorkbook: ' + url + '\n' : '\nIf you use the report file instead, fill in the attached report file and send it back.\n'}\nThank you.`)}`;
 
   return h('div',
     h('div', { style: { padding: '16px 18px 12px', borderBottom: '1px solid var(--line-soft)', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' } },
@@ -226,7 +230,8 @@ function form(ctx, w, wsRow, s) {
         h('div.field', h('span.field-label', 'Overall RAG'), seg(['Green', 'Amber', 'Red'], E.rag, (v) => { E.rag = v; }, true)),
         h('div.field', h('span.field-label', 'Trend'), seg(['Improving', 'Stable', 'Worsening'], E.trend, (v) => { E.trend = v; }, false))),
       h('span.small.muted', 'The RAG starts as the Hub\'s suggestion from the registers (red if any service is red, amber if any is amber or plan items are late). Change it if you disagree.'),
-      TEXTS.map(([o, label, rows], i) => fieldBox(label, ta(i, rows))),
+      TEXTS.map(([o, label, rows], i) => fieldBox(label.replace(/ month$/, ` ${unit()}`), ta(i, rows))),
+      openItems(ctx, w, E),
       tableBlock('risk'), tableBlock('iss'), tableBlock('dec'),
       h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '6px' } },
         h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save report'),
@@ -234,3 +239,76 @@ function form(ctx, w, wsRow, s) {
 }
 
 function inputStyle() { return { border: '1px solid var(--line-strong)', background: 'var(--input)', borderRadius: '6px', padding: '7px 9px', fontSize: '13px', width: '100%', minWidth: 0, resize: 'vertical' }; }
+
+// ---------------------------------------------------------------- the workstream's open items (Tim, 17 Nov 2026; brief 4.5)
+// A lead reviews the workstream's open risks, issues and decisions while writing the report: edits save to the registers, and
+// each changed item is marked "Updated in this period's report" (Lead updated on) for the programme office to review on RAID and Home.
+// A lead can't remove an item: closing is proposed (Close proposed (lead) = Y) and the programme office confirms.
+const OPEN = {
+  risk: { t: 'tblRisks', id: 'Risk ID', title: 'Risk', status: 'Status (adopt or remove)', live: ['Open', 'In progress', 'New'], label: 'Risks',
+    fields: [['Likelihood (1-5)', 'scale'], ['Impact (1-5)', 'scale'], ['Mitigation / response', 'text'], ['Status (adopt or remove)', ['Open', 'In progress']]] },
+  iss: { t: 'tblIssues', id: 'Issue ID', title: 'Issue', status: 'Status', live: ['Open', 'In progress', 'New'], label: 'Issues',
+    fields: [['Due date', 'date'], ['Owner', 'person'], ['Status', ['Open', 'In progress']], ['Latest update', 'text']] },
+  dec: { t: 'tblDecisions', id: 'Decision ID', title: 'Decision needed', status: 'Status', live: ['Open', 'New'], label: 'Decisions',
+    fields: [['Needed by', 'date'], ['Status', ['Open']]] }
+};
+
+function openItems(ctx, w, E) {
+  const { store } = ctx;
+  const people = store.options({ h: 'Owner', t: 'I', dv: { name: 'L_People' } }) || [];
+  const blocks = Object.entries(OPEN).map(([k, o]) => {
+    if (!store.has(o.t)) return null;
+    const hasCol = (hd) => !!store.colDef(o.t, hd) || store.records(o.t).some((r) => r.get(hd) !== '');
+    const recs = store.records(o.t).filter((r) => r.get('Workstream') === w.code && o.live.includes(String(r.get(o.status))));
+    if (!recs.length) return null;
+    return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
+      h('div.small', { style: { fontWeight: 700, color: 'var(--heading)' } }, `${o.label} (${recs.length})`),
+      recs.map((r) => {
+        const key = `${o.t}:${r.i}`, ed0 = (E.open[key] = E.open[key] || {});
+        const val = (hd) => (hd in ed0 ? ed0[hd] : r.get(hd));
+        const set = (hd, v) => { if (String(v) === String(r.get(hd) ?? '')) delete ed0[hd]; else ed0[hd] = v; row.classList.toggle('changed', Object.keys(ed0).length > 0); };
+        const fields = o.fields.filter(([hd]) => hasCol(hd) || hd !== 'Latest update').map(([hd, kind]) => {
+          let el;
+          if (kind === 'scale' || Array.isArray(kind) || kind === 'person') {
+            const opts = kind === 'scale' ? ['1', '2', '3', '4', '5'] : kind === 'person' ? people : kind;
+            el = h('select', { style: inputStyle(), 'aria-label': hd }, h('option', { value: '' }, ''), [...new Set([String(val(hd) ?? ''), ...opts].filter(Boolean))].map((x) => h('option', { value: x }, kind === 'person' ? personLabel(store, x) : x)));
+            el.value = String(val(hd) ?? '');
+            el.addEventListener('change', () => set(hd, kind === 'scale' && el.value ? Number(el.value) : el.value));
+          } else if (kind === 'date') {
+            el = dateBox(val(hd), { style: inputStyle(), 'aria-label': hd });
+            el.addEventListener('input', () => set(hd, isoToSerial(el.value)));
+          } else {
+            el = h('input', { type: 'text', value: String(val(hd) ?? ''), style: inputStyle(), 'aria-label': hd });
+            el.addEventListener('input', () => set(hd, el.value));
+          }
+          return fieldBox(hd.replace(' (adopt or remove)', ''), el, { style: kind === 'text' ? { gridColumn: 'span 2' } : null });
+        });
+        const close = hasCol(LEAD_CLOSE) ? h('label.small', { style: { display: 'flex', gap: '6px', alignItems: 'center', alignSelf: 'end', paddingBottom: '8px' } },
+          (() => { const cb = h('input.cb-plain', { type: 'checkbox', checked: /^Y/i.test(String(val(LEAD_CLOSE))) });
+            cb.addEventListener('change', () => set(LEAD_CLOSE, cb.checked ? 'Y' : '')); return cb; })(), 'Propose close') : null;
+        const flag = /^Y/i.test(String(r.get(LEAD_CLOSE))) ? h('span.chip.Amber', 'Close proposed') : Number(r.get(LEAD_UPD)) >= periodStart(store.names.RD) ? h('span.chip.info', 'Updated in this report') : null;
+        const row = h('div.open-item', { class: Object.keys(ed0).length ? 'changed' : null },
+          h('div', { style: { display: 'flex', gap: '8px', alignItems: 'baseline', flexWrap: 'wrap' } },
+            h('b.small', r.get(o.id) || ''), h('span.small', { style: { flex: '1 1 200px' } }, String(r.get(o.title) || '')), flag),
+          h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' } }, fields, close));
+        return row;
+      }));
+  }).filter(Boolean);
+  return h('div', { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+    h('div.sec', 'Your open items: review and update'),
+    h('span.small.muted', ed(`Change what has moved since the last report. Changes save to the registers with the report, marked for ${theTeam()} to review. You can't remove an item: tick Propose close and ${theTeam()} confirms it.`)),
+    blocks.length ? blocks : h('p.small.muted', { style: { margin: 0 } }, 'No open risks, issues or decisions for this workstream.'));
+}
+
+async function saveOpen(store, E) {
+  const today = asOf(store.names);
+  let n = 0;
+  for (const [key, ch] of Object.entries(E.open)) {
+    if (!Object.keys(ch).length) continue;
+    const [t, i] = key.split(':');
+    const extra = store.colDef(t, LEAD_UPD) ? { [LEAD_UPD]: today } : {};
+    await store.save(t, Number(i), { ...ch, ...extra });
+    n++;
+  }
+  return n;
+}

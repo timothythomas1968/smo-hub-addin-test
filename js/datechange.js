@@ -3,7 +3,8 @@
 // in TSA Changes (status Pending) with the impact worked out. The planned exit date only moves when the forum
 // approves it: the workbook's Planned exit date formula takes the latest approved Extend or Early exit request.
 // A forecast exit date stays editable; moving it is logged in TSA Changes as a "Forecast change".
-import { h, toast, fmtDate, fmtMoney, plural, serialToIso, isoToSerial, fromSerial, asOf, realToday, dateBox } from './util.js?v=0.11.3.20261117210951';
+import { h, toast, fmtDate, fmtMoney, plural, serialToIso, isoToSerial, fromSerial, asOf, realToday, dateBox } from './util.js?v=0.11.4.20261117215350';
+import { decidePlanCR, applyApprovedDate } from './daterules.js?v=0.11.4.20261117215350';
 
 const num = (v) => Number(v) || 0;
 const monthsBetween = (a, b) => { const x = fromSerial(a), y = fromSerial(b); return (y.getUTCFullYear() - x.getUTCFullYear()) * 12 + (y.getUTCMonth() - x.getUTCMonth()); };
@@ -49,11 +50,11 @@ function modal(title, body, actions) {
 }
 
 /** "Process a date change": raise a Pending change request with its impact. */
-export function openDateChange(ctx, rec) {
+export function openDateChange(ctx, rec, proposed) {
   const { store } = ctx;
   const planned = num(rec.get('Planned exit date')) || num(rec.get('Initial end date'));
   const forums = (store.options({ h: 'Approval forum', t: 'I', dv: { name: 'L_Forum' } }) || []);
-  const date = dateBox(planned, { 'aria-label': 'New planned exit date' });
+  const date = dateBox(proposed || planned, { 'aria-label': 'New planned exit date' });
   const reason = h('textarea', { rows: 3, placeholder: 'Why the date needs to change, and who asked' });
   const forum = h('select', { 'aria-label': 'Approval forum' }, forums.map((f) => h('option', { value: f }, f)));
   const def = forums.find((f) => /change|separation committee/i.test(f)); if (def) forum.value = def;
@@ -107,9 +108,17 @@ export function openDecision(ctx, cr) {
     const d = isoToSerial(date.value);
     if (!d) { toast('Pick the decision date', true); return; }
     try {
+      const type = String(cr.get('Request type'));
       await store.save('tblChange', cr.i, { Status: ok ? 'Approved' : 'Rejected', Decision: `${ok ? 'Approved' : 'Rejected'} by ${forum.value}${note.value.trim() ? ': ' + note.value.trim() : ''}`, 'Decision date': d, 'Approval forum': forum.value });
+      let msg = ok ? `Approved. The planned exit date is now ${fmtDate(cr.get('Proposed exit date'))}.` : 'Rejected. The planned exit date stays as it was.';
+      if (type === 'Plan change') msg = (ok ? 'Approved. ' : '') + await decidePlanCR(store, cr, ok);
+      else if (type === 'Contract change') {
+        const m = /^Setting: (\w+) = (.*)$/.exec(String(cr.get('Item ID') || ''));
+        if (ok && m) { await store.writeNames([[m[1], /^\d+(\.\d+)?$/.test(m[2]) ? Number(m[2]) : m[2]]]); msg = `Approved. The set-up answer is now ${m[2]}; the notice deadlines follow it.`; }
+        else msg = ok ? 'Approved. Change the answer on Start Here.' : 'Rejected. The set-up answer stays as it was.';
+      } else if (type === 'Date change') msg = ok ? `Approved. ${await applyApprovedDate(store, cr) || 'Change the date on its register.'}` : 'Rejected. The date stays as it was.';
       back.remove();
-      toast(ok ? `Approved. The planned exit date is now ${fmtDate(cr.get('Proposed exit date'))}.` : 'Rejected. The planned exit date stays as it was.');
+      toast(msg);
       ctx.rerender();
     } catch (e) { toast('Could not record it: ' + (e.message || e), true); }
   };

@@ -1,9 +1,10 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { buildForm, personLabel } from '../form.js?v=0.11.3.20261117210951';
-import { LIVE } from '../live.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { buildForm, personLabel } from '../form.js?v=0.11.4.20261117215350';
+import { LIVE } from '../live.js?v=0.11.4.20261117215350';
+import { openDecision, OPEN_CR } from '../datechange.js?v=0.11.4.20261117215350';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
@@ -92,6 +93,7 @@ export function editPanel(ctx, cfg, ui, rec) {
       h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save'),
       h('button.btn', { type: 'button', onclick: () => store.show(cfg.t, rec.i).catch((e) => toast(e.message, true)) }, 'Show row'),
       cfg.remove ? h('button.btn', { type: 'button', style: { marginLeft: 'auto', color: 'var(--r-fg)' }, onclick: () => removeRecord(ctx, cfg, ui, rec) }, cfg.remove) : null,
+      cfg.actions ? cfg.actions(ctx, rec) : null,
       h('span.small.muted', { style: { flex: '1 1 100%' } }, ed('Grey italic values are suggested by the Hub: type over them to set your own. Bold values are calculated.'))));
 }
 
@@ -159,7 +161,10 @@ export const changes = registerScreen({
   lede: 'Every change request: extensions, early exits, date changes, disputes and their decisions. To move a planned exit date, use Process a date change on the TSA register.',
   placeholder: 'Search by CR, service or title', search: ['CR ID', 'TSA ID', 'Title', 'Request type'],
   cols: [['CR ID'], ['Title'], ['Request type'], ['TSA ID'], ['Decision due', null, 'date'], ['Status']],
-  late: (r, T) => /^(Draft|Submitted|Pending|Under review)$/.test(r.get('Status')) && num(r.get('Decision due')) && num(r.get('Decision due')) < T
+  late: (r, T) => /^(Draft|Submitted|Pending|Under review)$/.test(r.get('Status')) && num(r.get('Decision due')) && num(r.get('Decision due')) < T,
+  // plan changes and calendar date changes are decided here (exit date changes also from the TSA register)
+  actions: (ctx, rec) => (OPEN_CR.test(String(rec.get('Status'))) && /^(Plan change|Date change|Contract change|Extend|Early exit)$/.test(String(rec.get('Request type')))
+    ? h('button.btn', { type: 'button', onclick: () => openDecision(ctx, rec) }, 'Record decision') : null)
 });
 export const invoices = registerScreen({
   t: 'tblInvoices', title: 'Invoices log', one: 'an invoice', id: 'Invoice ID', name: 'Their invoice number', status: 'Status', live: 'Service month', use: 'Use_INV',

@@ -1,8 +1,8 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { countTests, COUNT_RULES } from '../counts.js?v=0.11.3.20261117210951';
-import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.11.3.20261117210951';
-import { buildForm } from '../form.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { countTests, COUNT_RULES } from '../counts.js?v=0.11.4.20261117215350';
+import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.11.4.20261117215350';
+import { buildForm } from '../form.js?v=0.11.4.20261117215350';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);
@@ -32,6 +32,10 @@ export default {
       if (arg.filter) ui.filter = arg.filter;
       if (arg.id) { ui.sel = arg.id; ui.filter = 'all'; ui.q = ''; ui.ws = ''; }
       if (arg.ws) ui.ws = arg.ws;
+      if (arg.id && arg.dateChange) {   // from the Calendar: a planned exit date dragged to a new day
+        const rec0 = store.records(T).find((r) => r.get('TSA ID') === arg.id);
+        if (rec0) setTimeout(() => openDateChange(ctx, rec0, arg.dateChange), 0);
+      }
     }
     const all = store.records(T);
     const live = (r) => !EXITED.has(r.get('Status'));

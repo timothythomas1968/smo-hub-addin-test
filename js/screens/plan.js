@@ -1,6 +1,8 @@
 // Exit plan: the Plan & Gantt register drawn as a Gantt chart, grouped by service, with an edit panel.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.11.3.20261117210951';
-import { buildForm } from '../form.js?v=0.11.3.20261117210951';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.11.4.20261117215350';
+import { buildForm } from '../form.js?v=0.11.4.20261117215350';
+import { openPlanChange } from '../daterules.js?v=0.11.4.20261117215350';
+import { openPlanImport } from '../planimport.js?v=0.11.4.20261117215350';
 
 const T = 'tblPlan';
 const ui = { ws: '', q: '', open: null, sel: null, lateOnly: false, critOnly: false, horizon: 12, exited: false };
@@ -14,6 +16,11 @@ export default {
     const tsa = Object.fromEntries(store.records('tblTSA').map((r) => [r.get('TSA ID'), r]));
     const wsName = Object.fromEntries(store.records('tblWorkstreams').map((r) => [r.get('Code'), r.get('Name')]));
     const all = store.records(T);
+    if (ctx.arg && !ctx.arg.used && ctx.arg.id) {   // from the Calendar or a pack: open that activity
+      ctx.arg.used = true;
+      const r0 = all.find((r) => r.get('Activity ID') === ctx.arg.id);
+      if (r0) { ui.sel = r0.i; ui.ws = ''; ui.q = ''; ui.lateOnly = false; ui.critOnly = false; ui.open = new Set([r0.get('TSA ID') || ed('Programme')]); }
+    }
     const late = (r) => r.get('Status') !== 'Complete' && Number(r.get('Planned finish')) > 0 && Number(r.get('Planned finish')) < RD;
     // Predecessors (finish-to-start): a successor goes red when a predecessor now finishes after it starts (evaluation G)
     const byAct = Object.fromEntries(all.map((r) => [r.get('Activity ID'), r]));
@@ -60,7 +67,7 @@ export default {
     const rowEls = [];
     shown.forEach((g) => {
       const t = tsa[g.id];
-      const isOpen = ui.open.has(g.id);
+      const isOpen = !!q || ui.open.has(g.id);   // a search opens every service it finds
       const exit = Number(t?.get('Forecast exit date')) || 0;
       const nLate = g.rows.filter(late).length;
       rowEls.push(h('div', { style: { display: 'flex', borderTop: '1px solid var(--line)', background: '#FAFBFD', cursor: 'pointer' }, onclick: () => { isOpen ? ui.open.delete(g.id) : ui.open.add(g.id); ctx.rerender(); } },
@@ -117,7 +124,8 @@ export default {
     return h('div.page',
       h('div.page-head',
         h('div', h('h1', 'Exit plan'), h('p.lede', `Every service's exit plan on one timeline. The blue line is today; diamonds are milestones and exits. Late means not finished by today (${fmtDate(RD)}). Select an activity to update it.`)),
-        h('button.btn', { type: 'button', onclick: () => store.show(T, selRec ? selRec.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet')),
+        h('button.btn', { type: 'button', onclick: () => store.show(T, selRec ? selRec.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
+        h('button.btn', { type: 'button', onclick: () => openPlanImport(ctx, 'plan'), title: 'Bring in your own exit plan from Excel or a .csv file' }, 'Import a plan')),
       stats,
       h('div.filters', search, wsSel,
         h('button.fchip', { type: 'button', 'aria-pressed': String(ui.lateOnly), onclick: () => go({ lateOnly: !ui.lateOnly, open: null }) }, 'Late items only', h('span.n', String(nLateAll))),
@@ -174,18 +182,33 @@ function editPanel(ctx, r) {
   const { store } = ctx;
   const form = buildForm(store, T, r, [{ h: 'Activity', full: true, area: true, rows: 2 }, 'Type', 'Owner', 'Party', 'Planned start', 'Planned finish', '% complete', 'Actual start', 'Actual finish', 'Status',
     'Baseline start', 'Baseline finish', 'Slippage (days)', 'Critical path', 'Predecessor 1', 'Predecessor 2', 'Predecessor check', 'Depends on', 'Dependency', 'Comments']);
+  // A new planned date goes through the plan change rules (brief 4.8): the impact preview decides whether it needs a
+  // change request. Other fields save straight away. TSA exit rows follow the TSA register (Process a date change).
   const save = async () => {
     const ch = form.collect();
     if (!Object.keys(ch).length) { toast('Nothing changed'); return; }
-    try { const n = await store.save(T, r.i, ch); toast(`Saved ${n} change${n === 1 ? '' : 's'} to the workbook`); ui.sel = null; ctx.rerender(); }
-    catch (e) { toast('Could not save: ' + (e.message || e), true); }
+    const dates = {};
+    if (r.get('Type') !== 'TSA exit') ['Planned start', 'Planned finish'].forEach((k) => { if (k in ch) { dates[k] = ch[k]; delete ch[k]; } });
+    try {
+      if (Object.keys(ch).length) { const n = await store.save(T, r.i, ch); toast(`Saved ${n} change${n === 1 ? '' : 's'} to the workbook`); }
+      if (Object.keys(dates).length) {
+        const f = Number(dates['Planned finish']) || 0, s0 = Number(dates['Planned start']) || 0;
+        const fin = f || (s0 ? s0 + (Number(r.get('Planned finish')) - Number(r.get('Planned start')) || 0) : 0);
+        ui.sel = null; await ctx.rerender();
+        openPlanChange(ctx, r.get('Activity ID'), fin, s0 || 0);
+        return;
+      }
+      ui.sel = null; ctx.rerender();
+    } catch (e) { toast('Could not save: ' + (e.message || e), true); }
   };
+  const pending = r.get('Change request') ? h('div.banner.warn', { style: { margin: '0 0 10px' } },
+    `Change requested (${r.get('Change request')}): ${r.get('Proposed start') ? fmtDate(r.get('Proposed start')) + ' to ' : 'finish '}${fmtDate(r.get('Proposed finish'))}. The current dates stay until the change forum approves it.`) : null;
   return h('aside.panel.drawer', { 'aria-label': 'Activity details', role: 'dialog' },
     h('div.panel-head', h('button.drawer-x', { type: 'button', 'aria-label': 'Close', onclick: () => { ui.sel = null; ctx.rerender(); } }, '✕'),
       h('span.panel-id', `${r.get('Activity ID')} · ${r.get('TSA ID') || ed('Programme')}`), h('h2.panel-title', r.get('Activity'))),
-    h('div.panel-body', form.el),
+    h('div.panel-body', pending, form.el),
     h('div.panel-foot',
       h('button.btn.btn-primary', { type: 'button', onclick: save }, 'Save'),
       h('button.btn', { type: 'button', onclick: () => store.show(T, r.i).catch((e) => toast(e.message, true)) }, 'Show row'),
-      h('span.small.muted', { style: { flex: '1 1 100%' } }, 'Status is worked out from the dates and progress as you type. Entering an actual finish date sets the activity to 100% complete.')));
+      h('span.small.muted', { style: { flex: '1 1 100%' } }, 'Status is worked out from the dates and progress as you type. Entering an actual finish date sets the activity to 100% complete. A new planned date shows its knock-on first, and says whether it needs a change request.')));
 }
