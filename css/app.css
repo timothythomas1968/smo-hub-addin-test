@@ -402,3 +402,9 @@ table.pgrid td.pgrid-tools { white-space: nowrap; padding: 0 8px; vertical-align
 .imp-mode { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
 .imp-mode.on { border-color: var(--blue); background: var(--selected); }
 @media (max-width: 640px) { .imp-row { grid-template-columns: 1fr; } }
+
+/* Request a change (P1): pairs of fields side by side, one column when narrow */
+.cr-form .cr-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.cr-form .cr-row > .field { flex: 1 1 240px; min-width: 0; }
+.cr-form textarea, .cr-form select, .cr-form input[type=text], .cr-form input[type=email] { width: 100%; box-sizing: border-box; }
+.cr-form .banner { flex-direction: column; align-items: flex-start; gap: 4px; }

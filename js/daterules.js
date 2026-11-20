@@ -6,8 +6,8 @@
 //   Rules            the exit plan change rules: the impact preview, then a logged forecast change or a change request
 //   CR               a Pending change request; the date moves only when the request is approved
 // Keep RULES in step with DATE_RULES in workbook/builder/lib3.py (the defaults, for workbooks that predate the table).
-import { h, toast, fmtDate, ed, asOf, dateBox, isoToSerial, plural } from './util.js?v=0.12.0.20261120045426';
-import { planNodes, knockOn, assess, withDates } from './planimpact.js?v=0.12.0.20261120045426';
+import { h, toast, fmtDate, ed, asOf, dateBox, isoToSerial, plural } from './util.js?v=0.12.1.20261120053858';
+import { planNodes, knockOn, assess, withDates } from './planimpact.js?v=0.12.1.20261120053858';
 
 export const RULES = {   // key: [calendar item, where the date comes from, default rule, note]
   deal: ['Closing and long-stop dates', 'Deal set-up (Start Here)', 'Fixed', 'A deal amendment, outside the Hub.'],
@@ -206,17 +206,19 @@ export async function applyApprovedDate(store, cr) {
 
 // ---------------------------------------------------------------- exit plan changes (brief 4.8)
 /** The impact preview for moving plan item `id` to finish on `finish` (and start on `start`, if given). */
-export function openPlanChange(ctx, id, finish, start) {
+export function openPlanChange(ctx, id, finish, start, opts = {}) {
   const { store } = ctx;
+  const cr = opts.cr || null;   // a New request from the change request form (P1) under review: it becomes the Plan change, or is closed
   const nodes = planNodes(store.records('tblPlan'));
   const me = nodes.get(id);
   if (!me) { toast('That plan item was not found.', true); return; }
   if (me.type === 'TSA exit') { ctx.go('register', { id: me.tsa, dateChange: finish }); return; }
   const moves = knockOn(nodes, id, start || 0, finish);
-  if (!moves.size) return;
+  if (!moves.size) { if (cr) toast('That is already the planned finish: nothing to move.', true); return; }
   const a = assess(nodes, moves, id, store.records('tblTSA'), store.names);
   const d = (t) => withDates(t, fmtDate);
   const reason = h('textarea', { rows: 3, placeholder: 'Why the date needs to change' });
+  if (cr) reason.value = [cr.get('Requested by') ? `Asked by ${cr.get('Requested by')}.` : '', cr.get('Reason for the change') || ''].filter(Boolean).join(' ');
   const groups = Object.entries(a.byWs).map(([ws, list]) => h('div', { style: { marginTop: '6px' } },
     h('b.small', `${ws}${ws === me.ws ? '' : ' (another workstream)'}`),
     h('ul.small', { style: { margin: '2px 0 0', paddingLeft: '18px' } }, list.map((x) => h('li', `${x.id} ${x.n.name}: ${fmtDate(x.from.f)} → ${fmtDate(x.to.f)}`)))));
@@ -232,7 +234,7 @@ export function openPlanChange(ctx, id, finish, start) {
     if (a.needsCR && !reason.value.trim()) { toast('Say why the date needs to change', true); return; }
     go.disabled = true;
     try {
-      const msg = a.needsCR ? await raisePlanCR(store, nodes, moves, id, a, reason.value.trim()) : await applyPlanMoves(store, nodes, moves, id, reason.value.trim());
+      const msg = a.needsCR ? await raisePlanCR(store, nodes, moves, id, a, reason.value.trim(), cr) : await applyPlanMoves(store, nodes, moves, id, reason.value.trim(), cr);
       back.remove(); await ctx.rerender(); toast(msg);
     } catch (x) { go.disabled = false; toast('Could not save: ' + (x.message || x), true); }
   });
@@ -240,6 +242,7 @@ export function openPlanChange(ctx, id, finish, start) {
     h('div', { style: { display: 'flex', flexDirection: 'column' } },
       h('p.small.muted', { style: { margin: 0 } }, `Finish from ${fmtDate(me.finish)} to ${fmtDate(moves.get(id).to.f)}. ${moves.size > 1 ? `${plural(moves.size - 1, 'item')} downstream move${moves.size === 2 ? 's' : ''} with it.` : 'Nothing downstream moves.'}`),
       groups, tsaList, a.critEnd ? h('div.small', { style: { marginTop: '6px' } }, `The critical path now ends ${fmtDate(a.critEnd.to)} (was ${fmtDate(a.critEnd.from)}).`) : null,
+      cr ? h('p.small', { style: { margin: '8px 0 0' } }, `Reviewing ${cr.get('CR ID') || 'a new request'}${cr.get('Requested by') ? ` from ${cr.get('Requested by')}` : ''}.`) : null,
       verdict, warn,
       h('div.field', { style: { marginTop: '10px' } }, h('label.field-label', a.needsCR ? 'Reason (for the change forum)' : 'Reason (optional)'), reason)),
     [h('button.btn', { type: 'button', onclick: () => back.remove() }, 'Cancel'), go], true);
@@ -248,31 +251,37 @@ export function openPlanChange(ctx, id, finish, start) {
 const rowsOf = (nodes, moves, fn) => [...moves].map(([k, mv]) => ({ i: nodes.get(k).i, changes: fn(mv) }));
 
 /** No request needed: the new dates go straight in, the knock-on included, logged as a Forecast change. */
-export async function applyPlanMoves(store, nodes, moves, id, reason) {
+export async function applyPlanMoves(store, nodes, moves, id, reason, cr) {
   await store.saveMany('tblPlan', rowsOf(nodes, moves, (mv) => ({ 'Planned start': mv.to.s, 'Planned finish': mv.to.f })));
   const me = nodes.get(id), mv = moves.get(id);
   await store.need(['tblChange']);
+  const impact = `${reason ? reason + ' ' : ''}${id} moves from ${fmtDate(mv.from.f)} to ${fmtDate(mv.to.f)}${moves.size > 1 ? `, with ${plural(moves.size - 1, 'item')} downstream` : ''}. No change request needed.`;
+  if (cr) {   // a request from the form that the plan rules allow: done, and closed with the reason
+    await store.save('tblChange', cr.i, { 'Item ID': id, 'Impact summary': impact, Status: 'Implemented', Decision: 'Within the plan change rules: no approval needed', 'Decision date': asOf(store.names) });
+    return `Saved. ${moves.size > 1 ? `${plural(moves.size, 'item')} moved` : 'The item moved'}; ${cr.get('CR ID') || 'the request'} is closed as implemented (no approval needed).`;
+  }
   await store.add('tblChange', {
     'Request type': 'Forecast change', 'TSA ID': me.tsa, Title: `Plan dates moved: ${me.name}`, 'Raised on': asOf(store.names), 'Item ID': id,
-    'Impact summary': `${reason ? reason + ' ' : ''}${id} moves from ${fmtDate(mv.from.f)} to ${fmtDate(mv.to.f)}${moves.size > 1 ? `, with ${plural(moves.size - 1, 'item')} downstream` : ''}. No change request needed.`,
-    Status: 'Implemented', Decision: 'Within the plan change rules: no approval needed', 'Decision date': asOf(store.names)
+    'Impact summary': impact, Status: 'Implemented', Decision: 'Within the plan change rules: no approval needed', 'Decision date': asOf(store.names)
   });
   return `Saved. ${moves.size > 1 ? `${plural(moves.size, 'item')} moved` : 'The item moved'}, logged as a forecast change.`;
 }
 
 /** A request is needed: a Pending Plan change with the impact written for you; the items show their proposed dates. */
-export async function raisePlanCR(store, nodes, moves, id, a, reason) {
+export async function raisePlanCR(store, nodes, moves, id, a, reason, cr) {
   const me = nodes.get(id), mv = moves.get(id);
   await store.need(['tblChange']);
   const lines = Object.entries(a.byWs).map(([ws, list]) => `${ws}: ${list.map((x) => `${x.id} ${fmtDate(x.from.f)} → ${fmtDate(x.to.f)}`).join('; ')}`);
-  const i = await store.add('tblChange', {
-    'Request type': 'Plan change', 'TSA ID': me.tsa, Title: `Plan change: ${me.name} to ${fmtDate(mv.to.f)}`, 'Raised on': asOf(store.names), 'Item ID': id,
+  const row = {
+    'Request type': 'Plan change', 'TSA ID': me.tsa, Title: `Plan change: ${me.name} to ${fmtDate(mv.to.f)}`, 'Raised on': cr ? cr.get('Raised on') || asOf(store.names) : asOf(store.names), 'Item ID': id,
     'Impact summary': [reason, ...a.reasons.map((r) => withDates(r, fmtDate)), `Moves: ${lines.join('. ')}.`].filter(Boolean).join(' '), Status: 'Pending'
-  });
+  };
+  let i;
+  if (cr) { i = cr.i; await store.save('tblChange', i, row); } else i = await store.add('tblChange', row);
   const rec = store.records('tblChange').find((r) => r.i === i);
-  const crId = (rec && rec.get('CR ID')) || `CR-${String(i + 1).padStart(3, '0')}`;
+  const crId = (rec && rec.get('CR ID')) || (cr && cr.get('CR ID')) || `CR-${String(i + 1).padStart(3, '0')}`;
   await store.saveMany('tblPlan', rowsOf(nodes, moves, (m) => ({ 'Proposed start': m.to.s, 'Proposed finish': m.to.f, 'Change request': crId })));
-  return `Change request ${crId} raised for the change forum. The plan keeps its current dates until it is approved.`;
+  return `Change request ${crId} ${cr ? 'is now Pending' : 'raised'} for the change forum. The plan keeps its current dates until it is approved.`;
 }
 
 /** The forum's decision on a Plan change: approved applies the proposed dates; rejected clears them and asks the owner to recover. */

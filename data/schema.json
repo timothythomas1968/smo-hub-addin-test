@@ -3066,7 +3066,7 @@
     "dv": {
      "name": "L_CRStatus"
     },
-    "n": "Suggested from the dates; overwrite for Rejected, Withdrawn or Implemented.",
+    "n": "Suggested from the dates; overwrite for Rejected, Withdrawn or Implemented. New: sent in through the change request form and not yet reviewed; the programme office moves it to Pending (for the forum) or Rejected.",
     "sec": "Decision"
    },
    {
@@ -3174,6 +3174,86 @@
     "dv": null,
     "n": "For a date change or plan change raised from the panel: the item whose date moves (for example WO-003 or SP-FIN-0012). The panel applies the new date when the request is approved.",
     "sec": "Decision"
+   },
+   {
+    "k": "ReqBy",
+    "h": "Requested by",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "Who asked for the change, as typed on the change request form. They need not be on the People sheet.",
+    "sec": "Request form"
+   },
+   {
+    "k": "ReqMail",
+    "h": "Requester email",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Request form"
+   },
+   {
+    "k": "What",
+    "h": "What should change",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Request form"
+   },
+   {
+    "k": "CFrom",
+    "h": "Change from",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "What it is now: a date, a fee, a service level or a description.",
+    "sec": "Request form"
+   },
+   {
+    "k": "CTo",
+    "h": "Change to",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "What the person asking wants it to be.",
+    "sec": "Request form"
+   },
+   {
+    "k": "Why",
+    "h": "Reason for the change",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Request form"
+   },
+   {
+    "k": "ReqImp",
+    "h": "Impact (requester's view)",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "The impact as the person asking sees it. The Impact summary is the programme office's own assessment.",
+    "sec": "Request form"
+   },
+   {
+    "k": "Via",
+    "h": "Received through",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Panel",
+      "Form file",
+      "Teams",
+      "Web page",
+      "Email"
+     ]
+    },
+    "n": "How the request arrived: the panel's Request a change screen, the change request form file, Teams, the web page or email.",
+    "sec": "Request form"
    }
   ]
  },

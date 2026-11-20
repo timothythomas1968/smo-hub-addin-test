@@ -1,9 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.0.20261120045426';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.0.20261120045426';
-import { readinessOf } from '../readiness.js?v=0.12.0.20261120045426';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.0.20261120045426';
-import { setTidy } from '../tabs.js?v=0.12.0.20261120045426';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.1.20261120053858';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.1.20261120053858';
+import { readinessOf } from '../readiness.js?v=0.12.1.20261120053858';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.1.20261120053858';
+import { setTidy } from '../tabs.js?v=0.12.1.20261120053858';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -16,7 +16,7 @@ const STEP_TIPS = {
   rep: 'Workstream Reports: check each lead has reported. The consolidated report then builds itself from these reports and feeds the governance packs.',
   raid: 'Risks. Review the items raised on reports, the items leads updated or proposed to close, and the starter suggestions. Then issues and overdue actions.',
   int: 'Plan & Gantt: record progress on exit tasks and milestones. Then hold any readiness interviews due.',
-  cr: 'TSA Changes: change requests waiting for the Change Forum. Process date changes here so the register follows the decision.',
+  cr: 'TSA Changes: review New requests (send each to its forum or reject it), then record the forums\' decisions. Process date changes here so the register follows the decision.',
   tpc: 'Third Parties: vendor consents still outstanding. Chase those blocking a service from moving across.',
   drwo: 'Data Requests: requests and work orders due or overdue. Follow up with the other party.',
   cost: 'TSA Cost Tracker: check this month\'s fees, changes and credits are in and look right.',
@@ -274,6 +274,7 @@ export default {
         h('div.page-head',
           h('div', h('div.band-kicker', `${n.ProgName || 'TransitionSuite'} · ${fmtMonth(RD)}`), h('h1', hello), h('p.lede', intro)),
           h('button.btn.btn-ghost', { type: 'button', onclick: () => go('raid', { add: true }) }, 'Add risk or issue'),
+          h('button.btn.btn-ghost', { type: 'button', onclick: () => go('request') }, 'Request a change'),
           h('button.btn.btn-onband', { type: 'button', onclick: () => go('pack') }, 'Produce governance pack')),
         tiles),
       ctx.preview ? h('div.banner', h('b', 'Browser preview.'), 'You are looking at the demo workbook outside Excel. Edits are kept until you reload and calculated values do not update. In Excel, every change goes straight into the workbook.') : null,

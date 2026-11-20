@@ -1,10 +1,10 @@
 // Home's one-page health check: ten cards, each a number, a small chart and the few items that need attention.
 // Everything is worked out live from the workbook: alerts from today (asOf), reporting items from the reporting date (RD). Cards for parts of the Hub
 // a programme does not use (the Use_ set-up answers, or a tier without that sheet) are left out.
-import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.12.0.20261120045426';
-import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.12.0.20261120045426';
-import { readinessOf } from '../readiness.js?v=0.12.0.20261120045426';
-import { reportsIn } from '../counts.js?v=0.12.0.20261120045426';
+import { h, fmtDate, fmtMonth, plural, ed, fromSerial, toSerial, team, asOf } from '../util.js?v=0.12.1.20261120053858';
+import { COL, donut, stackBar, columns, meter } from '../charts.js?v=0.12.1.20261120053858';
+import { readinessOf } from '../readiness.js?v=0.12.1.20261120053858';
+import { reportsIn } from '../counts.js?v=0.12.1.20261120053858';
 
 export const HEALTH_TABLES = ['tblREG', 'tblTPC', 'tblOBL', 'tblActions', 'tblSLA', 'tblStatus', 'tblWorkstreams', 'tblDataReq', 'tblWO',
   'tblDay1', 'tblFirst100', 'tblPlan', 'tblChange', 'tblInvoices', 'tblCostLines', 'tblReadiness', 'tblPeople', 'tblTSA'];
@@ -178,14 +178,16 @@ export function healthCheck(ctx) {
   if (store.has('tblChange') && use('Mod_CR')) {
     const cr = store.records('tblChange');
     const waiting = cr.filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status')));
-    const fresh = waiting.filter((r) => num(r.get('Raised on')) >= T - 30 || /^New/i.test(r.get('Status')));
-    const plans = waiting.filter((r) => r.get('Request type') === 'Plan change').length;   // brief 4.8: plan changes waiting for the change forum
-    const items = waiting.sort((a, b) => num(b.get('Raised on')) - num(a.get('Raised on'))).map((r) => ({ when: r.get('Status'), late: num(r.get('Decision due')) && num(r.get('Decision due')) < T, what: `${r.get('CR ID')} ${r.get('Title') || r.get('Request type')}${num(r.get('Decision due')) ? ` · decide by ${fmtDate(num(r.get('Decision due')), true)}` : ''}` }));
+    // New: sent in on the change request form, not yet reviewed (P1); listed first. The sheet's Home uses the same rule (crNew).
+    const fresh = waiting.filter((r) => /^New/i.test(r.get('Status')));
+    const plans = waiting.filter((r) => r.get('Request type') === 'Plan change' && !/^New/i.test(r.get('Status'))).length;   // brief 4.8: plan changes waiting for the change forum
+    const items = waiting.sort((a, b) => (/^New/i.test(b.get('Status')) - /^New/i.test(a.get('Status'))) || num(b.get('Raised on')) - num(a.get('Raised on'))).map((r) => ({ when: /^New/i.test(r.get('Status')) ? 'New: review' : r.get('Status'), late: num(r.get('Decision due')) && num(r.get('Decision due')) < T, what: `${r.get('CR ID')} ${r.get('Title') || r.get('Request type')}${num(r.get('Decision due')) ? ` · decide by ${fmtDate(num(r.get('Decision due')), true)}` : ''}` }));
     cards.push(card({
-      title: 'Change requests', big: String(waiting.length), bigSub: `awaiting a decision (${fresh.length} new in 30 days${plans ? `; ${plans} plan change${plans > 1 ? 's' : ''} waiting for the change forum` : ''})`,
+      title: 'Change requests', big: String(waiting.length), bigSub: `awaiting a decision (${fresh.length} new to review${plans ? `; ${plans} plan change${plans > 1 ? 's' : ''} waiting for the change forum` : ''})`,
       tone: items.some((i) => i.late) ? 'red' : waiting.length ? 'amber' : 'ok',
       chart: donut([{ v: cr.length - waiting.length, c: COL.g, label: 'Decided' }, { v: waiting.length, c: COL.a, label: 'Awaiting a decision' }], { size: 84, centre: String(cr.length), caption: 'in total', label: 'Change requests' }),
-      items, more: items.length - 4, empty: 'No change requests waiting.'
+      items, more: items.length - 4, empty: 'No change requests waiting.',
+      open: () => go('changes', fresh.length ? { filter: 's:New' } : null), openLabel: fresh.length ? 'Review new requests' : 'TSA changes'
     }));
   }
 

@@ -1,8 +1,8 @@
 // Shared screen for the Day 1 checklist and the first 100 days plan: a long task list with
 // filters, a status you can change in the row, an edit panel, add and delete.
-import { h, fmtDate, toast, plural, asOf } from '../util.js?v=0.12.0.20261120045426';
-import { openPlanImport } from '../planimport.js?v=0.12.0.20261120045426';
-import { buildForm } from '../form.js?v=0.12.0.20261120045426';
+import { h, fmtDate, toast, plural, asOf } from '../util.js?v=0.12.1.20261120053858';
+import { openPlanImport } from '../planimport.js?v=0.12.1.20261120053858';
+import { buildForm } from '../form.js?v=0.12.1.20261120053858';
 
 export function checklist(cfg) {
   // cfg: { t, title, lede, id, dueLabel, extraTile(store, recs), lateTest(r, RD), statusTags }

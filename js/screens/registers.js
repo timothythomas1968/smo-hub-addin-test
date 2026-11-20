@@ -1,10 +1,13 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.0.20261120045426';
-import { buildForm, personLabel } from '../form.js?v=0.12.0.20261120045426';
-import { LIVE } from '../live.js?v=0.12.0.20261120045426';
-import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.0.20261120045426';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.1.20261120053858';
+import { buildForm, personLabel } from '../form.js?v=0.12.1.20261120053858';
+import { LIVE } from '../live.js?v=0.12.1.20261120053858';
+import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.1.20261120053858';
+import { openReview, isNew } from '../crreview.js?v=0.12.1.20261120053858';
+import { openCRImport } from '../crimport.js?v=0.12.1.20261120053858';
+import { requestLines } from '../crform.js?v=0.12.1.20261120053858';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
@@ -33,6 +36,7 @@ export function registerScreen(cfg) {
       const rows = all.filter(tests[ui.f][1]).filter(match);
       if (ui.selId != null) { const f = all.find((r) => String(r.get(cfg.id)) === String(ui.selId)); if (f) ui.sel = f.i; ui.selId = null; }
       let sel = all.find((r) => r.i === ui.sel) || null;   // selected by row: an ID is only known after the workbook recalculates
+      if (sel && !ui.adding && rows.length && !rows.includes(sel) && ui.f !== 'all') sel = null;   // hidden by the filter: show the first one shown instead
       if (!sel && !ui.adding && rows.length) { sel = rows[0]; ui.sel = sel.i; }
       const rerender = () => ctx.rerender();
       const fmt = (r, [hd, , kind]) => {
@@ -64,7 +68,9 @@ export function registerScreen(cfg) {
         h('div.page-head',
           h('div', h('h1', ed(cfg.title)), h('p.lede', ed(cfg.lede))),
           h('button.btn', { type: 'button', onclick: () => store.show(cfg.t, sel ? sel.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
+          cfg.head ? cfg.head(ctx) : null,
           h('button.btn.btn-primary', { type: 'button', onclick: () => { ui.adding = true; ui.sel = null; rerender(); } }, `+ Add ${cfg.one || 'an item'}`)),
+        cfg.banner ? cfg.banner(ctx, all, (k) => { ui.f = k; rerender(); }) : null,
         h('div.filters', search,
           Object.entries(tests).map(([k, [label, fn]]) => h('button.fchip', { type: 'button', 'aria-pressed': String(ui.f === k), onclick: () => { ui.f = k; rerender(); } }, label, h('span.n', String(all.filter(fn).length))))),
         h('div.row-wrap', table, ui.adding ? addPanel(ctx, cfg, ui) : editPanel(ctx, cfg, ui, sel)));
@@ -158,13 +164,18 @@ export const PEOPLE_CFG = {
 };
 export const changes = registerScreen({
   t: 'tblChange', title: 'TSA changes', one: 'a change request', id: 'CR ID', name: 'Title', status: 'Status', live: 'Request type', also: ['tblTSA'],
-  lede: 'Every change request: extensions, early exits, date changes, disputes and their decisions. To move a planned exit date, use Process a date change on the TSA register.',
-  placeholder: 'Search by CR, service or title', search: ['CR ID', 'TSA ID', 'Title', 'Request type'],
-  cols: [['CR ID'], ['Title'], ['Request type'], ['TSA ID'], ['Decision due', null, 'date'], ['Status']],
+  lede: 'Every change request: extensions, early exits, fees, scope, service levels, plan and date changes, disputes and their decisions. Requests from the change request form arrive as New: review each one to send it to its forum or reject it.',
+  placeholder: 'Search by CR, service, title or who asked', search: ['CR ID', 'TSA ID', 'Title', 'Request type', 'Requested by', 'Item ID'],
+  cols: [['CR ID'], ['Title'], ['Request type'], ['TSA ID'], ['Decision due', null, 'date'], ['Status', null, 'chip']],
   late: (r, T) => /^(Draft|Submitted|Pending|Under review)$/.test(r.get('Status')) && num(r.get('Decision due')) && num(r.get('Decision due')) < T,
-  // plan changes and calendar date changes are decided here (exit date changes also from the TSA register)
-  actions: (ctx, rec) => (OPEN_CR.test(String(rec.get('Status'))) && /^(Plan change|Date change|Contract change|Extend|Early exit)$/.test(String(rec.get('Request type')))
-    ? h('button.btn', { type: 'button', onclick: () => openDecision(ctx, rec) }, 'Record decision') : null)
+  head: (ctx) => [h('button.btn', { type: 'button', title: 'Change request form files sent in by people without the Hub', onclick: () => openCRImport(ctx) }, 'Import change requests'),
+    h('button.btn', { type: 'button', onclick: () => ctx.go('request') }, 'Request a change')],
+  // New requests from the change request form (P1): an amber banner, as on the TSA Changes sheet
+  banner: (ctx, all, pick) => { const k = all.filter(isNew).length; return k ? h('div.banner.warn', { style: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' } }, h('span', h('b', `${k} new change request${k === 1 ? '' : 's'} to review. `), 'Select one and choose Review: send it to its forum, or reject it.'), h('button.btn.btn-sm', { type: 'button', onclick: () => pick('s:New') }, 'Show them')) : null; },
+  // New: the programme office's review. Then the forum's decision on anything waiting (exit date changes also from the TSA register)
+  actions: (ctx, rec) => (isNew(rec) ? [h('button.btn', { type: 'button', style: { background: 'var(--a-bg)' }, onclick: () => openReview(ctx, rec), title: requestLines(rec).join(' ') }, 'Review')]
+    : OPEN_CR.test(String(rec.get('Status'))) && String(rec.get('Request type')) !== 'Forecast change'
+      ? h('button.btn', { type: 'button', onclick: () => openDecision(ctx, rec) }, 'Record decision') : null)
 });
 export const invoices = registerScreen({
   t: 'tblInvoices', title: 'Invoices log', one: 'an invoice', id: 'Invoice ID', name: 'Their invoice number', status: 'Status', live: 'Service month', use: 'Use_INV',

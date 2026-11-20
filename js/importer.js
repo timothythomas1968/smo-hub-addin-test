@@ -3,8 +3,8 @@
 //   3. checks before writing, with matching of workstreams and people;  4. how to write (replace, add, update);
 //   5. a summary of what will be written, then write it and show the result.
 // The file is read in the browser (xlsxread.js) and never leaves the computer.
-import { h, toast, fmtDate, ed, isUS, plural } from './util.js?v=0.12.0.20261120045426';
-import { readFile } from './xlsxread.js?v=0.12.0.20261120045426';
+import { h, toast, fmtDate, ed, isUS, plural } from './util.js?v=0.12.1.20261120053858';
+import { readFile } from './xlsxread.js?v=0.12.1.20261120053858';
 
 const MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
 const serial = (y, m, d) => { const t = Date.UTC(y, m, d); const x = new Date(t); return x.getUTCMonth() === m && x.getUTCDate() === d ? Math.round(t / 864e5) + 25569 : null; };
