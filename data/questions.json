@@ -425,6 +425,16 @@
     "ai": true
    },
    {
+    "name": "PayInstr",
+    "q": "What payment details should go on the invoices you issue? (leave blank if you issue none)",
+    "fmt": "text",
+    "dv": null,
+    "help": "Bank, account name and number, sort code or routing number, and the reference to quote. Used by default on Our Invoice; change it there for one invoice.",
+    "example": "Quillmere Life Ltd, Example Bank, account 00000000, sort code 00-00-00, quote the invoice number",
+    "required": false,
+    "ai": false
+   },
+   {
     "name": "VarThr",
     "q": "How far can an invoice differ from the expected fees before it is flagged?",
     "fmt": "pct",

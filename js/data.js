@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.3.20261120063500';
+import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.4.20261120065822';
 
 const SCALAR_NAMES = ['Today', 'RepFreq', 'RepDay', 'PlanXWS', 'PlanMSCR', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
@@ -240,6 +240,34 @@ export class Store {
     await this.reloadNames();
     this.file = await this.src.fileName();
     if (this.schema.tblPeople) await this.need(['tblPeople']);   // for "Name (role)" in every people dropdown
+    await this.need(['tblSettings']).catch(() => {});             // the panel's settings, kept in the workbook (Lists, Panel settings)
+    this.installSettings();
+  }
+
+  /** The panel's settings live in the workbook (v0.11 item 5; build waves P5): the Panel settings table on the Lists sheet, so they
+   *  travel with the file and show in Excel's change history. A workbook without that table (before v0.12.4) keeps using Office's
+   *  document settings, and a setting not yet in the table is read from there too, so nothing is lost when a Hub is upgraded.
+   *  The logo stays in the document settings: a picture is too large for a cell. */
+  installSettings() {
+    if (this.settingsInstalled) return;
+    this.settingsInstalled = true;
+    const src = this.src, get0 = src.getSetting.bind(src), set0 = src.setSetting.bind(src), store = this;
+    const inCells = (k) => k !== 'logo' && !String(k).startsWith('Office.');
+    const row = (k) => { const t = store.t.tblSettings; return t ? t.rows.find((x) => String(x.v[t.idx.Setting] ?? '') === k) : null; };
+    src.getSetting = (k) => {
+      const t = store.t.tblSettings, r = inCells(k) ? row(k) : null;
+      if (r) { const v = r.v[t.idx.Value]; if (v !== '' && v != null) { try { return JSON.parse(v); } catch (e) { return v; } } }
+      return get0(k);
+    };
+    src.setSetting = async (k, v) => {
+      await set0(k, v);
+      const t = store.t.tblSettings;
+      if (!t || !inCells(k)) return;
+      const text = v == null ? '' : JSON.stringify(v);
+      if (text.length > 32000) return;   // longer than a cell holds: the document setting keeps it
+      try { const r = row(k); if (r) await store.save('tblSettings', r.i, { Value: text }, { force: true }); else if (text) await store.add('tblSettings', { Setting: k, Value: text }); }
+      catch (e) { console.warn('panel setting', k, e); }
+    };
   }
 
   /** "Workstream lead, CON" for a person on the People sheet, or '' if not found. */
