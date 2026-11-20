@@ -1,8 +1,8 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.2.20261120060231';
-import { packDeck } from '../packdeck.js?v=0.12.2.20261120060231';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.2.20261120060231';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.3.20261120063500';
+import { packDeck } from '../packdeck.js?v=0.12.3.20261120063500';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.3.20261120063500';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -278,7 +278,9 @@ function costSection(store, tsa, cap, rec, drill = (t) => t) {
     h('thead', h('tr', ['Year', 'Forward fees (we pay)', 'Reverse fees (we receive)'].map((x, i) => h('th', { style: { textAlign: i ? 'right' : 'left', color: 'var(--muted)', fontSize: '11px', padding: '4px 6px', borderBottom: '1px solid var(--line)' } }, x)))),
     h('tbody', Object.entries(years).map(([y, v]) => h('tr', [drill(y, 'finance', { year: Number(y) }), fm(v.f), fm(v.r)].map((c, i) => h('td', { style: { textAlign: i ? 'right' : 'left', padding: '6px', borderBottom: '1px solid var(--line-soft)' } }, c))))));
   // bar chart
-  const qs = Object.entries(quarters);
+  // by quarter while that fits (three years); a longer programme is charted by year (Tim, 20 Nov 2026: up to five years)
+  let qs = Object.entries(quarters);
+  if (qs.length > 12) qs = Object.entries(qs.reduce((o, [q, v]) => { const y = '20' + q.slice(-2); o[y] = o[y] || { v: 0, past: true, k: v.k }; o[y].v += v.v; if (!v.past) o[y].past = false; return o; }, {}));
   const max = Math.max(...qs.map(([, v]) => v.v)) || 1;
   const W = 640, H = 200, padL = 46, padB = 26, bw = (W - padL - 10) / qs.length;
   const ns = 'http://www.w3.org/2000/svg';

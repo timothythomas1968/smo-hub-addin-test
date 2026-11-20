@@ -5,13 +5,13 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.2.20261120060231';
+import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.3.20261120063500';
 
 const SCALAR_NAMES = ['Today', 'RepFreq', 'RepDay', 'PlanXWS', 'PlanMSCR', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
   'QDone', 'QReq',   // set-up progress, the same cells Start Here shows
   'WF_Mark', 'WF_ToDo', 'WF_cal', 'WF_start', 'WF_cost', 'WF_inv', 'WF_ourinv', 'WF_cons', 'WF_pack', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
-  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR'];
+  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR', 'SpanEnd', 'SpanMonths'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID', 'WRS_WS', 'WRS_Sum', 'TSA_NoTax', 'DCR_Key', 'DCR_Rule', 'MV_Forum', 'MV_From', 'MV_To'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
 const FALLBACK_LISTS = { Workstream: 'WS_Code', Owner: 'L_People', 'TSA ID': 'TSA_ID' };
@@ -135,6 +135,23 @@ export class ExcelSource {
       sheets.items.forEach((w) => { if (w.visibility !== 'VeryHidden' && !want(w) && w.name !== active.name && w.visibility === 'Visible') w.visibility = Excel.SheetVisibility.hidden; });
       await ctx.sync();
     });
+  }
+
+  /** The months after the programme's span (Tim, 20 Nov 2026): hide the columns whose month header (in each named header row) is after `end`,
+   *  and show the rest. A protected sheet that refuses is left as it is: the workbook greys those months anyway. */
+  async hideMonthsAfter(names, end) {
+    if (!end) return;
+    for (const nm of names) {
+      try {
+        await Excel.run(async (ctx) => {
+          const it = ctx.workbook.names.getItemOrNullObject(nm); await ctx.sync();
+          if (it.isNullObject) return;
+          const r = it.getRange(); r.load('values'); await ctx.sync();
+          (r.values[0] || []).forEach((v, i) => { r.getColumn(i).columnHidden = typeof v === 'number' && v > end; });
+          await ctx.sync();
+        });
+      } catch (e) { console.warn('hide months', nm, e); }
+    }
   }
 
   getSetting(k) { try { return Office.context.document.settings.get(k); } catch (e) { return null; } }

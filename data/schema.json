@@ -2041,6 +2041,222 @@
     "sec": "Actual spend by month"
    },
    {
+    "k": "A37",
+    "h": "M37",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A38",
+    "h": "M38",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A39",
+    "h": "M39",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A40",
+    "h": "M40",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A41",
+    "h": "M41",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A42",
+    "h": "M42",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A43",
+    "h": "M43",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A44",
+    "h": "M44",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A45",
+    "h": "M45",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A46",
+    "h": "M46",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A47",
+    "h": "M47",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A48",
+    "h": "M48",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A49",
+    "h": "M49",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A50",
+    "h": "M50",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A51",
+    "h": "M51",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A52",
+    "h": "M52",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A53",
+    "h": "M53",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A54",
+    "h": "M54",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A55",
+    "h": "M55",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A56",
+    "h": "M56",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A57",
+    "h": "M57",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A58",
+    "h": "M58",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A59",
+    "h": "M59",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
+    "k": "A60",
+    "h": "M60",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Actual spend in this month, in the line currency. Month shown above.",
+    "sec": "Actual spend by month"
+   },
+   {
     "k": "SShare",
     "h": "Seller share %",
     "t": "C",
@@ -4776,6 +4992,390 @@
    {
     "k": "M36",
     "h": "M36",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M37",
+    "h": "M37",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M38",
+    "h": "M38",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M39",
+    "h": "M39",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M40",
+    "h": "M40",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M41",
+    "h": "M41",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M42",
+    "h": "M42",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M43",
+    "h": "M43",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M44",
+    "h": "M44",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M45",
+    "h": "M45",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M46",
+    "h": "M46",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M47",
+    "h": "M47",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M48",
+    "h": "M48",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M49",
+    "h": "M49",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M50",
+    "h": "M50",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M51",
+    "h": "M51",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M52",
+    "h": "M52",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M53",
+    "h": "M53",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M54",
+    "h": "M54",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M55",
+    "h": "M55",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M56",
+    "h": "M56",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M57",
+    "h": "M57",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M58",
+    "h": "M58",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M59",
+    "h": "M59",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Met",
+      "Concern",
+      "Missed",
+      "N/A"
+     ]
+    },
+    "n": "Met, Concern (met but quality worries) or Missed. Past months are suggested as Met: type over only the exceptions.",
+    "sec": "Result by month (months shown above)"
+   },
+   {
+    "k": "M60",
+    "h": "M60",
     "t": "D",
     "f": "text",
     "dv": {

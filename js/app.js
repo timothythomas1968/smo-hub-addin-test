@@ -1,29 +1,29 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.12.2.20261120060231';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.12.2.20261120060231';
-import { openRDDialog } from './rd.js?v=0.12.2.20261120060231';
-import home from './screens/home.js?v=0.12.2.20261120060231';
-import register from './screens/register.js?v=0.12.2.20261120060231';
-import raid from './screens/raid.js?v=0.12.2.20261120060231';
-import dates from './screens/dates.js?v=0.12.2.20261120060231';
-import interview from './screens/interview.js?v=0.12.2.20261120060231';
-import report from './screens/report.js?v=0.12.2.20261120060231';
-import invoice from './screens/invoice.js?v=0.12.2.20261120060231';
-import pack from './screens/pack.js?v=0.12.2.20261120060231';
-import plan from './screens/plan.js?v=0.12.2.20261120060231';
-import setup from './screens/setup.js?v=0.12.2.20261120060231';
-import contents from './screens/contents.js?v=0.12.2.20261120060231';
-import { tidyTabs } from './tabs.js?v=0.12.2.20261120060231';
-import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.12.2.20261120060231';
-import { day1, f100 } from './screens/checklist.js?v=0.12.2.20261120060231';
-import consolidated from './screens/consolidated.js?v=0.12.2.20261120060231';
-import finance from './screens/finance.js?v=0.12.2.20261120060231';
-import execSummary from './screens/exec.js?v=0.12.2.20261120060231';
-import people from './screens/people.js?v=0.12.2.20261120060231';
-import request from './screens/request.js?v=0.12.2.20261120060231';
-import { changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.12.2.20261120060231';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.12.3.20261120063500';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.12.3.20261120063500';
+import { openRDDialog } from './rd.js?v=0.12.3.20261120063500';
+import home from './screens/home.js?v=0.12.3.20261120063500';
+import register from './screens/register.js?v=0.12.3.20261120063500';
+import raid from './screens/raid.js?v=0.12.3.20261120063500';
+import dates from './screens/dates.js?v=0.12.3.20261120063500';
+import interview from './screens/interview.js?v=0.12.3.20261120063500';
+import report from './screens/report.js?v=0.12.3.20261120063500';
+import invoice from './screens/invoice.js?v=0.12.3.20261120063500';
+import pack from './screens/pack.js?v=0.12.3.20261120063500';
+import plan from './screens/plan.js?v=0.12.3.20261120063500';
+import setup from './screens/setup.js?v=0.12.3.20261120063500';
+import contents from './screens/contents.js?v=0.12.3.20261120063500';
+import { tidyTabs } from './tabs.js?v=0.12.3.20261120063500';
+import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.12.3.20261120063500';
+import { day1, f100 } from './screens/checklist.js?v=0.12.3.20261120063500';
+import consolidated from './screens/consolidated.js?v=0.12.3.20261120063500';
+import finance from './screens/finance.js?v=0.12.3.20261120063500';
+import execSummary from './screens/exec.js?v=0.12.3.20261120063500';
+import people from './screens/people.js?v=0.12.3.20261120063500';
+import request from './screens/request.js?v=0.12.3.20261120063500';
+import { changes, invoices, obligations, thirdparties, datareq, workorders } from './screens/registers.js?v=0.12.3.20261120063500';
 
-export const VERSION = '0.12.2';
+export const VERSION = '0.12.3';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -246,7 +246,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.12.2.20261120060231')).json();
+    const schema = await (await fetch('data/schema.json?v=0.12.3.20261120063500')).json();
     let src;
     if (inWindow) { src = new RelaySource(); await src.connect(); }
     else if (inExcel) src = new ExcelSource();

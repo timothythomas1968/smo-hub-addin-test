@@ -6,7 +6,7 @@
 //  - parts switched off in set-up are hidden, and so is everything else (the registers and logs, the dividers).
 // The panel's Contents screen opens any sheet, hidden or not (ExcelSource.showRange shows a hidden sheet first).
 // Users can turn tidying off there (setting 'tidy-tabs' = 'off'); the workbook's own Contents sheet lists everything.
-import { ed, asOf } from './util.js?v=0.12.2.20261120060231';
+import { ed, asOf } from './util.js?v=0.12.3.20261120063500';
 
 export const MAIN = ['Home', 'Contents', 'Calendar', 'TSA Register', 'TSA Cost Tracker', 'One-off Costs', 'Consolidated WS Reporting', 'RAID Summary',
   'Actions', 'Plan & Gantt', 'Readiness Interview'];
@@ -34,6 +34,8 @@ export async function tidyTabs(store) {
   if (store.src.getSetting('tidy-tabs') === 'off') return;
   await store.need(['tblDay1', 'tblFirst100']).catch(() => {});
   await store.src.setVisibleSheets(tabsToShow(store), ALWAYS_HIDDEN.map(ed));
+  // the monthly grids hold five years: hide the months after the programme's span (SpanEnd, on Home)
+  if (store.src.hideMonthsAfter && Number(store.names.SpanEnd)) await store.src.hideMonthsAfter(['FEE_Months', 'CM_Hdr', 'SLA_Hdr'], Number(store.names.SpanEnd));
 }
 
 // The panel's Contents: the same groups and wording as the workbook's Contents sheet (polish_part.py, PURPOSE)

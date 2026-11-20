@@ -3,9 +3,9 @@
 // Built from the same figures as the pack on screen (pack.js records them as it draws), in direction B: a navy band, big numbers,
 // white space. Every content slide leads with its message, a sentence worked out from the figures, like a consultant's action title;
 // the evidence (cards, tables, a chart) sits below it. Everything stays native and editable: text, shapes, tables, charts.
-import { Deck, W, H } from './pptx.js?v=0.12.2.20261120060231';
-import { team, ed, unit } from './util.js?v=0.12.2.20261120060231';
-import { mshort } from './screens/health.js?v=0.12.2.20261120060231';
+import { Deck, W, H } from './pptx.js?v=0.12.3.20261120063500';
+import { team, ed, unit } from './util.js?v=0.12.3.20261120063500';
+import { mshort } from './screens/health.js?v=0.12.3.20261120063500';
 
 const NAVY = '003A70', NAVY2 = '0B4A87', INK = '212529', MUTED = '5A6573', HEAD = '3A4250', ONNAVY = 'C4D3E6', EYEBROW = '8FB8E6';
 const LINE = 'D5DCE5', SOFT = 'ECEFF3', BAND = 'F7F9FC', SEL = 'E6EEF7', BLUE = '007BFF';
@@ -160,20 +160,25 @@ export async function packDeck(model) {
     const msg = yrs.length ? `Forward fees forecast ${yrs.map(([y, a]) => `${sh(a)} in ${y}`).join(' and ')}` + (yrs.some(([, , b]) => b) ? `; we receive ${sh(yrs.reduce((t, [, , b]) => t + (Number(b) || 0), 0))} for reverse services.` : '.') : 'No TSA fees recorded yet.';
     const s = content(sec.src, sec.title, msg);
     const lw = 11.6;
-    yrs.slice(0, 3).forEach(([y, a], i) => {
-      const yy = TOP + i * 2.15;
-      s.rect(L, yy, lw, 1.85, { fill: 'FFFFFF', line: LINE, round: true });
-      s.rect(L, yy, 0.18, 1.85, { fill: NAVY, line: null });
-      s.text(L + 0.6, yy + 0.2, lw - 1, 0.55, `${y} · FORWARD FEES (WE PAY)`, { size: 9, bold: true, color: MUTED });
-      s.text(L + 0.6, yy + 0.7, lw - 1, 1.0, m(a), { size: 22, bold: true, color: INK });
+    // one tile per year of the programme (Tim, 20 Nov 2026: up to five years): one column up to three years, then two columns
+    const cols = yrs.length > 3 ? 2 : 1, tw = cols === 1 ? lw : (lw - 0.3) / 2, rows = Math.ceil(Math.min(yrs.length, 6) / cols);
+    yrs.slice(0, 6).forEach(([y, a], i) => {
+      const xx = L + (i % cols) * (tw + 0.3), yy = TOP + Math.floor(i / cols) * 2.15;
+      s.rect(xx, yy, tw, 1.85, { fill: 'FFFFFF', line: LINE, round: true });
+      s.rect(xx, yy, 0.18, 1.85, { fill: NAVY, line: null });
+      s.text(xx + 0.6, yy + 0.2, tw - 1, 0.55, cols === 1 ? `${y} · FORWARD FEES (WE PAY)` : `${y} · WE PAY`, { size: 9, bold: true, color: MUTED });
+      s.text(xx + 0.6, yy + 0.7, tw - 1, 1.0, m(a), { size: cols === 1 ? 22 : 18, bold: true, color: INK });
     });
-    const ty = TOP + Math.min(3, yrs.length) * 2.15 + 0.2;
+    const ty = TOP + rows * 2.15 + 0.2;
     if (ty + 0.9 * (f.years.length + 1) < BOTTOM)
       s.table(L, ty, [2.6, 4.5, 4.5], [['Year', 'We pay', 'We receive'], ...f.years.map(([y, a, b], i) => [y, { t: m(a), align: 'r', fill: i % 2 ? BAND : null }, { t: m(b), align: 'r', fill: i % 2 ? BAND : null }])], { size: 11, rowH: 0.8 });
     const cx = L + lw + 0.9, cwid = R - cx;
-    s.text(cx, TOP - 0.1, cwid, 0.6, 'FORWARD FEES BY QUARTER', { size: 9, bold: true, color: MUTED });
-    s.chart(cx, TOP + 0.5, cwid, BOTTOM - TOP - 0.6, { cats: f.quarters.map((q) => q[0]), stacked: true, numFmt: `"${f.sym}"#,##0,"k"`,
-      series: [{ name: 'Invoiced or to date', values: f.quarters.map((q) => Math.round(q[1])), color: NAVY }, { name: 'Forecast', values: f.quarters.map((q) => Math.round(q[2])), color: 'AAB8C9' }] });
+    // by quarter while that fits (three years); a longer programme is shown by year, so the chart stays readable
+    const byYear = f.quarters.length > 12;
+    const pts = byYear ? Object.values(f.quarters.reduce((o, q) => { const y = '20' + String(q[0]).slice(-2); o[y] = o[y] || [y, 0, 0]; o[y][1] += q[1]; o[y][2] += q[2]; return o; }, {})) : f.quarters;
+    s.text(cx, TOP - 0.1, cwid, 0.6, byYear ? 'FORWARD FEES BY YEAR' : 'FORWARD FEES BY QUARTER', { size: 9, bold: true, color: MUTED });
+    s.chart(cx, TOP + 0.5, cwid, BOTTOM - TOP - 0.6, { cats: pts.map((q) => q[0]), stacked: true, numFmt: `"${f.sym}"#,##0,"k"`,
+      series: [{ name: 'Invoiced or to date', values: pts.map((q) => Math.round(q[1])), color: NAVY }, { name: 'Forecast', values: pts.map((q) => Math.round(q[2])), color: 'AAB8C9' }] });
   }
 
   // Tables and notes, split across slides by the room the rows need, so nothing is squeezed or runs off the slide

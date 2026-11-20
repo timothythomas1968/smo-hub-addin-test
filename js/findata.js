@@ -3,7 +3,7 @@
 // A service is "running" in a month from its first month (service start, or closing) until it exits: the actual exit date,
 // or else the date being compared (forecast exit, the current plan's planned exit, or the contract's initial end).
 // Fees are the monthly fee in the reporting currency; extension mark-ups are left out, as on Home.
-import { fromSerial, toSerial, asOf } from './util.js?v=0.12.2.20261120060231';
+import { fromSerial, toSerial, asOf } from './util.js?v=0.12.3.20261120063500';
 
 const num = (v) => Number(v) || 0;
 const mStart = (n) => { const d = fromSerial(n); return d ? toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))) : 0; };
@@ -23,7 +23,8 @@ export function financeData(store) {
   }));
   // the months the programme runs: from the first service month to the month after the last exit (at most six years)
   const starts = rec.map((x) => x.start).filter(Boolean), ends = rec.flatMap((x) => [x.actual, x.fc, x.plan, x.contract]).filter(Boolean);
-  const m0 = mStart(Math.min(...(starts.length ? starts : [close || RD || T]))), m1 = mStart(Math.max(...(ends.length ? ends : [m0])));
+  // ... and at least to the end of the programme's span (SpanEnd: the longest the programme can run, up to five years)
+  const m0 = mStart(Math.min(...(starts.length ? starts : [close || RD || T]))), m1 = mStart(Math.max(...(ends.length ? ends : [m0]), num(n.SpanEnd)));
   const months = [];
   for (let m = m0; m <= m1 && months.length < 72; m = addM(m, 1)) months.push(m);
   const running = (x, m, key) => x.start && x.start <= m && (x.actual || x[key] || 9e9) > m;
@@ -46,7 +47,7 @@ export function financeData(store) {
     const rate = num(r.get('Rate')) || 1, fac = num(r.get('Forecast at completion (reporting currency)'));
     ocBudget += num(r.get('Budget (reporting currency)')); ocFac += fac; ocActual += num(r.get('Actual to date (reporting currency)'));
     let spent = 0;
-    for (let i = 0; i < 36; i++) {
+    for (let i = 0; i < 60; i++) {
       const m = addM(mStart(close || m0), i);
       if (m > RD) break;
       const v = num(r.get('M' + String(i + 1).padStart(2, '0'))) * rate;

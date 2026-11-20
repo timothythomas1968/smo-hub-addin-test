@@ -4,11 +4,11 @@
 // Improved for the executives (Tim, 20 Nov 2026; build waves P2): the status trend over the last six reporting periods,
 // the top risks by score, cost against the fee cap and the budget, exits in the next 90 days with their readiness,
 // extensions requested and their cost, milestones slipping, and decisions overdue.
-import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf, periodStart, periodLabel, plural } from '../util.js?v=0.12.2.20261120060231';
-import { COL, donut, columns, meter } from '../charts.js?v=0.12.2.20261120060231';
-import { financeData } from '../findata.js?v=0.12.2.20261120060231';
-import { serviceCounts } from '../counts.js?v=0.12.2.20261120060231';
-import { mshort } from './health.js?v=0.12.2.20261120060231';
+import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf, periodStart, periodLabel, plural } from '../util.js?v=0.12.3.20261120063500';
+import { COL, donut, columns, meter } from '../charts.js?v=0.12.3.20261120063500';
+import { financeData } from '../findata.js?v=0.12.3.20261120063500';
+import { serviceCounts } from '../counts.js?v=0.12.3.20261120063500';
+import { mshort } from './health.js?v=0.12.3.20261120063500';
 
 export default {
   tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines', 'tblStatus', 'tblWorkstreams', 'tblDecisions', 'tblRisks', 'tblChange', 'tblPlan'],

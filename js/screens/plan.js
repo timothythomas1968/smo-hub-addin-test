@@ -1,8 +1,8 @@
 // Exit plan: the Plan & Gantt register drawn as a Gantt chart, grouped by service, with an edit panel.
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.12.2.20261120060231';
-import { buildForm } from '../form.js?v=0.12.2.20261120060231';
-import { openPlanChange } from '../daterules.js?v=0.12.2.20261120060231';
-import { openPlanImport } from '../planimport.js?v=0.12.2.20261120060231';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, ed, asOf } from '../util.js?v=0.12.3.20261120063500';
+import { buildForm } from '../form.js?v=0.12.3.20261120063500';
+import { openPlanChange } from '../daterules.js?v=0.12.3.20261120063500';
+import { openPlanImport } from '../planimport.js?v=0.12.3.20261120063500';
 
 const T = 'tblPlan';
 const ui = { ws: '', q: '', open: null, sel: null, lateOnly: false, critOnly: false, horizon: 12, exited: false };
@@ -48,9 +48,11 @@ export default {
     if (ui.open == null) ui.open = new Set(shown.filter((g) => g.rows.some(late) || (Number(tsa[g.id]?.get('Forecast exit date')) <= RD + 120 && Number(tsa[g.id]?.get('Forecast exit date')) >= RD)).slice(0, 6).map((g) => g.id));
 
     // time axis: from three months before the reporting date for `horizon` months
-    const rd = fromSerial(RD);
-    const m0 = new Date(Date.UTC(rd.getUTCFullYear(), rd.getUTCMonth() - 3, 1));
-    const nM = ui.horizon + 3;
+    // or, for the whole programme, from closing to the end of the span (SpanEnd) with the months grouped in quarters
+    const rd = fromSerial(RD), whole = ui.horizon === 'all';
+    const cl = fromSerial(Number(store.names.CloseDate) || RD), se = fromSerial(Number(store.names.SpanEnd) || 0);
+    const m0 = whole ? new Date(Date.UTC(cl.getUTCFullYear(), Math.floor(cl.getUTCMonth() / 3) * 3, 1)) : new Date(Date.UTC(rd.getUTCFullYear(), rd.getUTCMonth() - 3, 1));
+    const nM = whole ? Math.max(12, Math.ceil(((se ? (se.getUTCFullYear() - m0.getUTCFullYear()) * 12 + se.getUTCMonth() - m0.getUTCMonth() + 1 : 36)) / 3) * 3) : ui.horizon + 3;
     const t0 = toSerial(m0), t1 = toSerial(new Date(Date.UTC(m0.getUTCFullYear(), m0.getUTCMonth() + nM, 1)));
     const pct = (d) => Math.max(0, Math.min(100, (d - t0) / (t1 - t0) * 100));
     const LW = 300;   // label column
@@ -58,7 +60,7 @@ export default {
     const monthHead = h('div', { style: { display: 'flex', position: 'sticky', top: 0, zIndex: 2, background: 'var(--selected)', borderBottom: '1px solid var(--line)' } },
       h('div', { style: { width: LW + 'px', flex: `0 0 ${LW}px`, padding: '8px 12px', fontSize: '12px', fontWeight: 700, color: 'var(--navy)' } }, 'Service and activity'),
       h('div', { style: { flex: '1 1 auto', position: 'relative', display: 'flex' } },
-        [...Array(nM).keys()].map((i) => { const d = new Date(Date.UTC(m0.getUTCFullYear(), m0.getUTCMonth() + i, 1)); return h('div', { style: { flex: '1 1 0', fontSize: '11px', fontWeight: 600, color: 'var(--navy)', padding: '8px 0 8px 4px', borderLeft: '1px solid var(--line)' } }, MONTHS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || i === 0 ? ' ' + String(d.getUTCFullYear()).slice(2) : '')); })));
+        (whole ? [...Array(nM / 3).keys()].map((i) => i * 3) : [...Array(nM).keys()]).map((i) => { const d = new Date(Date.UTC(m0.getUTCFullYear(), m0.getUTCMonth() + i, 1)); if (whole) return h('div', { style: { flex: '1 1 0', fontSize: '11px', fontWeight: 600, color: 'var(--navy)', padding: '8px 0 8px 4px', borderLeft: '1px solid var(--line)' } }, `Q${d.getUTCMonth() / 3 + 1}${d.getUTCMonth() === 0 || i === 0 ? ' ' + String(d.getUTCFullYear()).slice(2) : ''}`); return h('div', { style: { flex: '1 1 0', fontSize: '11px', fontWeight: 600, color: 'var(--navy)', padding: '8px 0 8px 4px', borderLeft: '1px solid var(--line)' } }, MONTHS[d.getUTCMonth()] + (d.getUTCMonth() === 0 || i === 0 ? ' ' + String(d.getUTCFullYear()).slice(2) : '')); })));
     // Tim, 2 Nov 2026: the line shows today, not the reporting date (shown only when today is on the chart).
     const TODAY = RD;   // today (the workbook's Today)
     const todayLine = () => (TODAY < t0 || TODAY > t1 ? null : h('div', { title: `Today, ${fmtDate(TODAY)}`, style: { position: 'absolute', top: 0, bottom: 0, left: pct(TODAY) + '%', width: '2px', background: 'var(--blue)', opacity: 0.6 } }));
@@ -132,6 +134,7 @@ export default {
         h('button.fchip', { type: 'button', 'aria-pressed': String(ui.critOnly), title: 'Only activities flagged as on the critical path', onclick: () => go({ critOnly: !ui.critOnly, open: ui.critOnly ? null : new Set(groups.filter((g) => g.rows.some(crit)).map((g) => g.id)) }) }, 'Critical path', h('span.n', String(all.filter(crit).length))),
         h('button.fchip', { type: 'button', 'aria-pressed': String(ui.exited), onclick: () => go({ exited: !ui.exited, open: null }) }, 'Include exited services'),
         [6, 12, 24].map((m) => h('button.fchip', { type: 'button', 'aria-pressed': String(ui.horizon === m), onclick: () => go({ horizon: m }) }, `${m} months`)),
+        h('button.fchip', { type: 'button', 'aria-pressed': String(ui.horizon === 'all'), title: 'From closing to the end of the programme, by quarter', onclick: () => go({ horizon: 'all' }) }, 'Whole programme'),
         h('button.link-btn', { type: 'button', onclick: () => go({ open: new Set(shown.map((g) => g.id)) }) }, 'Expand all'),
         h('button.link-btn', { type: 'button', onclick: () => go({ open: new Set() }) }, 'Collapse all')),
       h('div.row-wrap',
