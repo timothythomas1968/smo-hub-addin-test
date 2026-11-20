@@ -1,5 +1,5 @@
 // Placeholder for screens that are mocked up but not yet built in the working prototype.
-import { h, toast } from '../util.js?v=0.12.1.20261120053858';
+import { h, toast } from '../util.js?v=0.12.2.20261120060231';
 
 export function soon(title, what, table) {
   return {

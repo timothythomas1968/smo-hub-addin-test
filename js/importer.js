@@ -3,8 +3,8 @@
 //   3. checks before writing, with matching of workstreams and people;  4. how to write (replace, add, update);
 //   5. a summary of what will be written, then write it and show the result.
 // The file is read in the browser (xlsxread.js) and never leaves the computer.
-import { h, toast, fmtDate, ed, isUS, plural } from './util.js?v=0.12.1.20261120053858';
-import { readFile } from './xlsxread.js?v=0.12.1.20261120053858';
+import { h, toast, fmtDate, ed, isUS, plural } from './util.js?v=0.12.2.20261120060231';
+import { readFile } from './xlsxread.js?v=0.12.2.20261120060231';
 
 const MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
 const serial = (y, m, d) => { const t = Date.UTC(y, m, d); const x = new Date(t); return x.getUTCMonth() === m && x.getUTCDate() === d ? Math.round(t / 864e5) + 25569 : null; };
@@ -99,7 +99,7 @@ export function importWizard(ctx, cfg) {
         st.rows.length ? h('p.small.muted', { style: { margin: 0 } }, `${st.file.name}: ${plural(data().length, 'row')} under the headings in row ${st.head + 1}.`) : null,
         h('div.small', { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' } },
           h('button.link-btn', { type: 'button', onclick: () => downloadCsv(cfg.template.name, cfg.template.rows) }, 'Download the template (.csv)'),
-          cfg.prompt ? h('button.link-btn', { type: 'button', onclick: () => { st.showPrompt = !st.showPrompt; render(); } }, 'Plan in Word, PDF or MS Project?') : null),
+          cfg.prompt ? h('button.link-btn', { type: 'button', onclick: () => { st.showPrompt = !st.showPrompt; render(); } }, cfg.promptLabel || 'Plan in Word, PDF or MS Project?') : null),
         st.showPrompt ? h('div.banner.info', { style: { margin: 0, whiteSpace: 'pre-wrap' } }, cfg.prompt) : null);
       return box.replaceChildren(head, body, nav(btn('Next: columns', () => { st.step = 2; render(); }, true, !st.rows.length)));
     }
@@ -115,7 +115,7 @@ export function importWizard(ctx, cfg) {
         })));
       const missing = cfg.fields.filter((f) => f.required && !(st.map[f.key] >= 0));
       return box.replaceChildren(head, body, nav(btn('Back', () => { st.step = 1; render(); }, false),
-        btn(missing.length ? `Choose a column for ${missing[0].label}` : 'Next: checks', () => { st.step = 3; render(); }, true, missing.length > 0)));
+        btn(missing.length ? `Choose a column for ${missing[0].label}` : 'Next: checks', () => { if (cfg.onHeaders) cfg.onHeaders(headers(), st.map); st.step = 3; render(); }, true, missing.length > 0)));
     }
     if (st.step === 3) {
       const a = analyse();
@@ -147,7 +147,7 @@ export function importWizard(ctx, cfg) {
     body = h('div', h('ul', lines.map((t) => h('li', t))));
     const go = btn('Import', async () => {
       st.busy = true; go.disabled = true; go.textContent = 'Writing…';
-      try { st.result = await cfg.write(a.items, st.mode, st.choices); st.busy = false; render(); ctx.rerender(); toast('Imported'); }
+      try { if (cfg.onHeaders) cfg.onHeaders(headers(), st.map); st.result = await cfg.write(a.items, st.mode, st.choices, { map: st.map, headers: headers(), file: st.file ? st.file.name : '', analysis: a }); st.busy = false; render(); ctx.rerender(); toast('Imported'); }
       catch (e) { st.busy = false; go.disabled = false; go.textContent = 'Import'; toast('Could not import: ' + (e.message || e), true); }
     });
     return box.replaceChildren(head, body, st.result ? nav() : nav(btn('Back', () => { st.step = 4; render(); }, false), go));
@@ -162,6 +162,9 @@ export function importWizard(ctx, cfg) {
       if (sc > bestScore) { bestScore = sc; best = r; }
     }
     st.head = best; st.map = matchColumns(headers(), cfg.fields); st.choices = {};
+    // a mapping saved from the last import of this kind wins, where the same heading is in the file
+    if (cfg.saved) Object.entries(cfg.saved).forEach(([k, hd]) => { const i = headers().indexOf(hd); if (i >= 0) st.map[k] = i; });
+    if (cfg.onHeaders) cfg.onHeaders(headers(), st.map);
   };
   render();
   document.body.appendChild(back);

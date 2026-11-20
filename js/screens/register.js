@@ -1,8 +1,9 @@
 // TSA register: every service, with a details panel that edits the register row.
-import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.1.20261120053858';
-import { countTests, COUNT_RULES } from '../counts.js?v=0.12.1.20261120053858';
-import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.12.1.20261120053858';
-import { buildForm } from '../form.js?v=0.12.1.20261120053858';
+import { openTsaImport } from '../tsaimport.js?v=0.12.2.20261120060231';
+import { h, fmtDate, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.2.20261120060231';
+import { countTests, COUNT_RULES } from '../counts.js?v=0.12.2.20261120060231';
+import { openDateChange, openDecision, pendingFor, impactOf, logForecast, openExtension, EXTEND_HELP } from '../datechange.js?v=0.12.2.20261120060231';
+import { buildForm } from '../form.js?v=0.12.2.20261120060231';
 
 const T = 'tblTSA';
 const EXITED = new Set(['Exited', 'Terminated']);
@@ -72,6 +73,7 @@ export default {
         h('button.btn', { type: 'button', onclick: () => store.show(T, sel ? sel.i : null).catch((e) => toast(e.message, true)) }, 'Show in the worksheet'),
         h('button.btn', { type: 'button', title: EXTEND_HELP, onclick: () => openExtension(ctx) }, 'Apply an extension'),
         h('button.btn', { type: 'button', title: 'Ask for a change to this service: dates, fees, scope or service levels', onclick: () => ctx.go('request', { tsa: sel ? sel.get('TSA ID') : '' }) }, 'Request a change'),
+        h('button.btn', { type: 'button', onclick: () => openTsaImport(ctx), title: "Bring in the seller's TSA schedule, or a new version of it, from Excel or a .csv file" }, 'Import the schedule'),
         h('button.btn.btn-primary', { type: 'button', onclick: () => { ui.adding = true; ui.sel = null; rerender(); } }, '+ Add a service')),
       h('div.filters',
         h('label.sr', { for: 'reg-q' }, 'Search services'),

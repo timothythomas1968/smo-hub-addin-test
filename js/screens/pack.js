@@ -1,8 +1,8 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.1.20261120053858';
-import { packDeck } from '../packdeck.js?v=0.12.1.20261120053858';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.1.20261120053858';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.2.20261120060231';
+import { packDeck } from '../packdeck.js?v=0.12.2.20261120060231';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.2.20261120060231';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
