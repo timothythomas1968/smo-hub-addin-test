@@ -1,7 +1,7 @@
 // Change the reporting date: one dialog, opened from the title bar, Home or the workstream report.
 // The date lives in the name RD: typed in Home's title band since workbook v0.11 (before that, 'Consolidated WS Reporting'!B5).
 // It is written by name, so both work; every screen reports to its month.
-import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox, unit, monthly, periodLabel, reportingDates } from './util.js?v=0.12.4.20261120065822';
+import { h, toast, fmtDate, fmtMonth, serialToIso, isoToSerial, fromSerial, dateBox, unit, monthly, periodLabel, reportingDates } from './util.js?v=0.12.5.20261120071957';
 
 const monthNo = (n) => { const d = fromSerial(n); return d ? d.getUTCFullYear() * 12 + d.getUTCMonth() : 0; };
 
@@ -18,7 +18,7 @@ export function openRDDialog(store, after) {
     const backwards = v && RD && monthNo(v) < monthNo(RD);
     warn.style.display = backwards ? '' : 'none';
     warn.textContent = backwards
-      ? `You are moving back from ${fmtMonth(RD)} to ${fmtMonth(v)}. The Workstream Reports sheet holds one month of reports at a time, so the reports on it now will count for ${fmtMonth(v)}. ${fmtMonth(RD)}'s status is already kept on Consolidated WS Reporting.`
+      ? `You are moving back from ${fmtMonth(RD)} to ${fmtMonth(v)}. Screens and packs will report on ${fmtMonth(v)}; the workstream report shows ${fmtMonth(v)}'s reports from the stored history, read-only. The reports on the Workstream Reports sheet stay as they are, for ${fmtMonth(RD)}.`
       : '';
     setBtn.textContent = backwards ? 'Move back anyway' : 'Set the date';
   };

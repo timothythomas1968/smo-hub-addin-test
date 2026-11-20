@@ -2,8 +2,8 @@
 // Restyled after the worksheet (Tim, 17 Nov 2026; brief 4.3): the same pastel event colours and the grey band behind the day names.
 // A day opens in a pop-up; items move by dragging them to another day, or with "Move to another date" in the pop-up,
 // by the Hub's date change rules (brief 4.4, daterules.js).
-import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed, dateBox, isoToSerial } from '../util.js?v=0.12.4.20261120065822';
-import { ruleFor, ruleText, moveItem, meetingMoves, RULES } from '../daterules.js?v=0.12.4.20261120065822';
+import { h, fmtDate, fromSerial, toSerial, MONTHS, toast, asOf, ed, dateBox, isoToSerial } from '../util.js?v=0.12.5.20261120071957';
+import { ruleFor, ruleText, moveItem, meetingMoves, RULES } from '../daterules.js?v=0.12.5.20261120071957';
 
 // [label, background, text]: keep in step with KD_COLOURS in workbook/builder/hub3_d.py (the worksheet Calendar)
 export const TYPES = {

@@ -1,8 +1,8 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed } from '../util.js?v=0.12.4.20261120065822';
-import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.4.20261120065822';
-import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.4.20261120065822';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed, monthly as monthlyCycle } from '../util.js?v=0.12.5.20261120071957';
+import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.5.20261120071957';
+import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.5.20261120071957';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -41,7 +41,12 @@ export default {
     const nDone = list.filter(done).length;
 
     const main = h('section.card', { style: { padding: 0, flex: '999 1 560px', minWidth: 0 } }, h('div.loading', h('div.spinner'), 'Reading the report…'));
-    if (sel) fill(ctx, main, sel, wsRows[sel.code]);
+    // Report history (v0.11 item 4; build waves P6): the sheet holds one period of reports. With the reporting date moved back before
+    // the period they belong to (WR_Period), show that earlier period's reports from the stored history, read-only.
+    const pk = (d) => { const x = Number(d) || 0; if (!x) return 0; return monthlyCycle() ? Math.floor(periodStart(x) / 1) : x; };
+    const sheetP = Number(n.WR_Period) || 0, past = sheetP && RD && pk(RD) < pk(sheetP);
+    if (past && sel) historyView(ctx, main, sel, sheetP);
+    else if (sel) fill(ctx, main, sel, wsRows[sel.code]);
 
     return h('div.page',
       h('div.page-head',
@@ -206,6 +211,8 @@ function form(ctx, w, wsRow, s) {
     if (!changed.length && !anyNew && !anyOpen) { toast('Nothing changed'); return; }
     try {
       if (changed.length) await store.writeCells(SHEET, changed);
+      // the reports on the sheet now belong to this reporting date (report history, build waves P6)
+      if (store.names.WR_Period !== undefined && Number(store.names.WR_Period) !== Number(store.names.RD)) await store.writeNames([['WR_Period', Number(store.names.RD)]]);
       const added = anyNew ? await toRegister() : { risk: 0, iss: 0, dec: 0 };
       const nUpd = anyOpen ? await saveOpen(store, E) : 0;
       const nAdded = added.risk + added.iss + added.dec;
@@ -311,4 +318,22 @@ async function saveOpen(store, E) {
     n++;
   }
   return n;
+}
+
+/** An earlier period's report, read-only, from the stored history (Consolidated WS Reporting, tblStatus): the status the
+ *  workstream had that period, its words, and how to get back to the current reports. */
+function historyView(ctx, main, w, sheetP) {
+  const { store } = ctx;
+  const RD = Number(store.names.RD) || 0;
+  const mS = (d) => { const x = new Date((Number(d) - 25569) * 864e5); return Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), 1); };
+  const hit = store.records('tblStatus').find((r) => r.get('Workstream') === w.code && (r.get('Scope') || 'Overall') === 'Overall' && mS(r.get('Period')) === mS(RD));
+  const field = (label, v) => h('div', { style: { marginTop: '10px' } }, h('div.small', { style: { fontWeight: 700, color: 'var(--muted)' } }, label), h('div', { style: { whiteSpace: 'pre-wrap' } }, String(v || '–')));
+  main.replaceChildren(h('div', { style: { padding: '16px 18px' } },
+    h('div.banner.info', { style: { margin: '0 0 12px' } }, `You are looking at ${periodLabel(RD)}. The reports on the Workstream Reports sheet are for ${periodLabel(sheetP)}, so this is ${w.name}'s report for ${periodLabel(RD)} from the stored history, read-only. Set the reporting date back to ${fmtDate(sheetP)} to work on the current reports.`),
+    hit ? h('div',
+      h('div', h('span.chip', { class: hit.get('RAG') }, `Status: ${hit.get('RAG') || 'not reported'}`)),
+      field('Summary', hit.get('Summary') || hit.get('Shared summary')), field('Achievements', hit.get('Achievements')), field('Next steps', hit.get('Next steps')),
+      field('Path to green', hit.get('Path to green')), field('Escalations and help needed', hit.get('Escalations')))
+      : h('p.muted', `No report from ${w.name} is stored for ${periodLabel(RD)}. Past periods are stored when ${theTeam()} saves the consolidated report to history.`),
+    h('div', { style: { marginTop: '14px' } }, h('button.btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change the reporting date'))));
 }

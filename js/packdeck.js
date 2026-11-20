@@ -3,9 +3,9 @@
 // Built from the same figures as the pack on screen (pack.js records them as it draws), in direction B: a navy band, big numbers,
 // white space. Every content slide leads with its message, a sentence worked out from the figures, like a consultant's action title;
 // the evidence (cards, tables, a chart) sits below it. Everything stays native and editable: text, shapes, tables, charts.
-import { Deck, W, H } from './pptx.js?v=0.12.4.20261120065822';
-import { team, ed, unit } from './util.js?v=0.12.4.20261120065822';
-import { mshort } from './screens/health.js?v=0.12.4.20261120065822';
+import { Deck, W, H } from './pptx.js?v=0.12.5.20261120071957';
+import { team, ed, unit } from './util.js?v=0.12.5.20261120071957';
+import { mshort } from './screens/health.js?v=0.12.5.20261120071957';
 
 const NAVY = '003A70', NAVY2 = '0B4A87', INK = '212529', MUTED = '5A6573', HEAD = '3A4250', ONNAVY = 'C4D3E6', EYEBROW = '8FB8E6';
 const LINE = 'D5DCE5', SOFT = 'ECEFF3', BAND = 'F7F9FC', SEL = 'E6EEF7', BLUE = '007BFF';

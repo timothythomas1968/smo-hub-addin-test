@@ -5,13 +5,13 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.4.20261120065822';
+import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.5.20261120071957';
 
 const SCALAR_NAMES = ['Today', 'RepFreq', 'RepDay', 'PlanXWS', 'PlanMSCR', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
   'QDone', 'QReq',   // set-up progress, the same cells Start Here shows
   'WF_Mark', 'WF_ToDo', 'WF_cal', 'WF_start', 'WF_cost', 'WF_inv', 'WF_ourinv', 'WF_cons', 'WF_pack', 'ConsentCap', 'TPC_OurTotal', 'ProgName', 'TeamName', 'TeamShort', 'BuyerName', 'SellerName', 'Perspective', 'HubOwner', 'SignDate', 'CloseDate', 'RepCcy', 'CcySym', 'Edition',
-  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR', 'SpanEnd', 'SpanMonths'];
+  'RD', 'RP', 'LongStop', 'FEE_Start', 'MkPct1', 'MkCum1', 'InvC2S', 'InvC2B', 'PayTerms', 'DQ_Errors', 'DQ_Warnings', 'FeeCap', 'FEE_FwdFcTot', 'FEE_FwdActTot', 'FEE_Headroom', 'Use_D1', 'Use_F100', 'Use_XR', 'Use_OBL', 'Use_SP', 'Use_TPC', 'Use_DR', 'Use_WO', 'Use_INV', 'Use_SLA', 'Use_REG', 'Use_CL', 'Mod_CR', 'SpanEnd', 'SpanMonths', 'WR_Period'];
 const LIST_NAMES = ['WS_Code', 'WS_Name', 'WS_Active', 'L_People', 'TSA_ID', 'WRS_WS', 'WRS_Sum', 'TSA_NoTax', 'DCR_Key', 'DCR_Rule', 'MV_Forum', 'MV_From', 'MV_To'];
 // Columns that have no dropdown in the workbook but are easier to fill from a list.
 const FALLBACK_LISTS = { Workstream: 'WS_Code', Owner: 'L_People', 'TSA ID': 'TSA_ID' };
@@ -350,9 +350,11 @@ export class Store {
       writes.push({ col, value: val });
     }
     if (!writes.length) return 0;
+    const logged = this.logEntries(name, rowIndex, writes);
     this.lastWrite = Date.now();
     await this.src.write(name, rowIndex, writes, opts.unhide);
     this.lastWrite = Date.now();
+    await this.writeLog(logged);
     // Re-read so formulas that depend on the change (scores, ratings, IDs) come back recalculated.
     this.stale.add(name);
     Object.keys(this.t).forEach((n) => this.stale.add(n));
@@ -392,7 +394,9 @@ export class Store {
         writes.push({ col, value: val });
       }
       if (!writes.length) continue;
+      const logged = this.logEntries(name, row, writes);
       await this.src.write(name, row, writes, isNew);
+      await this.writeLog(logged);
       this.lastWrite = Date.now();
       if (isNew) added++; else updated++;
     }
@@ -415,19 +419,66 @@ export class Store {
       writes.push({ col, value: '' });
     });
     if (!writes.length) return 0;
+    const logged = this.logEntries(name, rowIndex, writes);
     this.lastWrite = Date.now();
     await this.src.write(name, rowIndex, writes);
     this.lastWrite = Date.now();
+    await this.writeLog(logged);
     Object.keys(this.t).forEach((n) => this.stale.add(n));
     await this.need([name]);
     await this.reloadNames();
     return writes.length;
   }
 
+  // ---------- audit trail (Stage 3b; build waves P6): every change the panel saves is added to the Change Log sheet (tblChangeLog):
+  // when, who, where, item, field, old value, new value. Typed changes in the sheets are not seen here (Excel's Show Changes has those).
+  /** Who is signed in to Office, where Office says (Microsoft 365 accounts); '' if it doesn't. Asked once. */
+  async who() {
+    if (this._who != null) return this._who;
+    this._who = '';
+    try {
+      if (window.Office && Office.auth && Office.auth.getAuthContext) {
+        const c = await Promise.race([Office.auth.getAuthContext(), new Promise((_, no) => setTimeout(() => no(new Error('no answer')), 2500))]);
+        this._who = (c && (c.userPrincipalName || c.displayName)) || '';
+      } else if (!(this.src instanceof ExcelSource)) this._who = 'Browser preview';
+    } catch (e) { /* not offered */ }
+    return this._who;
+  }
+  /** The log rows for a set of writes to a table, made before the write so the old values are known. */
+  logEntries(name, rowIndex, writes) {
+    if (name === 'tblChangeLog') return [];
+    const t = this.t[name]; if (!t) return [];
+    const r = t.rows[rowIndex]; if (!r) return [];
+    const live = t.live != null ? t.live : 0, short = (v) => { const x = v == null ? '' : String(v); return x.length > 500 ? x.slice(0, 497) + '…' : x; };
+    const item = String(r.v[live] ?? '') || writes.map((w) => (w.col === live ? w.value : null)).find((v) => v != null && v !== '') || `row ${rowIndex + 1}`;
+    return writes.map((w) => ({ where: name.replace(/^tbl/, ''), item: short(item), field: t.headers[w.col], from: short(r.v[w.col]), to: short(w.value) }))
+      .filter((e) => e.from !== e.to);
+  }
+  /** Add log rows to the Change Log (the first empty rows). A Hub before 0.12.5 has no log: nothing is written. */
+  async writeLog(entries, where) {
+    if (!entries || !entries.length) return;
+    try {
+      // read once, then kept up to date here (only the panel writes the log), so a save doesn't re-read 3,000 rows
+      if (!this.t.tblChangeLog) await this.need(['tblChangeLog']).catch(() => {});
+      this.stale.delete('tblChangeLog');
+      const t = this.t.tblChangeLog; if (!t) return;
+      const who = await this.who(), when = Math.round((Date.now() / 864e5 + 25569) * 1e5) / 1e5;   // Excel serial date and time, in UTC
+      for (const e of entries) {
+        const r = t.rows.find((x) => x.v[0] === '' || x.v[0] == null);
+        if (!r) { if (!this._logFull) { this._logFull = true; console.warn('The change log is full.'); } return; }
+        const vals = [when, who, e.where || where || '', e.item, e.field, e.from, e.to];
+        await this.src.write('tblChangeLog', r.i, vals.map((value, col) => ({ col, value })), true);
+        r.v = vals;
+      }
+    } catch (err) { console.warn('change log', err); }
+  }
+
   /** Write item i of a one-column named range (WS_Active: which workstreams are in use, on Start Here since v0.11). */
   async writeNameItem(name, i, value) {
     this.lastWrite = Date.now();
+    const was = Array.isArray(this.names[name]) ? this.names[name][i] : '';
     await this.src.writeNameItem(name, i, value);
+    if (String(was ?? '') !== String(value ?? '')) await this.writeLog([{ where: 'Set-up answers', item: `${name} ${i + 1}`, field: name, from: String(was ?? ''), to: String(value ?? '') }]);
     this.lastWrite = Date.now();
     Object.keys(this.t).forEach((n) => this.stale.add(n));
     await this.reloadNames();
@@ -439,8 +490,10 @@ export class Store {
   readNamesNow(list) { return this.src.readNames(list); }
   async writeNames(pairs) {
     this.lastWrite = Date.now();
+    const before = pairs.map(([n]) => this.names[n]);
     await this.src.writeNames(pairs);
     this.lastWrite = Date.now();
+    await this.writeLog(pairs.map(([n, v], k) => ({ where: 'Set-up answers', item: n, field: n, from: String(before[k] ?? ''), to: String(v ?? '') })).filter((e) => e.from !== e.to));
     pairs.forEach(([n, v]) => { this.names[n] = v; });
     Object.keys(this.t).forEach((t) => this.stale.add(t));
     if (pairs.some(([n]) => n === 'TeamName')) {   // the short form is worked out in the workbook from the answer
@@ -451,6 +504,7 @@ export class Store {
   async writeCells(sheet, cells) {
     this.lastWrite = Date.now();
     await this.src.writeCells(sheet, cells);
+    await this.writeLog(cells.map((c) => ({ where: sheet, item: c.addr, field: 'Cell ' + c.addr, from: '', to: String(c.value ?? '').slice(0, 500) })));
     this.lastWrite = Date.now();
     Object.keys(this.t).forEach((n) => this.stale.add(n));   // formulas elsewhere depend on these cells
     await this.reloadNames();
