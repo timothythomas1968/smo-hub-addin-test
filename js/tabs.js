@@ -6,14 +6,14 @@
 //  - parts switched off in set-up are hidden, and so is everything else (the registers and logs, the dividers).
 // The panel's Contents screen opens any sheet, hidden or not (ExcelSource.showRange shows a hidden sheet first).
 // Users can turn tidying off there (setting 'tidy-tabs' = 'off'); the workbook's own Contents sheet lists everything.
-import { ed, asOf } from './util.js?v=0.12.5.20261120071957';
+import { ed, asOf } from './util.js?v=0.12.6.20261120074927';
 
 export const MAIN = ['Home', 'Contents', 'Calendar', 'TSA Register', 'TSA Cost Tracker', 'One-off Costs', 'Consolidated WS Reporting', 'RAID Summary',
   'Actions', 'Plan & Gantt', 'Readiness Interview'];
 // The sheets each set-up switch turns off (the Use_ answers on Start Here)
 const SWITCH = { 'Plan & Gantt': 'Use_SP', 'Readiness Interview': 'Use_XR', 'Exit Readiness': 'Use_XR', 'One-off Costs': 'Use_CL', 'Day 1': 'Use_D1',
   'First 100 Days': 'Use_F100', 'SLA': 'Use_SLA', 'Invoices Log': 'Use_INV', 'Our Invoice': 'Use_INV', 'Third Parties': 'Use_TPC', 'Obligations': 'Use_OBL',
-  'Regulatory': 'Use_REG', 'Data Requests': 'Use_DR', 'Work Orders': 'Use_WO' };
+  'Regulatory': 'Use_REG', 'Data Requests': 'Use_DR', 'Work Orders': 'Use_WO', 'Pass-through Expenses': 'Use_PT' };
 const ALWAYS_HIDDEN = ['Governance dates', 'Fees Summary'];   // the Hub's own working sheets: never shown by tidying
 
 /** Which sheets to show, from the workbook's names and the Day 1 and First 100 Days tables. */
@@ -67,6 +67,8 @@ export const GROUPS = [
     ['Obligations', 'Contract obligations and entitlements, with their next due date.'],
     ['Data Requests', 'Data requested from the other party, and when it is due.'],
     ['Work Orders', 'Extra work ordered under the TSA, quoted and approved.'],
+    ['Pass-through Expenses', 'Costs passed on at cost, outside the TSA fees.'],
+    ['Baselines', 'The agreed plans the reports measure against.'],
     ['Links', 'Links between items the registers cannot show.'],
     ['Data Quality', 'Every check on the Hub\'s data: errors first, then warnings.']]],
   ['Set-up', [['Start Here', 'The set-up questions, answered once.'],

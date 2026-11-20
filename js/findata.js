@@ -3,7 +3,7 @@
 // A service is "running" in a month from its first month (service start, or closing) until it exits: the actual exit date,
 // or else the date being compared (forecast exit, the current plan's planned exit, or the contract's initial end).
 // Fees are the monthly fee in the reporting currency; extension mark-ups are left out, as on Home.
-import { fromSerial, toSerial, asOf } from './util.js?v=0.12.5.20261120071957';
+import { fromSerial, toSerial, asOf } from './util.js?v=0.12.6.20261120074927';
 
 const num = (v) => Number(v) || 0;
 const mStart = (n) => { const d = fromSerial(n); return d ? toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))) : 0; };
@@ -41,6 +41,25 @@ export function financeData(store) {
     id: r.get('WO ID'), title: r.get('Title'), status: r.get('Status'), amount: num(r.get('Approved amount')) || num(r.get('Quote')), m: mStart(num(r.get('Target completion')))
   })) : [];
   woList.forEach((w) => { if (w.m) wo[w.m] = (wo[w.m] || 0) + w.amount; });
+  // pass-through expenses (P7): each charge's amount per month in the reporting currency, for the months it runs
+  // (From up to, not including, To; no To: to the end of the programme's span). One-off charges fall in their From month.
+  const pt = {};
+  const ptList = store.has('tblPassThrough') ? store.records('tblPassThrough').filter((r) => !/^(Cancelled|Canceled)$/.test(r.get('Status'))).map((r) => ({
+    id: r.get('PT ID'), charge: r.get('Charge'), cat: r.get('Category'), tsa: r.get('TSA ID'), status: r.get('Status'), freq: r.get('Frequency'),
+    pm: num(r.get('Per month (reporting currency)')), from: mStart(num(r.get('From'))), to: mStart(num(r.get('To'))),
+    thisY: num(r.get('This year (reporting currency)')), nextY: num(r.get('Next year (reporting currency)')), amount: num(r.get('Amount')), after: r.get('Runs after exit')
+  })) : [];
+  ptList.forEach((p) => {
+    if (!p.from) return;
+    if (p.freq === 'One-off') {
+      const y = yearOf(p.from), ry = RD ? yearOf(RD) : y;
+      const v = y === ry ? p.thisY : y === ry + 1 ? p.nextY : p.amount;
+      pt[p.from] = (pt[p.from] || 0) + v; p.total = v; return;
+    }
+    let t = 0;
+    for (let m = p.from, k = 0; (p.to ? m < p.to : m <= m1) && k < 72; m = addM(m, 1), k++) { pt[m] = (pt[m] || 0) + p.pm; t += p.pm; }
+    p.total = t;
+  });
   // one-off separation costs: actual by month (M01 = the closing month) to the reporting month, then the rest of the forecast spread evenly
   const oc = {}; let ocBudget = 0, ocFac = 0, ocActual = 0;
   if (store.has('tblCostLines')) store.records('tblCostLines').forEach((r) => {
@@ -57,7 +76,7 @@ export function financeData(store) {
     fut.forEach((m) => { oc[m] = (oc[m] || 0) + left / fut.length; });
   });
   const burn = months.map((m) => {
-    const row = { m, fwd: { fc: 0, plan: 0, contract: 0 }, n: { fc: 0, plan: 0, contract: 0 }, rev: 0, act: act[m] ?? null, wo: wo[m] || 0, oc: oc[m] || 0 };
+    const row = { m, fwd: { fc: 0, plan: 0, contract: 0 }, n: { fc: 0, plan: 0, contract: 0 }, rev: 0, act: act[m] ?? null, wo: wo[m] || 0, oc: oc[m] || 0, pt: pt[m] || 0 };
     rec.forEach((x) => {
       if (x.dir === 'Reverse') { if (running(x, m, 'fc')) row.rev += x.fee; return; }
       for (const k of ['fc', 'plan', 'contract']) if (running(x, m, k)) { row.fwd[k] += x.fee; row.n[k]++; }
@@ -70,8 +89,8 @@ export function financeData(store) {
     const out = new Map();
     burn.forEach((b) => {
       const k = keyFn(b.m);
-      const e = out.get(k) || { key: k, fc: 0, plan: 0, contract: 0, rev: 0, act: 0, fees: 0, wo: 0, oc: 0, hasAct: false };
-      e.fc += b.fwd.fc; e.plan += b.fwd.plan; e.contract += b.fwd.contract; e.rev += b.rev; e.fees += b.fees; e.wo += b.wo; e.oc += b.oc;
+      const e = out.get(k) || { key: k, fc: 0, plan: 0, contract: 0, rev: 0, act: 0, fees: 0, wo: 0, oc: 0, pt: 0, hasAct: false };
+      e.fc += b.fwd.fc; e.plan += b.fwd.plan; e.contract += b.fwd.contract; e.rev += b.rev; e.fees += b.fees; e.wo += b.wo; e.oc += b.oc; e.pt += b.pt;
       if (b.act != null) { e.act += b.act; e.hasAct = true; }
       out.set(k, e);
     });
@@ -80,7 +99,7 @@ export function financeData(store) {
   const fwd = rec.filter((x) => x.dir !== 'Reverse');
   const nowM = mStart(T), nowRow = burn.find((b) => b.m === nowM) || burn[burn.length - 1] || { fwd: { fc: 0 }, n: { fc: 0 }, rev: 0 };
   return {
-    T, RD, months, burn, years: roll(yearOf), quarters: roll(qOf), rec, wo: woList,
+    T, RD, months, burn, years: roll(yearOf), quarters: roll(qOf), rec, wo: woList, pt: ptList, ptRate: pt[nowM] || 0, baseline: currentBaseline(store),
     oneoff: { budget: ocBudget, fac: ocFac, actual: ocActual },
     runRate: nowRow.fwd.fc, liveNow: nowRow.n.fc, revRate: nowRow.rev,
     exits: {
@@ -91,4 +110,14 @@ export function financeData(store) {
     },
     cap: num(n.FeeCap)
   };
+}
+
+/** The baseline the reports measure against (P7): the Current row on Baselines, with its decision. null when the Hub has none. */
+export function currentBaseline(store) {
+  if (!store.has('tblBaselines')) return null;
+  const all = store.records('tblBaselines');
+  const cur = all.find((r) => r.get('Status') === 'Current');
+  if (!cur) return null;
+  return { id: cur.get('Baseline ID'), name: cur.get('Name'), dec: cur.get('Approving decision'), on: num(cur.get('Approved on')), forum: cur.get('Approved by (forum)'),
+    reason: cur.get('Reason (shown on reports)'), original: all.length > 1 && cur.i !== all[0].i };
 }

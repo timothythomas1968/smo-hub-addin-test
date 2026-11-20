@@ -1,15 +1,15 @@
 // Finance (Tim, 0.9.5 feedback): the Teams Finance report, inside the Hub. Read only, worked out live from the registers (findata.js):
 // TSA fees forecast for every year the programme runs, against the current plan or the original contract, the reverse services we
 // provide, invoiced actuals, work orders and one-off separation costs. The governance pack's fees section drills into it by year.
-import { h, fmtMoney, fmtMonth, fmtDate, ed, team } from '../util.js?v=0.12.5.20261120071957';
-import { COL, columns, stackColumns, meter } from '../charts.js?v=0.12.5.20261120071957';
-import { financeData } from '../findata.js?v=0.12.5.20261120071957';
-import { mshort } from './health.js?v=0.12.5.20261120071957';
+import { h, fmtMoney, fmtMonth, fmtDate, ed, team } from '../util.js?v=0.12.6.20261120074927';
+import { COL, columns, stackColumns, meter } from '../charts.js?v=0.12.6.20261120074927';
+import { financeData } from '../findata.js?v=0.12.6.20261120074927';
+import { mshort } from './health.js?v=0.12.6.20261120074927';
 
 const ui = { cmp: 'plan', year: null };
 
 export default {
-  tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines'],
+  tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines', 'tblPassThrough', 'tblBaselines'],
   render(ctx) {
     const { store } = ctx;
     const n = store.names, sym = n.CcySym || '';
@@ -34,7 +34,7 @@ export default {
     const total = (k) => F.years.reduce((a, y) => a + y[k], 0);
     const quarters = ui.year ? F.quarters.filter((q) => q.key.endsWith(String(ui.year))) : F.quarters;
     const stack = stackColumns(quarters.map((q) => ({ label: q.key.replace(' 20', ' ’'), parts: [
-      { v: q.fees, c: COL.navy, label: 'TSA fees (invoiced, then forecast)' }, { v: q.wo, c: COL.blue, label: 'Work orders' }, { v: q.oc, c: COL.soft, label: 'One-off separation costs' }] })),
+      { v: q.fees, c: COL.navy, label: 'TSA fees (invoiced, then forecast)' }, { v: q.pt, c: COL.a, label: 'Pass-through' }, { v: q.wo, c: COL.blue, label: 'Work orders' }, { v: q.oc, c: COL.soft, label: 'One-off separation costs' }] })),
     { width: Math.max(420, quarters.length * 64), height: 230, fmt: s, label: 'Expenses by quarter' });
     const byYear = columns(F.years.map((y) => ({ label: String(y.key), bars: [{ v: y[ui.cmp], c: COL.n, label: cmpLabel }, { v: y.fc, c: COL.navy, label: 'Forecast' }, { v: y.act, c: COL.g, label: 'Invoiced' }] })),
       { width: Math.max(300, F.years.length * 120), height: 170, fmt: s, label: 'TSA fees by year' });
@@ -47,33 +47,35 @@ export default {
       td(h('button.drill', { type: 'button', onclick: () => { ui.year = ui.year === y.key ? null : y.key; ctx.rerender(); } }, String(y.key))),
       td(m(y[ui.cmp]), true), td(m(y.fc), true), td(y.hasAct ? m(y.act) : '–', true),
       td((y.fc - y[ui.cmp] >= 0 ? '+' : '−') + m(Math.abs(y.fc - y[ui.cmp])), true, { color: y.fc > y[ui.cmp] ? 'var(--r-fg)' : 'var(--g-fg)' }),
-      td(m(y.rev), true), td(y.wo ? m(y.wo) : '–', true), td(m(y.oc), true)));
-    const qRows = quarters.map((q) => h('tr', td(q.key), td(m(q[ui.cmp]), true), td(m(q.fc), true), td(q.hasAct ? m(q.act) : '–', true), td(m(q.rev), true), td(q.wo ? m(q.wo) : '–', true), td(m(q.oc), true)));
+      td(m(y.rev), true), td(y.pt ? m(y.pt) : '–', true), td(y.wo ? m(y.wo) : '–', true), td(m(y.oc), true)));
+    const qRows = quarters.map((q) => h('tr', td(q.key), td(m(q[ui.cmp]), true), td(m(q.fc), true), td(q.hasAct ? m(q.act) : '–', true), td(m(q.rev), true), td(q.pt ? m(q.pt) : '–', true), td(q.wo ? m(q.wo) : '–', true), td(m(q.oc), true)));
 
     return h('div.page',
       h('div.page-head',
-        h('div', h('h1', 'Finance'), h('p.lede', `TSA fees, the reverse services we provide, work orders and one-off separation costs, worked out from the registers. Read only. Today ${fmtDate(F.T)}; reporting month ${fmtMonth(F.RD)}.`)),
+        h('div', h('h1', 'Finance'), h('p.lede', `TSA fees, the reverse services we provide, pass-through expenses, work orders and one-off separation costs, worked out from the registers. Read only. Today ${fmtDate(F.T)}; reporting month ${fmtMonth(F.RD)}.`)),
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' } }, h('span.small', { style: { color: '#C9D6E6' } }, 'Compare the forecast with'), seg)),
       h('div.tiles', F.years.map(yearTile)),
       h('div.tiles',
         h('div.tile', h('span.tile-label', 'Monthly run-rate now'), h('span.tile-value', s(F.runRate)), h('span.tile-sub', `forward services · ${F.liveNow} running${F.revRate ? ` · reverse ${s(F.revRate)} a month` : ''}`)),
         h('div.tile', { class: F.cap && total('fc') > F.cap ? 'red' : null }, h('span.tile-label', 'All TSA fees, forecast'), h('span.tile-value', s(total('fc'))),
           F.cap ? h('span.tile-sub', `fee cap ${s(F.cap)} · ${Math.round(total('fc') / F.cap * 100)}% used`, h('br'), meter(total('fc'), F.cap, { width: 150, height: 6, label: 'Forecast against the fee cap' })) : h('span.tile-sub', 'no fee cap set')),
+        F.pt.length ? h('div.tile', { class: F.pt.some((p) => p.after === 'Check') ? 'amber' : null }, h('span.tile-label', 'Pass-through'), h('span.tile-value', s(total('pt'))),
+          h('span.tile-sub', `${F.pt.length} charge${F.pt.length === 1 ? '' : 's'} · ${s(F.ptRate)} a month now${F.pt.some((p) => p.after === 'Check') ? ` · ${F.pt.filter((p) => p.after === 'Check').length} run past their exit` : ''}`)) : null,
         h('div.tile', h('span.tile-label', 'Work orders'), h('span.tile-value', s(F.wo.reduce((a, w) => a + w.amount, 0))), h('span.tile-sub', `${F.wo.length} approved or quoted`)),
         h('div.tile', h('span.tile-label', 'One-off separation costs'), h('span.tile-value', s(F.oneoff.fac)), h('span.tile-sub', `forecast at completion · budget ${s(F.oneoff.budget)} · spent ${s(F.oneoff.actual)}`))),
-      h('p.small.muted', `${cmpLabel}: ${CMP[ui.cmp][1]}. Select a year to see its quarters. Pass-through expenses get their own register in workbook v0.11 and will appear here then.`),
+      h('p.small.muted', `${cmpLabel}: ${CMP[ui.cmp][1]}.${ui.cmp === 'plan' && F.baseline && F.baseline.original ? ` Current baseline ${F.baseline.id}${F.baseline.dec ? ` (${F.baseline.dec}${F.baseline.on ? ', ' + fmtDate(F.baseline.on) : ''})` : ''}: ${F.baseline.reason || F.baseline.name}` : ''} Select a year to see its quarters.`),
       h('div.row-wrap', { style: { alignItems: 'flex-start' } },
         h('section.card', { style: { flex: '2 1 460px', minWidth: 0, overflowX: 'auto' } },
           h('h2.cap', ui.year ? `Expenses by quarter · ${ui.year}` : 'Expenses by quarter'), stack,
-          key([[COL.navy, 'TSA fees (invoiced, then forecast)'], [COL.blue, 'Work orders'], [COL.soft, 'One-off separation costs']])),
+          key([[COL.navy, 'TSA fees (invoiced, then forecast)'], [COL.a, 'Pass-through'], [COL.blue, 'Work orders'], [COL.soft, 'One-off separation costs']])),
         h('section.card', { style: { flex: '1 1 300px', minWidth: 0, overflowX: 'auto' } },
           h('h2.cap', 'TSA fees by year'), byYear, key([[COL.n, cmpLabel], [COL.navy, 'Forecast'], [COL.g, 'Invoiced']]))),
       h('section.card', { style: { overflowX: 'auto' } }, h('h2.cap', 'By year'),
-        h('table.grid', h('thead', h('tr', th('Year'), th(cmpLabel, 1), th('Forecast', 1), th('Invoiced', 1), th('Forecast less ' + cmpLabel.toLowerCase(), 1), th('Reverse (we provide)', 1), th('Work orders', 1), th('One-off costs', 1))),
+        h('table.grid', h('thead', h('tr', th('Year'), th(cmpLabel, 1), th('Forecast', 1), th('Invoiced', 1), th('Forecast less ' + cmpLabel.toLowerCase(), 1), th('Reverse (we provide)', 1), th('Pass-through', 1), th('Work orders', 1), th('One-off costs', 1))),
           h('tbody', yearRows),
-          h('tfoot', h('tr', td(h('b', 'Total')), td(m(total(ui.cmp)), true), td(m(total('fc')), true), td(m(total('act')), true), td(m(total('fc') - total(ui.cmp)), true), td(m(total('rev')), true), td(m(total('wo')), true), td(m(total('oc')), true))))),
+          h('tfoot', h('tr', td(h('b', 'Total')), td(m(total(ui.cmp)), true), td(m(total('fc')), true), td(m(total('act')), true), td(m(total('fc') - total(ui.cmp)), true), td(m(total('rev')), true), td(m(total('pt')), true), td(m(total('wo')), true), td(m(total('oc')), true))))),
       h('section.card', { style: { overflowX: 'auto' } }, h('h2.cap', ui.year ? `By quarter · ${ui.year}` : 'By quarter'),
-        h('table.grid', h('thead', h('tr', th('Quarter'), th(cmpLabel, 1), th('Forecast', 1), th('Invoiced', 1), th('Reverse', 1), th('Work orders', 1), th('One-off costs', 1))), h('tbody', qRows))),
+        h('table.grid', h('thead', h('tr', th('Quarter'), th(cmpLabel, 1), th('Forecast', 1), th('Invoiced', 1), th('Reverse', 1), th('Pass-through', 1), th('Work orders', 1), th('One-off costs', 1))), h('tbody', qRows))),
       h('p.small.muted', ed(`Prepared by ${team()} with TransitionSuite. Fees are monthly fees in the reporting currency for each month a service runs; extension mark-ups are left out.`)));
   }
 };

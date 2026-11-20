@@ -1,8 +1,8 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed, monthly as monthlyCycle } from '../util.js?v=0.12.5.20261120071957';
-import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.5.20261120071957';
-import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.5.20261120071957';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed, monthly as monthlyCycle } from '../util.js?v=0.12.6.20261120074927';
+import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.6.20261120074927';
+import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.6.20261120074927';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;

@@ -6,8 +6,8 @@
 //   Rules            the exit plan change rules: the impact preview, then a logged forecast change or a change request
 //   CR               a Pending change request; the date moves only when the request is approved
 // Keep RULES in step with DATE_RULES in workbook/builder/lib3.py (the defaults, for workbooks that predate the table).
-import { h, toast, fmtDate, ed, asOf, dateBox, isoToSerial, plural } from './util.js?v=0.12.5.20261120071957';
-import { planNodes, knockOn, assess, withDates } from './planimpact.js?v=0.12.5.20261120071957';
+import { h, toast, fmtDate, ed, asOf, dateBox, isoToSerial, plural } from './util.js?v=0.12.6.20261120074927';
+import { planNodes, knockOn, assess, withDates } from './planimpact.js?v=0.12.6.20261120074927';
 
 export const RULES = {   // key: [calendar item, where the date comes from, default rule, note]
   deal: ['Closing and long-stop dates', 'Deal set-up (Start Here)', 'Fixed', 'A deal amendment, outside the Hub.'],

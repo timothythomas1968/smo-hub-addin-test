@@ -4,14 +4,14 @@
 // Improved for the executives (Tim, 20 Nov 2026; build waves P2): the status trend over the last six reporting periods,
 // the top risks by score, cost against the fee cap and the budget, exits in the next 90 days with their readiness,
 // extensions requested and their cost, milestones slipping, and decisions overdue.
-import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf, periodStart, periodLabel, plural } from '../util.js?v=0.12.5.20261120071957';
-import { COL, donut, columns, meter } from '../charts.js?v=0.12.5.20261120071957';
-import { financeData } from '../findata.js?v=0.12.5.20261120071957';
-import { serviceCounts } from '../counts.js?v=0.12.5.20261120071957';
-import { mshort } from './health.js?v=0.12.5.20261120071957';
+import { h, fmtDate, fmtMonth, fmtMoney, ed, team, theTeam, printNode, asOf, periodStart, periodLabel, plural } from '../util.js?v=0.12.6.20261120074927';
+import { COL, donut, columns, meter } from '../charts.js?v=0.12.6.20261120074927';
+import { financeData } from '../findata.js?v=0.12.6.20261120074927';
+import { serviceCounts } from '../counts.js?v=0.12.6.20261120074927';
+import { mshort } from './health.js?v=0.12.6.20261120074927';
 
 export default {
-  tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines', 'tblStatus', 'tblWorkstreams', 'tblDecisions', 'tblRisks', 'tblChange', 'tblPlan'],
+  tables: ['tblTSA', 'tblInvoices', 'tblWO', 'tblCostLines', 'tblStatus', 'tblWorkstreams', 'tblDecisions', 'tblRisks', 'tblChange', 'tblPlan', 'tblPassThrough', 'tblBaselines'],
   render(ctx) {
     const { store, go } = ctx;
     const n = store.names, sym = n.CcySym || '', T = asOf(n);
@@ -88,6 +88,7 @@ export default {
         h('section.card', { style: { flex: '1 1 260px', minWidth: 0 } }, h('h2.cap', 'Cost against the cap and the budget'),
           h('div.small', h('b', 'TSA fees, whole programme: '), `${s(feeTotal)} forecast · ${s(feeToDate)} to date`),
           F.cap ? h('div', { style: { margin: '6px 0 2px' } }, meter(feeTotal, F.cap, { width: 240, label: 'TSA fees against the fee cap' }), h('div.small.muted', feeTotal > F.cap ? `${s(feeTotal - F.cap)} over the fee cap of ${s(F.cap)}` : `${s(F.cap - feeTotal)} headroom under the fee cap of ${s(F.cap)}`)) : h('div.small.muted', 'No fee cap in the contract.'),
+          F.pt.length ? h('div.small', { style: { marginTop: '8px' } }, h('b', 'Pass-through on top: '), `${s(F.years.reduce((a, y) => a + y.pt, 0))} over the programme · ${s(F.ptRate)} a month now`) : null,
           h('div.small', { style: { marginTop: '12px' } }, h('b', 'One-off separation costs: '), `${s(F.oneoff.fac)} forecast · ${s(F.oneoff.actual)} spent`),
           F.oneoff.budget ? h('div', { style: { margin: '6px 0 2px' } }, meter(F.oneoff.fac, F.oneoff.budget, { width: 240, label: 'One-off costs against the budget' }), h('div.small.muted', F.oneoff.fac > F.oneoff.budget ? `${s(F.oneoff.fac - F.oneoff.budget)} over the budget of ${s(F.oneoff.budget)}` : `${s(F.oneoff.budget - F.oneoff.fac)} under the budget of ${s(F.oneoff.budget)}`)) : h('div.small.muted', 'No budget set.'))),
       h('div.row-wrap', { style: { alignItems: 'flex-start' } },
@@ -116,7 +117,7 @@ export default {
         h('section.card', { style: { flex: '1 1 320px', minWidth: 0 } }, h('h2.cap', 'Watch list'),
           watch.length ? watch.map((x) => h('div', { style: { display: 'flex', gap: '10px', padding: '6px 0', borderTop: '1px solid var(--line-soft)' } }, chip('Red', 'Red'),
             h('div', h('button.drill', { type: 'button', onclick: () => go('register', { id: x.id }) }, `${x.name} (${x.id})`), h('div.small.muted', x.ptg || 'No path to green recorded yet')))) : h('p.small.muted', 'No services are red.'))),
-      h('div.small.muted', { style: { borderTop: '1px solid var(--line)', paddingTop: '6px' } }, ed(`Prepared by ${theTeam()} with TransitionSuite · today ${fmtDate(T)} · reporting month ${fmtMonth(n.RD)}. Select a figure, decision or service to see the detail.`))));
+      h('div.small.muted', { style: { borderTop: '1px solid var(--line)', paddingTop: '6px' } }, ed(`Prepared by ${theTeam()} with TransitionSuite · today ${fmtDate(T)} · reporting month ${fmtMonth(n.RD)}.${F.baseline && F.baseline.original ? ` Against baseline ${F.baseline.id}${F.baseline.dec ? ` (${F.baseline.dec}${F.baseline.on ? ', ' + fmtDate(F.baseline.on) : ''})` : ''}; the original contract is on Finance.` : ''} Select a figure, decision or service to see the detail.`))));
 
     return h('div.page',
       h('div.page-head', h('div', h('h1', 'Executive summary'), h('p.lede', 'One page for the steering committee, worked out from the registers.')),

@@ -1,13 +1,14 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.5.20261120071957';
-import { buildForm, personLabel } from '../form.js?v=0.12.5.20261120071957';
-import { LIVE } from '../live.js?v=0.12.5.20261120071957';
-import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.5.20261120071957';
-import { openReview, isNew } from '../crreview.js?v=0.12.5.20261120071957';
-import { openCRImport } from '../crimport.js?v=0.12.5.20261120071957';
-import { requestLines } from '../crform.js?v=0.12.5.20261120071957';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.6.20261120074927';
+import { buildForm, personLabel } from '../form.js?v=0.12.6.20261120074927';
+import { LIVE } from '../live.js?v=0.12.6.20261120074927';
+import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.6.20261120074927';
+import { openReview, isNew } from '../crreview.js?v=0.12.6.20261120074927';
+import { openCRImport } from '../crimport.js?v=0.12.6.20261120074927';
+import { requestLines } from '../crform.js?v=0.12.6.20261120074927';
+import { openRebaseline, makeCurrent, pendingMoves } from '../baselines.js?v=0.12.6.20261120074927';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
@@ -163,7 +164,7 @@ export const PEOPLE_CFG = {
   cols: [['Name', 'Name'], ['Role'], ['Workstream or function'], ['Organisation']]
 };
 export const changes = registerScreen({
-  t: 'tblChange', title: 'TSA changes', one: 'a change request', id: 'CR ID', name: 'Title', status: 'Status', live: 'Request type', also: ['tblTSA'],
+  t: 'tblChange', title: 'TSA changes', one: 'a change request', id: 'CR ID', name: 'Title', status: 'Status', live: 'Request type', also: ['tblTSA', 'tblPassThrough'],
   lede: 'Every change request: extensions, early exits, fees, scope, service levels, plan and date changes, disputes and their decisions. Requests from the change request form arrive as New: review each one to send it to its forum or reject it.',
   placeholder: 'Search by CR, service, title or who asked', search: ['CR ID', 'TSA ID', 'Title', 'Request type', 'Requested by', 'Item ID'],
   cols: [['CR ID'], ['Title'], ['Request type'], ['TSA ID'], ['Decision due', null, 'date'], ['Status', null, 'chip']],
@@ -211,4 +212,26 @@ export const workorders = registerScreen({
   placeholder: 'Search by work order or service', search: ['WO ID', 'Title', 'Scope', 'TSA ID'],
   cols: [['WO ID'], ['Title'], ['Providing party', 'Provider'], ['Approved amount', 'Approved', 'money'], ['Target completion', 'Target', 'date'], ['Status']],
   late: (r, T) => open(r, 'Status', ['Complete', 'Rejected', 'Cancelled', 'Canceled']) && num(r.get('Target completion')) && num(r.get('Target completion')) < T
+});
+export const passthrough = registerScreen({
+  t: 'tblPassThrough', title: 'Pass-through expenses', one: 'a charge', id: 'PT ID', name: 'Charge', status: 'Status', use: 'Use_PT', also: ['tblTSA'],
+  lede: 'Costs the provider passes on at cost, outside the TSA fees: vendor licences, data centre power, print and post, audits. Finance, the packs and the executive summary add them to the fees.',
+  placeholder: 'Search by charge, category or service', search: ['PT ID', 'Charge', 'Category', 'TSA ID', 'Basis or contract reference'],
+  cols: [['PT ID'], ['Charge'], ['TSA ID'], ['Per month (reporting currency)', 'Per month', 'money'], ['This year (reporting currency)', 'This year', 'money'], ['To', 'Runs to', 'date'], ['Status', null, 'chip']],
+  banner: (ctx, all) => { const k = all.filter((r) => r.get('Runs after exit') === 'Check'); return k.length ? h('div.banner.warn', h('b', `${k.length} charge${k.length === 1 ? ' runs' : 's run'} past ${k.length === 1 ? 'its' : 'their'} service's forecast exit: `), k.map((r) => r.get('PT ID')).join(', '), '. Move the To date to the exit, or agree with the provider why it continues.') : null; }
+});
+export const baselines = registerScreen({
+  t: 'tblBaselines', title: 'Baselines', one: 'a baseline', id: 'Baseline ID', name: 'Name', status: 'Status', also: ['tblDecisions', 'tblBaseHist', 'tblTSA', 'tblPlan'],
+  lede: 'The agreed plans the reports measure against. B0 is the contract as signed. A re-baseline needs a decision that is Made; nothing is overwritten.',
+  placeholder: 'Search by baseline, decision or reason', search: ['Baseline ID', 'Name', 'Approving decision', 'Reason (shown on reports)'],
+  cols: [['Baseline ID'], ['Name'], ['Takes effect from', 'From', 'date'], ['Approving decision', 'Decision'], ['Decision status', 'Decision is'], ['Status', null, 'chip']],
+  head: (ctx) => [h('button.btn.btn-primary', { type: 'button', onclick: () => openRebaseline(ctx) }, 'Start a re-baseline')],
+  banner: (ctx, all) => {
+    const cur = all.find((r) => r.get('Status') === 'Current');
+    if (!cur) return h('div.banner.info', 'No baseline yet. Start a re-baseline to record the contract as signed (B0) first.');
+    const mv = pendingMoves(ctx.store, cur);
+    return h('div.banner.info', h('b', `Reports measure against ${cur.get('Baseline ID')}: ${cur.get('Name')}`), cur.get('Approving decision') ? ` (${cur.get('Approving decision')}${Number(cur.get('Approved on')) ? ', ' + fmtDate(Number(cur.get('Approved on'))) : ''})` : '', '. ',
+      `Since then: ${mv.exits.length} exit date${mv.exits.length === 1 ? '' : 's'} and ${mv.tasks.length} plan item${mv.tasks.length === 1 ? '' : 's'} differ from it, shown as variances.`);
+  },
+  actions: (ctx, rec) => (rec.get('Status') === 'Draft' ? h('button.btn', { type: 'button', title: 'The approving decision must be Made', onclick: () => makeCurrent(ctx, rec) }, 'Make current') : null)
 });

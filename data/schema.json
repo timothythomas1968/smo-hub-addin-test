@@ -4040,6 +4040,441 @@
    }
   ]
  },
+ "tblPassThrough": {
+  "prefix": "PT",
+  "sheet": "Pass-through Expenses",
+  "title": "Pass-through expenses",
+  "live": "Charge",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "PT ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Charge"
+   },
+   {
+    "k": "Charge",
+    "h": "Charge",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Charge"
+   },
+   {
+    "k": "Cat",
+    "h": "Category",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Licence",
+      "Infrastructure",
+      "Third-party services",
+      "Audit",
+      "Other"
+     ]
+    },
+    "n": "",
+    "sec": "Charge"
+   },
+   {
+    "k": "TSA",
+    "h": "TSA ID",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "TSA_ID"
+    },
+    "n": "The service the charge goes with. Leave blank for a charge across the programme, such as an audit.",
+    "sec": "Charge"
+   },
+   {
+    "k": "WS",
+    "h": "Workstream",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Charge"
+   },
+   {
+    "k": "By",
+    "h": "Charged by",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Seller",
+      "Buyer"
+     ]
+    },
+    "n": "Suggested: the other party.",
+    "sec": "Charge"
+   },
+   {
+    "k": "Ccy",
+    "h": "Currency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "CcyCode"
+    },
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "Amt",
+    "h": "Amount",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "Per month, per quarter or once, as Frequency says.",
+    "sec": "Money"
+   },
+   {
+    "k": "Freq",
+    "h": "Frequency",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Monthly",
+      "Quarterly",
+      "One-off"
+     ]
+    },
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "From",
+    "h": "From",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The first month charged.",
+    "sec": "Money"
+   },
+   {
+    "k": "To",
+    "h": "To",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "The first month after the charge stops. Leave blank for a one-off charge, or while the end is not known (it then runs to the long-stop date).",
+    "sec": "Money"
+   },
+   {
+    "k": "PM",
+    "h": "Per month (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "ThisY",
+    "h": "This year (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "The charge in the calendar year of the reporting date.",
+    "sec": "Money"
+   },
+   {
+    "k": "NextY",
+    "h": "Next year (reporting currency)",
+    "t": "C",
+    "f": "money",
+    "dv": null,
+    "n": "",
+    "sec": "Money"
+   },
+   {
+    "k": "ToDate",
+    "h": "Charged to date",
+    "t": "I",
+    "f": "money",
+    "dv": null,
+    "n": "The total billed so far, from the invoices (in the charge currency).",
+    "sec": "Money"
+   },
+   {
+    "k": "Basis",
+    "h": "Basis or contract reference",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Control"
+   },
+   {
+    "k": "Evid",
+    "h": "Evidence required (Y/N)",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Y",
+      "N"
+     ]
+    },
+    "n": "",
+    "sec": "Control"
+   },
+   {
+    "k": "AppBy",
+    "h": "Approved by",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "L_People"
+    },
+    "n": "",
+    "sec": "Control"
+   },
+   {
+    "k": "AppOn",
+    "h": "Approved on",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Control"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Proposed",
+      "Active",
+      "Ended",
+      "Disputed",
+      "Cancelled"
+     ]
+    },
+    "n": "Suggested from the dates. Overwrite for Disputed or Cancelled.",
+    "sec": "Control"
+   },
+   {
+    "k": "After",
+    "h": "Runs after exit",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "Check: the charge runs past the service's forecast exit date.",
+    "sec": "Control"
+   },
+   {
+    "k": "Comm",
+    "h": "Comments",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Control"
+   }
+  ]
+ },
+ "tblBaselines": {
+  "prefix": "BL",
+  "sheet": "Baselines",
+  "title": "Baselines",
+  "live": "Name",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "ID",
+    "h": "Baseline ID",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Baseline"
+   },
+   {
+    "k": "Name",
+    "h": "Name",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Baseline"
+   },
+   {
+    "k": "Eff",
+    "h": "Takes effect from",
+    "t": "I",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Baseline"
+   },
+   {
+    "k": "Dec",
+    "h": "Approving decision",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "name": "DEC_ID"
+    },
+    "n": "The Decision ID on the Decisions log. Needed for every baseline after B0, and it must be Made.",
+    "sec": "Approval"
+   },
+   {
+    "k": "DecSt",
+    "h": "Decision status",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "Forum",
+    "h": "Approved by (forum)",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "name": "L_Forum"
+    },
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "On",
+    "h": "Approved on",
+    "t": "D",
+    "f": "date",
+    "dv": {
+     "date": true
+    },
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "Reason",
+    "h": "Reason (shown on reports)",
+    "t": "I",
+    "f": "long",
+    "dv": null,
+    "n": "",
+    "sec": "Approval"
+   },
+   {
+    "k": "What",
+    "h": "What moved",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "For example: exit dates, fee budget, task dates, one-off budgets, pass-through.",
+    "sec": "Approval"
+   },
+   {
+    "k": "Status",
+    "h": "Status",
+    "t": "D",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Draft",
+      "Current",
+      "Superseded"
+     ]
+    },
+    "n": "Only one baseline is Current. The panel makes a draft current once its decision is Made, and marks the one before Superseded.",
+    "sec": "Approval"
+   },
+   {
+    "k": "Chk",
+    "h": "Check",
+    "t": "C",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Approval"
+   }
+  ]
+ },
+ "tblBaseHist": {
+  "prefix": "BH",
+  "sheet": "Baseline History",
+  "title": "Baseline history",
+  "live": "Baseline ID",
+  "mode": "list",
+  "cols": [
+   {
+    "k": "Base",
+    "h": "Baseline ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Value"
+   },
+   {
+    "k": "Kind",
+    "h": "What",
+    "t": "I",
+    "f": "text",
+    "dv": {
+     "list": [
+      "Exit date",
+      "Task dates",
+      "Fee budget",
+      "One-off budget",
+      "Pass-through"
+     ]
+    },
+    "n": "",
+    "sec": "Value"
+   },
+   {
+    "k": "Item",
+    "h": "Item ID",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Value"
+   },
+   {
+    "k": "Field",
+    "h": "Field",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Value"
+   },
+   {
+    "k": "Value",
+    "h": "Value",
+    "t": "I",
+    "f": "text",
+    "dv": null,
+    "n": "",
+    "sec": "Value"
+   }
+  ]
+ },
  "tblTPC": {
   "prefix": "TPC",
   "sheet": "Third Parties",

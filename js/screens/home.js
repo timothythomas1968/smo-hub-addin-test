@@ -1,9 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.5.20261120071957';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.5.20261120071957';
-import { readinessOf } from '../readiness.js?v=0.12.5.20261120071957';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.5.20261120071957';
-import { setTidy } from '../tabs.js?v=0.12.5.20261120071957';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.6.20261120074927';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.6.20261120074927';
+import { readinessOf } from '../readiness.js?v=0.12.6.20261120074927';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.6.20261120074927';
+import { setTidy } from '../tabs.js?v=0.12.6.20261120074927';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's

@@ -1,8 +1,9 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.5.20261120071957';
-import { packDeck } from '../packdeck.js?v=0.12.5.20261120071957';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.5.20261120071957';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.6.20261120074927';
+import { packDeck } from '../packdeck.js?v=0.12.6.20261120074927';
+import { financeData } from '../findata.js?v=0.12.6.20261120074927';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.6.20261120074927';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -24,7 +25,7 @@ function defaultsFor(name, joint) {
 const ui = { forum: null };
 
 export default {
-  tables: ['tblForums', 'tblTSA', 'tblStatus', 'tblWorkstreams', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblChange', 'tblDataReq', 'tblREG', 'tblDay1', 'tblFirst100', 'tblOBL', 'tblTPC'],
+  tables: ['tblForums', 'tblTSA', 'tblStatus', 'tblWorkstreams', 'tblRisks', 'tblIssues', 'tblDecisions', 'tblChange', 'tblDataReq', 'tblREG', 'tblDay1', 'tblFirst100', 'tblOBL', 'tblTPC', 'tblPassThrough', 'tblBaselines'],
   render(ctx) {
     const { store } = ctx;
     const n = store.names, RD = Number(n.RD) || 0, close = Number(n.CloseDate) || 0;
@@ -302,7 +303,17 @@ function costSection(store, tsa, cap, rec, drill = (t) => t) {
   const capNode = cap('TSA fees', 'TSA register: monthly fees x months running, with extension mark-ups');
   if (rec) rec({ sym, years: Object.entries(years).map(([y, v]) => [y, v.f, v.r]), quarters: qs.map(([q, v]) => [q, v.past ? v.v : 0, v.past ? 0 : v.v]) });
   const more = h('div.small', { style: { marginTop: '6px' } }, drill('Open the full financial analysis (Finance) ›', 'finance', {}));
-  return [capNode, yt, more,
+  // pass-through expenses and the baseline the figures measure against (P7)
+  const F = financeData(store), extra = [];
+  if (F.pt.length) {
+    const byY = F.years.filter((y) => y.pt);
+    extra.push(h('div.small', { style: { marginTop: '8px' } }, h('b', 'Pass-through on top of the fees: '),
+      byY.map((y) => `${y.key} ${fmtMoney(Math.round(y.pt), sym)}`).join(' · '), ` · ${plural(F.pt.length, 'charge')}`,
+      F.pt.some((p) => p.after === 'Check') ? ` · ${F.pt.filter((p) => p.after === 'Check').map((p) => p.id).join(', ')} run past the exit` : ''));
+    if (rec) rec({ sym, years: Object.entries(years).map(([y, v]) => [y, v.f, v.r]), quarters: qs.map(([q, v]) => [q, v.past ? v.v : 0, v.past ? 0 : v.v]), pt: byY.map((y) => [String(y.key), Math.round(y.pt)]) });
+  }
+  if (F.baseline && F.baseline.original) extra.push(h('div.small.muted', { style: { marginTop: '4px' } }, `Against baseline ${F.baseline.id}${F.baseline.dec ? ` (${F.baseline.dec}${F.baseline.on ? ', ' + fmtDate(F.baseline.on) : ''})` : ''}: ${F.baseline.reason || F.baseline.name}`));
+  return [capNode, yt, ...extra, more,
     h('div', { style: { marginTop: '12px' } }, h('div.small', { style: { fontWeight: 600, marginBottom: '4px' } }, 'Forward fees by quarter: dark = to date, light = forecast'), svg)];
 }
 
