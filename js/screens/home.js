@@ -1,9 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.11.5.20261117220441';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.11.5.20261117220441';
-import { readinessOf } from '../readiness.js?v=0.11.5.20261117220441';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.11.5.20261117220441';
-import { setTidy } from '../tabs.js?v=0.11.5.20261117220441';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.0.20261120045426';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.0.20261120045426';
+import { readinessOf } from '../readiness.js?v=0.12.0.20261120045426';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.0.20261120045426';
+import { setTidy } from '../tabs.js?v=0.12.0.20261120045426';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -14,7 +14,7 @@ const STEP_TIPS = {
   cal: 'Calendar: the contract dates, notice deadlines, forums, actions and decisions. Look at the next few weeks.',
   start: 'Workstream Reports. Each lead fills in a report (in the Hub, the report file or Teams). Send the leads the request for this month.',
   rep: 'Workstream Reports: check each lead has reported. The consolidated report then builds itself from these reports and feeds the governance packs.',
-  raid: 'Risks. Review the items raised on reports and the starter suggestions; adopt or remove them. Then issues and overdue actions.',
+  raid: 'Risks. Review the items raised on reports, the items leads updated or proposed to close, and the starter suggestions. Then issues and overdue actions.',
   int: 'Plan & Gantt: record progress on exit tasks and milestones. Then hold any readiness interviews due.',
   cr: 'TSA Changes: change requests waiting for the Change Forum. Process date changes here so the register follows the decision.',
   tpc: 'Third Parties: vendor consents still outstanding. Chase those blocking a service from moving across.',
@@ -100,7 +100,7 @@ export default {
     const wsActive = store.records('tblWorkstreams').filter((r) => r.get('Active (Y/N)') === 'Y').map((r) => r.get('Code'));
     const rin = reportsIn(store);
     const repIn = wsActive.filter((c) => rin.has(c)).length;   // a report is in when its section has a summary (counts.js)
-    const raidWaiting = suggested + fromReports;
+    const raidWaiting = suggested + fromReports + byLeads;   // the sheet's Home counts the same (polish_part.py leadUpd)
     const has = (t) => store.has ? store.has(t) : true;
     const crWaiting = has('tblChange') && use('Mod_CR') ? store.records('tblChange').filter((r) => r.get('Request type') !== 'Forecast change' && /^(New|Submitted|Pending|Under review|Raised|Draft)/i.test(r.get('Status'))).length : null;
     const tpcOut = has('tblTPC') && use('Use_TPC') ? store.records('tblTPC').filter((r) => r.get('Consent alert') === 'Outstanding' || !/^(Agreed|Not needed|Not required|Complete|Closed)/i.test(r.get('Status'))).length : null;   // as the health check
@@ -120,7 +120,7 @@ export default {
         ['start', 'Ask the workstream leads for their reports', `Send by ${fmtDate(RD + 1, true)}`, null, null, startReporting, 'Email the leads']]],
       ['Collect and update', [
         ['rep', 'Bring the reports in and check them', dueIn(7), `${repIn} of ${wsActive.length} in`, repIn >= wsActive.length, () => go('report')],
-        ['raid', 'Review new risks, issues and overdue actions', dueIn(8), raidWaiting ? `${raidWaiting} waiting` : word(!overdue, `${overdue} overdue`), raidWaiting === 0 && overdue === 0, () => go('raid', fromReports ? { newOnly: true } : { suggested: true })],
+        ['raid', 'Review new risks, issues and overdue actions', dueIn(8), raidWaiting ? `${raidWaiting} waiting` : word(!overdue, `${overdue} overdue`), raidWaiting === 0 && overdue === 0, () => go('raid', fromReports ? { newOnly: true } : byLeads ? { leadOnly: true } : { suggested: true })],
         ['int', 'Update plan progress and readiness interviews', dueIn(9), planLate ? `${planLate} late` : word(!interviewsDue, `${interviewsDue} due`), planLate === 0 && interviewsDue === 0, () => go(interviewsDue && !planLate ? 'interview' : 'plan')],
         crWaiting == null ? null : ['cr', 'Process date changes and change requests', dueIn(13), word(!crWaiting, `${crWaiting} waiting`), crWaiting === 0, () => go('changes')],
         tpcOut == null ? null : ['tpc', 'Chase vendor consents', dueIn(9), word(!tpcOut, `${tpcOut} outstanding`), tpcOut === 0, () => go('thirdparties')],
