@@ -1,8 +1,9 @@
 // Workstream report: each lead's monthly status, entered into their section of the Workstream Reports sheet
 // (from there it flows into Consolidated WS Reporting and the RAID logs). The programme's team (SMO, IMO, PMO...) sets the reporting date here.
-import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed, monthly as monthlyCycle } from '../util.js?v=0.12.6.20261120074927';
-import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.6.20261120074927';
-import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.6.20261120074927';
+import { h, fmtDate, fmtMonth, toast, isoToSerial, serialToIso, theTeam, fieldBox, asOf, dateBox, unit, periodLabel, periodStart, ed, monthly as monthlyCycle } from '../util.js?v=0.12.7.20261121230531';
+import { personLabel, SCALE_WORDS } from '../form.js?v=0.12.7.20261121230531';
+import { LEAD_UPD, LEAD_CLOSE } from '../counts.js?v=0.12.7.20261121230531';
+import { openReportImport } from '../wrimport.js?v=0.12.7.20261121230531';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35;
@@ -54,7 +55,8 @@ export default {
           h('p.lede', `Each lead's status for the ${unit()}. It flows into Consolidated WS Reporting, Home and the governance pack; new risks, issues and decisions raised here go straight into RAID, marked New.`)),
         h('div.card', { style: { padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
           h('span.small', { style: { fontWeight: 600, color: 'var(--muted)' } }, `Reporting date (set by ${theTeam()})`),
-          [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')])),
+          [h('b', fmtDate(RD)), h('button.link-btn', { type: 'button', onclick: () => ctx.changeRD() }, 'Change')]),
+          h('button.btn.btn-sm', { type: 'button', title: 'Bring in the report files the leads sent you', onclick: () => openReportImport(ctx, () => { ui.sec = null; ui.summ = null; }) }, 'Import reports')),
       h('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } },
         h('span.small', { style: { fontWeight: 700, color: 'var(--navy)' } }, `${nDone} of ${list.length} reports in`),
         h('div.bar', { style: { maxWidth: '240px' } }, h('div', { style: { width: (list.length ? Math.round(nDone / list.length * 100) : 0) + '%' } }))),

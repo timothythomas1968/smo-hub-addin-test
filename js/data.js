@@ -5,7 +5,7 @@
 //   PreviewSource - in a plain browser, from a snapshot of the demo workbook (edits kept in memory only)
 // The screens always use the UK column names from schema.json. In a US workbook a few names are spelt
 // the US way (e.g. "Organization"), so need() also files each column under its UK name.
-import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.6.20261120074927';
+import { ed, isUS, setTeam, setCycle } from './util.js?v=0.12.7.20261121230531';
 
 const SCALAR_NAMES = ['Today', 'RepFreq', 'RepDay', 'PlanXWS', 'PlanMSCR', 'RevPt1', 'RevPt2', 'RevPt3', 'RevPt4',
   // this month's workflow ticks, shared with Home on the sheet (workbook v0.11)
@@ -229,6 +229,32 @@ export class PreviewSource {
   getSetting(k) { try { return JSON.parse(localStorage.getItem('smohub.' + k)); } catch (e) { return null; } }
   async setSetting(k, v) { try { localStorage.setItem('smohub.' + k, JSON.stringify(v)); } catch (e) { /* ignore */ } }
   async show() { throw new Error('Preview only: open the add-in in Excel to jump to the worksheet.'); }
+}
+
+/** The Connected level (build waves P8): the same screens on the snapshot the Hub publishes to the programme's SharePoint site
+ *  ("TransitionSuite published"), read live after sign-in and never kept on the web host. It reads like PreviewSource. It writes
+ *  nothing back to the Hub: a change request saved by the screens (a row added to TSA Changes) becomes one item on the
+ *  "TransitionSuite submissions" list, which the programme office takes in from the panel. Reports are sent by sendReport().
+ *  `client` is the Graph client (graph.js) or, for tests and demos, any object with listAdd(list, title, payload). */
+export class GraphSource extends PreviewSource {
+  constructor(snapshot, client, who) { super(snapshot); this.kind = 'graph'; this.client = client; this.who = who || ''; this.sent = []; }
+  async submit(kind, title, body) {
+    const payload = JSON.stringify(Object.assign({ kind, v: 1, by: this.who, at: new Date().toISOString(), hub: this.snap.file || '' }, body));
+    await this.client.listAdd('TransitionSuite submissions', title, payload);
+    this.sent.push({ kind, title, payload });
+  }
+  async write(name, row, writes) {
+    if (name === 'tblChangeLog') return;   // the Hub keeps its own change log when the request is taken in
+    if (name !== 'tblChange') throw new Error('Read-only here: changes are made in the Hub. Use Request a change, or send your report.');
+    const t = this.snap.tables[name];
+    const record = {};
+    for (const w of writes) record[t.headers[w.col]] = w.value;
+    await super.write(name, row, writes);   // so the screen shows it straight away
+    await this.submit('cr', `change request ${record['Request type'] || ''} ${record['TSA ID'] || record['Item ID'] || ''}`.trim(), { record });
+  }
+  async writeCells() { throw new Error('Read-only here: changes are made in the Hub.'); }
+  async writeNames() { throw new Error('Read-only here: changes are made in the Hub.'); }
+  async writeNameItem() { throw new Error('Read-only here: changes are made in the Hub.'); }
 }
 
 export class Store {

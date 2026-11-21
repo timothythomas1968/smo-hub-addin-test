@@ -1,14 +1,14 @@
 // The other registers (0.10 item 2): one screen design, set up per table. A searchable list with status filters,
 // and the same edit panel as the TSA register, built from the workbook's column definitions (schema.json).
 // Each has a worksheet behind it, so the workbook still works without the add-in.
-import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.6.20261120074927';
-import { buildForm, personLabel } from '../form.js?v=0.12.6.20261120074927';
-import { LIVE } from '../live.js?v=0.12.6.20261120074927';
-import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.6.20261120074927';
-import { openReview, isNew } from '../crreview.js?v=0.12.6.20261120074927';
-import { openCRImport } from '../crimport.js?v=0.12.6.20261120074927';
-import { requestLines } from '../crform.js?v=0.12.6.20261120074927';
-import { openRebaseline, makeCurrent, pendingMoves } from '../baselines.js?v=0.12.6.20261120074927';
+import { h, fmtDate, fmtMonth, fmtMoney, toast, ed, asOf } from '../util.js?v=0.12.7.20261121230531';
+import { buildForm, personLabel } from '../form.js?v=0.12.7.20261121230531';
+import { LIVE } from '../live.js?v=0.12.7.20261121230531';
+import { openDecision, OPEN_CR } from '../datechange.js?v=0.12.7.20261121230531';
+import { openReview, isNew } from '../crreview.js?v=0.12.7.20261121230531';
+import { openCRImport } from '../crimport.js?v=0.12.7.20261121230531';
+import { requestLines } from '../crform.js?v=0.12.7.20261121230531';
+import { openRebaseline, makeCurrent, pendingMoves } from '../baselines.js?v=0.12.7.20261121230531';
 
 /** cfg: t (table), title, lede, id (ID column), name (title column), cols [[header, label, kind]], status (column),
  *  search [headers], use (set-up answer that switches the module on), late(r, T) for the "Overdue" filter. */
