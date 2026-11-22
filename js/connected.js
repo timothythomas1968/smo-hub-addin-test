@@ -5,7 +5,7 @@
 //    on Workstream Reports (as Import reports does), change requests into TSA Changes as New (as the panel's own form does).
 // The Graph calls go only to the programme's site (Sites.Selected), through graph.js; nothing is sent anywhere else, and the
 // web host never sees the data. The site's address and the app registration's IDs are kept in the panel's settings.
-import { writeBlock } from './wrimport.js?v=0.12.7.20261121230531';
+import { writeBlock } from './wrimport.js?v=0.12.8.20261122225802';
 
 export const PUBLISHED = 'TransitionSuite published', SUBMISSIONS = 'TransitionSuite submissions';
 const KEY = 'connected';
@@ -31,8 +31,12 @@ export async function graphClient(cfg) {
 
 /** The Hub as one snapshot, in the same shape as the demo snapshot (data/demo-data.json), so the leads' page runs the same screens. */
 export async function buildSnapshot(store) {
-  const names = Object.keys(store.schema);
-  await store.need(names);
+  // the registers (schema.json) and the Lists tables the screens read (workstreams, forums, currencies and the like);
+  // not the service library or the plan templates, which only the set-up wizard uses
+  const LISTS = ['tblWorkstreams', 'tblForums', 'tblCurrencies', 'tblEntities', 'tblReqTypes', 'tblRoles', 'tblSettings', 'tblMeetingMoves',
+    'tblAgreements', 'tblCountries', 'tblDateRules', 'tblRoutes', 'tblRegulators', 'tblChangeLog'];
+  const names = [...Object.keys(store.schema), ...LISTS];
+  for (const n of names) { try { await store.need([n]); } catch (e) { /* a Hub without that table */ } }
   const tables = {};
   for (const n of names) {
     const t = store.t[n];

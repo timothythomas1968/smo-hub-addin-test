@@ -6,8 +6,8 @@
 // Dates: the import writes Service start and Initial term (worked out from the seller's terminate date when only that is
 // given). It doesn't overwrite Planned exit date: that column follows approved change requests, so the contract end comes
 // from the start and the term, and any row where the Hub's end date differs from the seller's is flagged.
-import { ed, plural, isUS, fmtDate, fmtMoney, asOf } from './util.js?v=0.12.7.20261121230531';
-import { importWizard, parseDate, closest } from './importer.js?v=0.12.7.20261121230531';
+import { ed, plural, isUS, fmtDate, fmtMoney, asOf } from './util.js?v=0.12.8.20261122225802';
+import { importWizard, parseDate, closest } from './importer.js?v=0.12.8.20261122225802';
 
 const F = (key, label, syn, extra = {}) => ({ key, label, syn, ...extra });
 export const TSA_FIELDS = [

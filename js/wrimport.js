@@ -4,8 +4,8 @@
 // new risks, issues and decisions appear as they would after a paste. Several files can be picked at once.
 // The cells read are the report file's Export block A3:H30 (workbook/builder/wr_file_part.py); the paste area is L:S of each
 // section, from row s+5 (wr_part.py PASTE_OFF = 10). Keep the three in step.
-import { h, toast, plural, fmtMonth, theTeam } from './util.js?v=0.12.7.20261121230531';
-import { open as openBook } from './xlsxread.js?v=0.12.7.20261121230531';
+import { h, toast, plural, fmtMonth, theTeam } from './util.js?v=0.12.8.20261122225802';
+import { open as openBook } from './xlsxread.js?v=0.12.8.20261122225802';
 
 const SHEET = 'Workstream Reports';
 const SEC0 = 9, SECH = 35, ROWS = 28, COLS = 'ABCDEFGH';

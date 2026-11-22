@@ -2,8 +2,8 @@
 // Click a cell and type; Tab moves along, Enter moves down. Each row saves when you leave it (only the cells you changed).
 // The empty row at the bottom adds a person. "Paste from Excel" adds or updates several people at once, after a preview.
 // The full edit panel (stakeholder analysis, forums) is one click away for the rarely used columns.
-import { h, toast, ed } from '../util.js?v=0.12.7.20261121230531';
-import { PEOPLE_CFG, editPanel, removeRecord, OWNED } from './registers.js?v=0.12.7.20261121230531';
+import { h, toast, ed } from '../util.js?v=0.12.8.20261122225802';
+import { PEOPLE_CFG, editPanel, removeRecord, OWNED } from './registers.js?v=0.12.8.20261122225802';
 
 const T = 'tblPeople';
 // [header, label, kind, width]

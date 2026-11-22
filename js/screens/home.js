@@ -1,9 +1,9 @@
 // Home: the month at a glance, built live from the workbook.
-import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.7.20261121230531';
-import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.7.20261121230531';
-import { readinessOf } from '../readiness.js?v=0.12.7.20261121230531';
-import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.7.20261121230531';
-import { setTidy } from '../tabs.js?v=0.12.7.20261121230531';
+import { h, fmtDate, fmtMonth, plural, ed, asOf, team, toast, unit, monthly, periodLabel } from '../util.js?v=0.12.8.20261122225802';
+import { serviceCounts, countTests, COUNT_RULES, reportsIn, leadUpdates } from '../counts.js?v=0.12.8.20261122225802';
+import { readinessOf } from '../readiness.js?v=0.12.8.20261122225802';
+import { healthCheck, HEALTH_TABLES } from './health.js?v=0.12.8.20261122225802';
+import { setTidy } from '../tabs.js?v=0.12.8.20261122225802';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 // This month's workflow: the steps ticked by hand (their ticks live in cells on the sheet's Home, names WF_<key>), and each step's
@@ -68,7 +68,7 @@ export default {
       byLeads ? tile('Updated by leads', String(byLeads), 'items to review, from this period\'s reports', 'info', () => go('raid', { leadOnly: true })) : null,
       tile('Decisions needed', String(decisions.length), nextDec ? `next by ${fmtDate(nextDec, true)}` : 'none open', null, () => go('raid', { tab: 'DEC' })),
       tile('Actions overdue', String(overdue), `${openActions} open`, overdue ? 'red' : null, () => go('raid', { tab: 'AC' })),
-      tile('Data quality', String(dqE), `errors · ${dqW} warnings`, dqE ? 'amber' : 'green', () => store.showRange('Data Quality', 'A1').catch((e) => toast(e.message, true)), 'Open the Data Quality sheet: each check, with the row it is about'));
+      tile('Data quality', String(dqE), `errors · ${dqW} warnings`, dqE ? 'amber' : 'green', () => ctx.go('dq'), 'Open Data quality: each check that finds something, and where to fix it'));
 
     // ---- this month checklist: some items tick themselves from the data; the rest are ticked by hand
     const key = 'month-' + RD;

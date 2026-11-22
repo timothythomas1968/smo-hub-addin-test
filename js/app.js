@@ -1,31 +1,32 @@
 // TransitionSuite add-in shell (repository and code names keep the old smo-hub names): header, navigation, routing.
-import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.12.7.20261121230531';
-import { ExcelSource, PreviewSource, Store } from './data.js?v=0.12.7.20261121230531';
-import { openRDDialog } from './rd.js?v=0.12.7.20261121230531';
-import home from './screens/home.js?v=0.12.7.20261121230531';
-import register from './screens/register.js?v=0.12.7.20261121230531';
-import raid from './screens/raid.js?v=0.12.7.20261121230531';
-import dates from './screens/dates.js?v=0.12.7.20261121230531';
-import interview from './screens/interview.js?v=0.12.7.20261121230531';
-import report from './screens/report.js?v=0.12.7.20261121230531';
-import invoice from './screens/invoice.js?v=0.12.7.20261121230531';
-import pack from './screens/pack.js?v=0.12.7.20261121230531';
-import plan from './screens/plan.js?v=0.12.7.20261121230531';
-import setup from './screens/setup.js?v=0.12.7.20261121230531';
-import contents from './screens/contents.js?v=0.12.7.20261121230531';
-import { tidyTabs } from './tabs.js?v=0.12.7.20261121230531';
-import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.12.7.20261121230531';
-import { day1, f100 } from './screens/checklist.js?v=0.12.7.20261121230531';
-import consolidated from './screens/consolidated.js?v=0.12.7.20261121230531';
-import finance from './screens/finance.js?v=0.12.7.20261121230531';
-import execSummary from './screens/exec.js?v=0.12.7.20261121230531';
-import people from './screens/people.js?v=0.12.7.20261121230531';
-import request from './screens/request.js?v=0.12.7.20261121230531';
-import changelog from './screens/changelog.js?v=0.12.7.20261121230531';
-import connect from './screens/connect.js?v=0.12.7.20261121230531';
-import { changes, invoices, obligations, thirdparties, datareq, workorders, passthrough, baselines } from './screens/registers.js?v=0.12.7.20261121230531';
+import { h, toast, fmtDate, setEdition, ed, realToday, installSelectFix } from './util.js?v=0.12.8.20261122225802';
+import { ExcelSource, PreviewSource, Store } from './data.js?v=0.12.8.20261122225802';
+import { openRDDialog } from './rd.js?v=0.12.8.20261122225802';
+import home from './screens/home.js?v=0.12.8.20261122225802';
+import register from './screens/register.js?v=0.12.8.20261122225802';
+import raid from './screens/raid.js?v=0.12.8.20261122225802';
+import dates from './screens/dates.js?v=0.12.8.20261122225802';
+import interview from './screens/interview.js?v=0.12.8.20261122225802';
+import report from './screens/report.js?v=0.12.8.20261122225802';
+import invoice from './screens/invoice.js?v=0.12.8.20261122225802';
+import pack from './screens/pack.js?v=0.12.8.20261122225802';
+import plan from './screens/plan.js?v=0.12.8.20261122225802';
+import setup from './screens/setup.js?v=0.12.8.20261122225802';
+import contents from './screens/contents.js?v=0.12.8.20261122225802';
+import { tidyTabs } from './tabs.js?v=0.12.8.20261122225802';
+import { inWindow, canOpenWindow, openFullWindow, windowOpen, notifyWindow, closeFullWindow, RelaySource } from './window.js?v=0.12.8.20261122225802';
+import { day1, f100 } from './screens/checklist.js?v=0.12.8.20261122225802';
+import consolidated from './screens/consolidated.js?v=0.12.8.20261122225802';
+import finance from './screens/finance.js?v=0.12.8.20261122225802';
+import execSummary from './screens/exec.js?v=0.12.8.20261122225802';
+import people from './screens/people.js?v=0.12.8.20261122225802';
+import request from './screens/request.js?v=0.12.8.20261122225802';
+import changelog from './screens/changelog.js?v=0.12.8.20261122225802';
+import connect from './screens/connect.js?v=0.12.8.20261122225802';
+import dq from './screens/dq.js?v=0.12.8.20261122225802';
+import { changes, invoices, obligations, thirdparties, datareq, workorders, passthrough, baselines } from './screens/registers.js?v=0.12.8.20261122225802';
 
-export const VERSION = '0.12.7';
+export const VERSION = '0.12.8';
 
 // The menu (0.10 item 2): the monthly routine, then the registers grouped together, then the plans.
 const NAV = [
@@ -37,7 +38,7 @@ const NAV = [
     ['invoice', 'Our invoice', invoice],
     ['pack', 'Governance pack', pack]] },
   { group: 'Reports', items: [
-    ['exec', 'Executive summary', execSummary], ['finance', 'Finance', finance], ['connect', 'Connected level', connect]] },
+    ['exec', 'Executive summary', execSummary], ['finance', 'Finance', finance], ['dq', 'Data quality', dq], ['connect', 'Connected level', connect]] },
   { group: 'Registers', items: [
     ['register', 'TSA register', register], ['people', 'People', people],
     ['changes', 'TSA changes', changes], ['invoices', 'Invoices log', invoices],
@@ -248,7 +249,7 @@ function loading(msg) { return h('div.loading', h('div.spinner'), msg); }
 async function start(inExcel) {
   document.body.replaceChildren(loading('Opening TransitionSuite…'));
   try {
-    const schema = await (await fetch('data/schema.json?v=0.12.7.20261121230531')).json();
+    const schema = await (await fetch('data/schema.json?v=0.12.8.20261122225802')).json();
     let src;
     if (inWindow) { src = new RelaySource(); await src.connect(); }
     else if (inExcel) src = new ExcelSource();
