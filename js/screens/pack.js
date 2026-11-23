@@ -1,9 +1,9 @@
 // Governance pack: one pack per forum, built live from the registers, with the team's commentary (SMO, IMO, PMO...), the client's letterhead,
 // and sections switched on or off per forum. Shared (joint) packs leave out internal-only sections and unshareable items.
-import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.8.20261122225802';
-import { packDeck } from '../packdeck.js?v=0.12.8.20261122225802';
-import { financeData } from '../findata.js?v=0.12.8.20261122225802';
-import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.8.20261122225802';
+import { h, fmtDate, fmtMonth, fmtMoney, fromSerial, toSerial, toast, printNode, plural, ed, team, theTeam, asOf, fieldBox, saveBlob, printNeedsFile } from '../util.js?v=0.12.9.20261123225222';
+import { packDeck } from '../packdeck.js?v=0.12.9.20261123225222';
+import { financeData } from '../findata.js?v=0.12.9.20261123225222';
+import { countTests, serviceCounts, COUNT_RULES } from '../counts.js?v=0.12.9.20261123225222';
 
 const EXITED = new Set(['Exited', 'Terminated']);
 const SECTIONS = [
@@ -251,20 +251,11 @@ function cellOut(c) {
 // Fees by year and by quarter, estimated from the register: monthly fee x months running, with extension mark-ups.
 function costSection(store, tsa, cap, rec, drill = (t) => t) {
   const n = store.names, RD = Number(n.RD) || 0, sym = n.CcySym || '';
-  const months = {};
+  // the same month-by-month figures as Finance and the executive summary (findata.js): invoiced where a month is invoiced,
+  // else the forecast, with mark-ups, extensions and the programme's whole span. Before 0.12.9 the pack estimated them here.
   const monthKey = (d) => d.getUTCFullYear() * 12 + d.getUTCMonth();
-  tsa.forEach((r) => {
-    const fee = Number(r.get('Monthly fee (reporting currency)')) || 0;
-    const s0 = fromSerial(r.get('Service start')), e0 = fromSerial(r.get('Actual exit date') || r.get('Forecast exit date'));
-    if (!fee || !s0 || !e0) return;
-    const mks = fromSerial(r.get('Mark-up starts'));
-    const rev = r.get('Direction') === 'Reverse';
-    for (let k = monthKey(s0); k < monthKey(e0); k++) {
-      const m = months[k] = months[k] || { f: 0, r: 0 };
-      const up = mks && k >= monthKey(mks) ? 1 + (Number(n.MkPct1) || 0) : 1;
-      m[rev ? 'r' : 'f'] += fee * up;
-    }
-  });
+  const F = financeData(store), months = {};
+  F.burn.forEach((b) => { const d = fromSerial(b.m); if (!d || (!b.fees && !b.rev)) return; months[monthKey(d)] = { f: b.fees, r: b.rev }; });
   const keys = Object.keys(months).map(Number).sort((a, b) => a - b);
   if (!keys.length) return [cap('TSA fees', ''), h('p.small.muted', 'No fees in the register yet.')];
   const rdK = monthKey(fromSerial(RD));
@@ -304,7 +295,7 @@ function costSection(store, tsa, cap, rec, drill = (t) => t) {
   if (rec) rec({ sym, years: Object.entries(years).map(([y, v]) => [y, v.f, v.r]), quarters: qs.map(([q, v]) => [q, v.past ? v.v : 0, v.past ? 0 : v.v]) });
   const more = h('div.small', { style: { marginTop: '6px' } }, drill('Open the full financial analysis (Finance) ›', 'finance', {}));
   // pass-through expenses and the baseline the figures measure against (P7)
-  const F = financeData(store), extra = [];
+  const extra = [];
   if (F.pt.length) {
     const byY = F.years.filter((y) => y.pt);
     extra.push(h('div.small', { style: { marginTop: '8px' } }, h('b', 'Pass-through on top of the fees: '),

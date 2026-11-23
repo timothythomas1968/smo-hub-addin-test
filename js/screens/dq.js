@@ -1,7 +1,7 @@
 // Data quality: the Hub's own checks (the Data Quality sheet, rows from 12: B check, C severity, D count, E what it looks for,
 // F where to look), in the panel. Checks that find something come first, errors before warnings. Fixing happens on the sheets
 // (or the panel screen for that register); this screen says what to fix and opens the check's row on the sheet.
-import { h, toast, plural } from '../util.js?v=0.12.8.20261122225802';
+import { h, toast, plural } from '../util.js?v=0.12.9.20261123225222';
 
 const SHEET = 'Data Quality', FIRST = 12, LAST = 80;
 const ui = { all: false };

@@ -1,7 +1,7 @@
 // Change log (audit trail, Stage 3b; build waves P6): every change saved through the panel, from the Change Log sheet
 // (tblChangeLog): when, who, where, item, field, old value and new value. Newest first; search by item, field or person.
 // Changes typed straight into the sheets are not here: Excel's own Review › Show Changes records those for a Hub in OneDrive or SharePoint.
-import { h, fmtDate, plural } from '../util.js?v=0.12.8.20261122225802';
+import { h, fmtDate, plural } from '../util.js?v=0.12.9.20261123225222';
 
 const ui = { q: '', where: '', limit: 200 };
 const when = (v) => { const n = Number(v); if (!n) return String(v || ''); const d = new Date(Math.round((n - 25569) * 864e5)); return `${fmtDate(Math.floor(n), true)} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`; };

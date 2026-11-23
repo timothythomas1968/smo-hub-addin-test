@@ -2,9 +2,9 @@
 // people without the Hub (Levels 1 and 2). Read in the browser with xlsxread.js, nothing leaves the computer, then saved into
 // TSA Changes as New through the same model as the panel's form (crform.js). Several files can be picked at once.
 // The cells read are the form's Export sheet (workbook/builder/cr_file_part.py): keep the two in step.
-import { h, toast, ed, plural, fmtDate, theTeam } from './util.js?v=0.12.8.20261122225802';
-import { open as openBook } from './xlsxread.js?v=0.12.8.20261122225802';
-import { checkRequest, requestRecord, readDate } from './crform.js?v=0.12.8.20261122225802';
+import { h, toast, ed, plural, fmtDate, theTeam } from './util.js?v=0.12.9.20261123225222';
+import { open as openBook } from './xlsxread.js?v=0.12.9.20261123225222';
+import { checkRequest, requestRecord, readDate } from './crform.js?v=0.12.9.20261123225222';
 
 const MARK = 'TransitionSuite change request';
 
