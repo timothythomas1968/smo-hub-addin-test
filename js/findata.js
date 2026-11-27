@@ -3,7 +3,7 @@
 // A service is "running" in a month from its first month (service start, or closing) until it exits: the actual exit date,
 // or else the date being compared (forecast exit, the current plan's planned exit, or the contract's initial end).
 // Fees are the monthly fee in the reporting currency; extension mark-ups are left out, as on Home.
-import { fromSerial, toSerial, asOf } from './util.js?v=0.12.9.20261123225222';
+import { fromSerial, toSerial, asOf } from './util.js?v=0.13.0.20261127225700';
 
 const num = (v) => Number(v) || 0;
 const mStart = (n) => { const d = fromSerial(n); return d ? toSerial(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))) : 0; };

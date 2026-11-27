@@ -5,7 +5,7 @@
 //    on Workstream Reports (as Import reports does), change requests into TSA Changes as New (as the panel's own form does).
 // The Graph calls go only to the programme's site (Sites.Selected), through graph.js; nothing is sent anywhere else, and the
 // web host never sees the data. The site's address and the app registration's IDs are kept in the panel's settings.
-import { writeBlock } from './wrimport.js?v=0.12.9.20261123225222';
+import { writeBlock } from './wrimport.js?v=0.13.0.20261127225700';
 
 export const PUBLISHED = 'TransitionSuite published', SUBMISSIONS = 'TransitionSuite submissions';
 const KEY = 'connected';

@@ -3,13 +3,13 @@
 // It reads the snapshot the Hub publishes to the programme's SharePoint site and runs the panel's own screens on it
 // (GraphSource in data.js). Leads send their workstream report and change requests back as items on the submissions list;
 // nothing is written to the Hub from here, and nothing is kept on the web host.
-import { h, toast, fmtDate, setEdition, ed, theTeam } from './util.js?v=0.12.9.20261123225222';
-import { GraphSource, Store } from './data.js?v=0.12.9.20261123225222';
-import myreport from './screens/myreport.js?v=0.12.9.20261123225222';
-import request from './screens/request.js?v=0.12.9.20261123225222';
-import execSummary from './screens/exec.js?v=0.12.9.20261123225222';
-import finance from './screens/finance.js?v=0.12.9.20261123225222';
-import { PUBLISHED } from './connected.js?v=0.12.9.20261123225222';
+import { h, toast, fmtDate, setEdition, ed, theTeam } from './util.js?v=0.13.0.20261127225700';
+import { GraphSource, Store } from './data.js?v=0.13.0.20261127225700';
+import myreport from './screens/myreport.js?v=0.13.0.20261127225700';
+import request from './screens/request.js?v=0.13.0.20261127225700';
+import execSummary from './screens/exec.js?v=0.13.0.20261127225700';
+import finance from './screens/finance.js?v=0.13.0.20261127225700';
+import { PUBLISHED } from './connected.js?v=0.13.0.20261127225700';
 
 const VIEWS = { report: ['My workstream report', myreport], request: ['Request a change', request], exec: ['Executive summary', execSummary], finance: ['Finance', finance] };
 const q = new URLSearchParams(location.search);
@@ -51,7 +51,7 @@ function askSettings() {
 async function start() {
   say('Opening TransitionSuite…');
   try {
-    const schema = await (await fetch('data/schema.json?v=0.12.9.20261123225222')).json();
+    const schema = await (await fetch('data/schema.json?v=0.13.0.20261127225700')).json();
     const g = await client();
     // A browser blocks a sign-in pop-up that a page opens by itself: in a web page, sign in from a button click.
     if (g.host && g.host.kind === 'web' && !g.signedIn) {

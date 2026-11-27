@@ -2,8 +2,8 @@
 // page and sent to the programme office as one submission. It is the same report as the standalone report file and the
 // Workstream Reports sheet (wrblock.js), so the programme office takes it in the same way. It starts from what is already in
 // the workstream's section of the published Hub.
-import { h, toast, fmtMonth, ed, theTeam, dateBox, isoToSerial, serialToIso, periodLabel } from '../util.js?v=0.12.9.20261123225222';
-import { toBlock, fromBlock, TEXTS, ROWS, COLS } from '../wrblock.js?v=0.12.9.20261123225222';
+import { h, toast, fmtMonth, ed, theTeam, dateBox, isoToSerial, serialToIso, periodLabel } from '../util.js?v=0.13.0.20261127225700';
+import { toBlock, fromBlock, TEXTS, ROWS, COLS } from '../wrblock.js?v=0.13.0.20261127225700';
 
 const SHEET = 'Workstream Reports', SEC0 = 9, SECH = 35;
 const ui = { ws: null, r: null, sent: {} };

@@ -1,7 +1,7 @@
 // Connected level (build waves P8), the programme office's screen: connect to the programme's SharePoint site, publish the
 // Hub for the leads' Teams tab and web page, and take in what they send. Nothing here is needed at Levels 1 and 2.
-import { h, toast, plural, theTeam } from '../util.js?v=0.12.9.20261123225222';
-import { connectConfig, saveConnectConfig, publish, inbox, takeIn, decline } from '../connected.js?v=0.12.9.20261123225222';
+import { h, toast, plural, theTeam } from '../util.js?v=0.13.0.20261127225700';
+import { connectConfig, saveConnectConfig, publish, inbox, takeIn, decline } from '../connected.js?v=0.13.0.20261127225700';
 
 const ui = { subs: null, loading: false, error: '', busy: false };
 
